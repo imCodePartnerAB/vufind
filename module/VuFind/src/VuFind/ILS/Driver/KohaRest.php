@@ -34,6 +34,7 @@ use VuFind\Date\DateException;
 use VuFind\Exception\AuthToken as AuthTokenException;
 use VuFind\Exception\ILS as ILSException;
 use VuFind\View\Helper\Root\SafeMoneyFormat;
+use VuFind\Db\Row\User;
 
 /**
  * VuFind Driver for Koha, using REST API
@@ -50,6 +51,7 @@ use VuFind\View\Helper\Root\SafeMoneyFormat;
  * @link     https://vufind.org/wiki/development:plugins:ils_drivers Wiki
  */
 class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
+\VuFind\Db\Table\DbTableAwareInterface,
     \VuFindHttp\HttpServiceAwareInterface,
     \VuFind\I18n\Translator\TranslatorAwareInterface,
     \Laminas\Log\LoggerAwareInterface
@@ -58,6 +60,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     use \VuFind\I18n\Translator\TranslatorAwareTrait;
     use \VuFind\ILS\Driver\CacheTrait;
     use \VuFind\ILS\Driver\OAuth2TokenTrait;
+    use \VuFind\Db\Table\DbTableAwareTrait;
 
     /**
      * Library prefix
@@ -360,9 +363,19 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
+
+//    public function getConsortialHoldings(
+//        $id,
+//        array $patron = null,
+//        array $ids = null
+//    )
+//    {
+//         return $this->getItemStatusesForBiblio($id, $patron);
+//    }   
+
     public function getHolding($id, array $patron = null, array $options = [])
-    {
-        return $this->getItemStatusesForBiblio($id, $patron);
+    {    
+         return $this->getItemStatusesForBiblio($id, $patron);
     }
 
     /**
@@ -550,6 +563,11 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
         }
 
         $result = $result['data'];
+        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username); 
+        if (isset($dbUser) && empty($dbUser->home_library)) {
+            $dbUser->changeHomeLibrary($result['library_id']);
+        }
+
         return [
             'id' => $result['patron_id'],
             'firstname' => $result['firstname'],
@@ -1071,7 +1089,9 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
             'patron_id' => (int)$patron['id'],
             'pickup_library_id' => $pickUpLocation,
             'notes' => $comment,
-            'expiration_date' => date('Y-m-d', $holdDetails['requiredByTS']),
+            'expiration_date' => $holdDetails['requiredByTS']
+                ? date('Y-m-d', $holdDetails['requiredByTS'])
+                : null,
         ];
         if ($level == 'copy') {
             $request['item_id'] = (int)$itemId;
@@ -1830,6 +1850,9 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 'errors' => true
             ]
         );
+        if (400 == $result['code']) {
+            return [];
+        }
         if (404 == $result['code']) {
             return [];
         }
@@ -1858,6 +1881,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
 
             $entry = [
                 'id' => $id,
+                'item' => $item,
                 'item_id' => $item['item_id'],
                 'location' => $this->getItemLocationName($item),
                 'availability' => $available,
@@ -1869,6 +1893,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 'number' => $item['serial_issue_number'],
                 'barcode' => $item['external_id'],
                 'sort' => $i,
+                'item_location_description' => $item["location_description"],
                 'requests_placed' => max(
                     [$item['hold_queue_length'],
                     $result['data']['hold_queue_length']]

@@ -435,9 +435,6 @@ class Loader extends \VuFind\ImageLoader
         if ($this->upc && strlen($this->upc) > 0) {
             $ids['upc'] = $this->upc;
         }
-        if ($this->nbn && strlen($this->nbn) > 0) {
-            $ids['nbn'] = $this->nbn;
-        }
         if ($this->ismn && $this->ismn->isValid()) {
             $ids['ismn'] = $this->ismn;
         }

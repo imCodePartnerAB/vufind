@@ -106,8 +106,8 @@ class Renewals extends AbstractPlugin
         if (is_array($ids) && !empty($ids)) {
             if (null !== $csrfValidator) {
                 if (!$csrfValidator->isValid($request->get('csrf'))) {
-                    $flashMsg->addErrorMessage('csrf_validation_failed');
-                    return [];
+                    //$flashMsg->addErrorMessage('csrf_validation_failed');
+                    //return [];
                 }
                 // After successful token verification, clear list to shrink session
                 // and prevent double submit:

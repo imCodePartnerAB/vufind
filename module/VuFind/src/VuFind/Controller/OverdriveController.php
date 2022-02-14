@@ -16,6 +16,7 @@ use Laminas\Log\LoggerAwareInterface;
 use Laminas\ServiceManager\ServiceLocatorInterface;
 use VuFind\DigitalContent\OverdriveConnector;
 
+
 /**
  * Overdrive Controller supports actions for Overdrive Integration
  *
@@ -31,6 +32,8 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
         logError as error;
     }
 
+    
+
     /**
      * Overdrive Connector
      *
@@ -43,6 +46,7 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
      *
      * @param ServiceLocatorInterface $sm Service locator
      */
+    
     public function __construct(ServiceLocatorInterface $sm)
     {
         $this->setLogger($sm->get(\VuFind\Log\Logger::class));
@@ -60,7 +64,11 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
      */
     public function mycontentAction()
     {
-        $this->debug("ODC mycontent action");
+        $holds = $this->debug("ODC mycontent action");
+
+
+        $searchService = $this->serviceLocator->get(\VuFindSearch\Service::class);
+ 
         //force login
         if (!is_array($patron = $this->catalogLogin())) {
             return $patron;
@@ -98,10 +106,17 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
             } else {
                 foreach ($checkoutResults->data as $checkout) {
                     $mycheckout['checkout'] = $checkout;
-                    $mycheckout['record']
-                        = $this->serviceLocator->get(\VuFind\Record\Loader::class)
-                        ->load(strtolower($checkout->reserveId));
-                    $checkouts[] = $mycheckout;
+                    $query = new \VuFindSearch\Query\Query("overdrive:\"$checkout->reserveId\"");
+                    $marcRec = $searchService->search('Solr', $query, 0, 5);
+                    if ($marcRec->getRecords()[0]) { // if it does not exist in solr, do not add it.
+
+                        $mycheckout['record']
+                            = $this->serviceLocator->get(\VuFind\Record\Loader::class)
+                           // ->load(strtolower($checkout->reserveId));
+                            ->load($marcRec->getRecords()[0]->getUniqueId());
+                            
+                        $checkouts[] = $mycheckout;
+                    }
                 }
             }
             //get the current Overdrive holds for this user and add to
@@ -176,13 +191,16 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
     public function holdAction()
     {
         $this->debug("ODC Hold action");
+        $searchService = $this->serviceLocator->get(\VuFindSearch\Service::class);
 
         if (!is_array($patron = $this->catalogLogin())) {
             return $patron;
         }
         $this->debug("patron: " . print_r($patron, true));
 
-        $od_id = $this->params()->fromQuery('od_id');
+        $od_id = strtoupper($this->params()->fromQuery('od_id'));
+        $id = $this->params()->fromQuery('id');
+        
         $rec_id = $this->params()->fromQuery('rec_id');
         $action = $this->params()->fromQuery('action');
 
@@ -199,12 +217,16 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
         $format = $this->params()->fromQuery('getTitleFormat');
 
         $this->debug("ODRC od_id=$od_id rec_id=$rec_id action=$action");
+
+        $query = new \VuFindSearch\Query\Query("overdrive:\"$od_id\"");
+        $marcRec = $searchService->search('Solr', $query, 0, 5);
+
         //load the Record Driver.  Should be a SolrOverdrive  driver.
         $driver = $this->serviceLocator->get(\VuFind\Record\Loader::class)->load(
-            $rec_id
+            $marcRec->getRecords()[0]->getUniqueId()
         );
 
-        $formats = $driver->getDigitalFormats();
+         $formats = $driver->getDigitalFormats();
         $title = $driver->getTitle();
         $cover = $driver->getThumbnail('small');
         $listAuthors = $driver->getPrimaryAuthors();
