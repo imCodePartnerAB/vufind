@@ -1,0 +1,162 @@
+<!-- START ./RecordDriver/DefaultRecord/core.phtml -->
+<?php $this->metadata()->generateMetatags($this->driver);?>
+<div class="media" vocab="http://schema.org/" resource="#record" typeof="<?=$this->driver->getSchemaOrgFormats()?> Product">
+  <?php
+    $QRCode = $this->record($this->driver)->getQRCode("core");
+    $coverDetails = $this->record($this->driver)->getCoverDetails('core', 'medium', $this->record($this->driver)->getThumbnail('large'));
+    $cover = $coverDetails['html'];
+    $preview = ($this->previewOverride ?? false)
+      ? $this->previewOverride : $this->record($this->driver)->getPreviews();
+
+    try {
+        $holdings = $this->driver->getRealTimeHoldings();
+    } catch (\VuFind\Exception\ILS $e) {
+        $holdings = [
+          'holdings' => [],
+          'electronic_holdings' => [],
+          'total' => 0,
+          'page' => 0,
+          'itemLimit' => 0
+        ];
+        $offlineMode = 'ils-offline';
+    }
+
+    function searchForId($id, $array) {
+      foreach ($array as $key => $val) {
+          if ($val['key'] === $id) {
+              return $val;
+          }
+      }
+      return null;
+    }
+    function recursive_array_search($needle,$haystack) {
+      foreach($haystack as $key=>$value) {
+          if($key===$needle) {
+              return $value;
+          } else if (is_array($value) && $subkey = recursive_array_search($needle,$value)) {
+            if (is_array($subkey)) {
+                array_unshift($subkey, $key);
+            }
+              return $subkey;
+          }
+      }
+    }
+
+  ?>
+  <?php if ($QRCode || $cover || $preview): ?>
+    <div class="media-left <?=$this->escapeHtmlAttr($coverDetails['size'])?> img-col">
+      <?php /* Display thumbnail if appropriate: */ ?>
+      <?php if($cover): ?>
+        <?=$cover?>
+      <?php endif; ?>
+      
+      <?php /* Display qrcode if appropriate: */ ?>
+      <?php if($QRCode): ?>
+        <span class="hidden-xs">
+          <br/><img alt="<?=$this->transEsc('QR Code')?>" class="qrcode" src="<?=$this->escapeHtmlAttr($QRCode);?>"/>
+        </span>
+      <?php endif; ?>
+
+      <?php // if you have a preview tab but want to move or remove the preview link
+         // from this area of the record view, this can be split into
+         // getPreviewData() (should stay here) and
+         // getPreviewLink() (can go in your desired tab) ?>
+      <?php if ($preview): ?>
+        <div class="record-previews">
+          <?=$preview?>
+        </div>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
+  <div class="media-body">
+
+    <h1 property="name"><?=$this->escapeHtml($this->driver->getShortTitle() . ' ' . $this->driver->getSubtitle() . ' ' . $this->driver->getTitleSection())?></h1>
+
+    <?php if(!empty($this->extraControls)): ?>
+      <?=$this->extraControls['actionControls'] ?? ''?>
+      <?=$this->extraControls['availabilityInfo'] ?? ''?>
+    <?php endif; ?>
+
+    <?php $summary = $this->driver->getSummary(); $summary = isset($summary[0]) ? $this->escapeHtml($summary[0]) : false; ?>
+    <?php if ($summary): ?>
+      <p><?=$this->truncate($summary, 300)?></p>
+
+      <!-- ?php if(strlen($summary) > 300): ?>
+        <p><a href='< ?=$this->recordLink()->getTabUrl($this->driver, 'Description')?>#tabnav'>< ?=$this->transEsc('Full description')?></a></p>
+      < ?php endif; ? -->
+    <?php endif; ?>
+
+    <?php if ($this->userlist()->getMode() !== 'disabled'): ?>
+      <?php /* Display the lists that this record is saved to */ ?>
+      <div class="savedLists">
+        <strong><?=$this->transEsc("Saved in")?>:</strong>
+      </div>
+    <?php endif; ?>
+
+    <?php /* Display Main Details */ ?>
+    <?php
+      $formatter = $this->recordDataFormatter();
+      $coreFields = $formatter->getData($driver, $formatter->getDefaults('core'));
+    ?>
+
+<?php if (!empty($coreFields)): ?>
+
+    <table class="table table-noborder table-details">
+        <caption class="sr-only"><?=$this->transEsc('Bibliographic Details')?></caption>
+        <?php foreach ($coreFields as $current): ?>
+          <?php if ("" != $current['value']): ?>
+              <tr><td><?=$current['value']?></td></tr>
+          <?php endif; ?> 
+        <?php endforeach; ?>
+      </table>
+      <div id="collapseDetailsLink">
+ <a data-toggle="collapse" href="#collapseDetails" role="button" aria-expanded="false" aria-controls="collapseDetails" class="btn btn-link collapsed">
+    Visa/dölj mer information
+  </a>
+</div>
+<div class="collapse" id="collapseDetails" style="">
+<?=$this->render('RecordTab/description.phtml');?> <!-- Testar att lägga in beskrivning -->
+   <!-- table class="table table-noborder table-details table-isbn">
+  <tbody>
+    <tr>
+      <th><?= !$this->driver->getCleanISBN() ? "" : "ISBN: "?></th>
+      <td><?=$this->driver->getCleanISBN()?></td> 
+    </tr>
+    <tr>
+      <th><?= !$this->transEsc(recursive_array_search('callnumber', $holdings)) ? "" : "Ämnesord "?>:</th>
+      <td><?=$this->transEsc(recursive_array_search('callnumber', $holdings))?></td>
+    </tr>
+  </tbody>
+</table-->
+
+    </div>
+    <?php endif; ?>
+
+
+<!-- Reservera på Titelnivå 1-->
+<?php $holdingTitleHold = $this->driver->tryMethod('getRealTimeTitleHold'); if (!empty($holdingTitleHold)): ?>
+    <a class="placehold" data-light-box title="<?=$this->transEscAttr('request_place_text')?>" href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holdingTitleHold))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('title_hold_place')?></a>
+<?php else: ?>
+    <div class="alert alert-info">
+            <?=$this->translate("hold_profile_html", ['%%url%%' => $this->escapeHtmlAttr($this->recordLinker()->getTabUrl($this->driver, 'Holdings', ['catalogLogin' => 'true']))])?>
+    </div>
+<?php endif; ?>
+     <?php if ($this->userlist()->getMode() !== 'disabled'): ?>
+        <?php if ($this->permission()->allowDisplay('feature.Favorites')): ?>
+          <?php /* Add to favorites */ ?>
+          <a href="<?=$this->recordLink()->getActionUrl($this->driver, 'Save')?>" data-light-box class="save-record" data-id="<?=$this->escapeHtmlAttr($this->driver->getUniqueId()) ?>">
+            <i class="result-link-icon fa fa-fw fa-star" aria-hidden="true"></i>
+            <span class="result-link-label"><?=$this->transEsc('Add to favorites')?></span>
+          </a><br/>
+
+        <?php endif; ?>
+
+      <?php endif; ?>
+
+    <?php /* End Main Details */ ?>
+  </div>
+  
+</div>
+
+
+<!-- STOP ./RecordDriver/DefaultRecord/core.phtml -->
