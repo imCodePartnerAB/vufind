@@ -10,7 +10,7 @@ from mysql.connector import connect #My/Maria SQL connection handling
 from sqlescapy import sqlescape #Helpts to escape strings for SQL queries 
 import sys
 sys.path.append('/srv/script')
-import dbconfig
+import python_config
 
 # Main is called last in file, as python needs function above.
 # Having them in order seem easier for me.
@@ -99,7 +99,7 @@ def compare_inifiles(inifile1, inifile2):
 """
 def update_vufind_sql_settings(inifile, section, key, value):
     server_id = get_server_id()
-    mydb = connect(**dbconfig.mysql)
+    mydb = connect(**python_config.mysql)
     #mysql = mydb.cursor()
     mysql = mydb.cursor(buffered=True)
     mysql.execute('SELECT id FROM vufind_settings WHERE server_id = "{}" and `file` = "{}" and section= "{}" and `key` = "{}"'.format(server_id,inifile, section,key.replace('[]','[0]'))) 
@@ -114,7 +114,7 @@ def update_vufind_sql_settings(inifile, section, key, value):
     Gets the server ID where it is run, to connect it in imAppmgr database
 """
 def get_server_id():
-    mydb = connect(**dbconfig.mysql)
+    mydb = connect(**python_config.mysql)
     mysql = mydb.cursor(buffered=True)
     query = ("SELECT id FROM Servers WHERE name IN (%s)")
     mysql.execute(query, (socket.gethostname(),))
