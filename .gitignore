@@ -20,7 +20,8 @@ module/VuFind/tests/.phpunit.result.cache
 node_modules
 public/swagger-ui
 
-local/config/vufind
-local/harvest
+local/config
+local/harvest/**
 local/import/translation_maps
 local/chown_dirs.sh
+
