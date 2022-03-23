@@ -15,7 +15,6 @@ import python_config
 # Main is called last in file, as python needs function above.
 # Having them in order seem easier for me.
 def main():
-#    print(get_server_id())
     get_set_all_to_delete()
     for inifile in os.popen('find /usr/local/vufind/local -type f -name *.ini|grep -v language').read().split('\n')[0:-1]:
         if not exists(inifile.replace('vufind/local/','vufind/')):
