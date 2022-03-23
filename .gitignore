@@ -25,3 +25,4 @@ local/harvest/**
 local/import/translation_maps
 local/chown_dirs.sh
 
+composer.json
