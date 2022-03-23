@@ -10,7 +10,6 @@
       $user = $this->auth()->isLoggedIn();
       $matomoparrams['username']=$user["username"];
      setrawcookie("currentVufindUserHoldLibrary",$user["home_library"],0,"/");
-    // setrawcookie("TTTEST",$profile["home_library" ."kkk",0,"/");
      setrawcookie("currentVufindUser",$user["username"],0,"/");
      setcookie("currentVufindUserFirstName",$user["firstname"],0,"/");
      setcookie("currentVufindUserLastName",$user["lastname"],0,"/");

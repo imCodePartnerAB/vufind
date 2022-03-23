@@ -66,8 +66,8 @@ class MultiOrderedDict(OrderedDict):
     default/source dir.
 """
 def compare_inifiles(inifile1, inifile2):
-    config1 = configparser.RawConfigParser(dict_type=MultiOrderedDict, strict=False)
-    config2 = configparser.RawConfigParser(dict_type=MultiOrderedDict, strict=False)
+    config1 = configparser.ConfigParser(dict_type=MultiOrderedDict, strict=False)
+    config2 = configparser.ConfigParser(dict_type=MultiOrderedDict, strict=False)
     config1.optionxform=str
     config2.optionxform=str
 
@@ -137,6 +137,7 @@ def delete_the_rest():
     Gets the server ID where it is run, to connect it in imAppmgr database
 """
 def get_server_id():
+    
     mydb = connect(**python_config.mysql)
     mysql = mydb.cursor(buffered=True)
     query = ("SELECT id FROM Servers WHERE name IN (%s)")

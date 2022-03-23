@@ -61,7 +61,10 @@ def create_ini_files():
     query = ("SELECT * from vufind_settings WHERE server_id = %s GROUP BY file")
     mysql.execute(query, (server_id,))
     for (id, server_id, inifile, section, key, value, to_delete) in mysql:
-        shutil.copyfile(inifile.replace('vufind/local/','vufind/'), inifile)
+        if ('oai.ini' in inifile):
+            shutil.copyfile('/usr/local/vufind/harvest/oai.ini','/usr/local/vufind/local/config/vufind/oai.ini')
+        else:
+            shutil.copyfile(inifile.replace('vufind/local/','vufind/'), inifile)
         print("copying file: ",inifile)
 
 def iterate_values_from_sql():
@@ -103,6 +106,8 @@ def setValue(inifile, section, key, value):
 #        config.write(configfile)
 
 def get_server_id():
+    if (len(sys.argv) > 1):
+        return sys.argv[1]
     mydb = connect(**python_config.mysql)
     mysql = mydb.cursor(buffered=True)
     query = ("SELECT id FROM Servers WHERE name IN (%s)")
