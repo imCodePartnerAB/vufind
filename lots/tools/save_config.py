@@ -16,11 +16,14 @@ import python_config
 # Having them in order seem easier for me.
 def main():
 #    print(get_server_id())
+    get_set_all_to_delete()
     for inifile in os.popen('find /usr/local/vufind/local -type f -name *.ini|grep -v language').read().split('\n')[0:-1]:
         if not exists(inifile.replace('vufind/local/','vufind/')):
             print('Can\'t find file to compare with {}'.format(inifile))
+            compare_inifiles(inifile, [])
         else:
             compare_inifiles(inifile,inifile.replace('vufind/local/','vufind/'))
+    delete_the_rest()
 
 """
  Class to help fixing input keys
@@ -104,11 +107,32 @@ def update_vufind_sql_settings(inifile, section, key, value):
     mysql = mydb.cursor(buffered=True)
     mysql.execute('SELECT id FROM vufind_settings WHERE server_id = "{}" and `file` = "{}" and section= "{}" and `key` = "{}"'.format(server_id,inifile, section,key.replace('[]','[0]'))) 
     if mysql.fetchone():
-        mysql.execute('UPDATE vufind_settings SET `value`="{}" WHERE server_id ="{}" and `file`="{}" and section="{}" and `key`="{}"'.format(sqlescape(', '.join(value.splitlines())),server_id, inifile, section,key.replace('[]','[0]'))) 
+        mysql.execute('UPDATE vufind_settings SET `value`="{}", to_delete = "Y" WHERE server_id ="{}" and `file`="{}" and section="{}" and `key`="{}"'.format(sqlescape(', '.join(value.splitlines())),server_id, inifile, section,key.replace('[]','[0]'))) 
         mydb.commit()
     else: 
-        mysql.execute("INSERT INTO `imAppmgr`.`vufind_settings` (`server_id`, `file`, `section`, `key`, `value`, `active`) VALUES ('{}', '{}', '{}', '{}', '{}', 'Y');".format(server_id,inifile,section,key.replace('[]','[0]'),sqlescape(', '.join(value.splitlines()))))
+        mysql.execute("INSERT INTO `imAppmgr`.`vufind_settings` (`server_id`, `file`, `section`, `key`, `value`, `to_delete`) VALUES ('{}', '{}', '{}', '{}', '{}', 'Y');".format(server_id,inifile,section,key.replace('[]','[0]'),sqlescape(', '.join(value.splitlines()))))
         mydb.commit()
+
+"""
+    Set to_delete so that we can delete those that are not updated after
+"""
+def get_set_all_to_delete():
+    server_id = get_server_id()
+    mydb = connect(**python_config.mysql)
+    mysql = mydb.cursor(buffered=True)
+    query = ("UPDATE vufind_settings SET to_delete = 'N' WHERE server_id = %s")
+    mysql.execute(query, (server_id,))
+    mydb.commit()
+
+"""
+    Delete to_delete=N
+"""
+def delete_the_rest():
+    mydb = connect(**python_config.mysql)
+    mysql = mydb.cursor(buffered=True)
+    query = ("DELETE FROM vufind_settings WHERE to_delete = 'N'")
+    mysql.execute(query)
+    mydb.commit()
 
 """
     Gets the server ID where it is run, to connect it in imAppmgr database
