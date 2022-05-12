@@ -35,14 +35,26 @@ def git_pull_to_tmp():
     #print(tag)
     options = ['-b {}'.format(tag),'--depth 1']
     repo = Repo.clone_from(f'https://{username}:{password}@github.com/imCodePartnerAB/vufind.git', gittmpdir, None, None, options)
+    return
     
     os.system("rsync -avhr --exclude=cache --exclude=harvest "+vufinddir+"/local/ "+gittmpdir+"/local")
     save_config()
+    
+    os.system('rm /tmp/vufind-lots/local/config/gurka')
+    
+    gitchanged=False
+    repo.git.add(all=True)
+    for diff in repo.head.commit.diff():
+        gitchanged=True
+        print(diff.a_path)
+        print(diff.b_path)
+        print(diff.new_file)
+        print(diff.change_type)
+    if gitchanged:
+        repo.index.commit('Config script save {}'.format(datetime.datetime.now()))
+        origin = repo.remote(name='origin')
+        origin.push()
 
-    repo.git.add(update=True)
-    repo.index.commit('Config script save {}'.format(datetime.datetime.now()))
-    origin = repo.remote(name='origin')
-    #origin.push()
 
     
 
