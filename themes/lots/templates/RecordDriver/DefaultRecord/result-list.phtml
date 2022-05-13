@@ -1,4 +1,8 @@
 <?php
+
+  $config = $this->config()->get('LOTS');
+  $lots_show_media_file_buttons = $config->Search->showMediaFileButtons ?? true;
+
   $coverDetails = $this->record($this->driver)->getCoverDetails('result-list', 'medium', $this->recordLink()->getUrl($this->driver));
   $cover = $coverDetails['html'];
   $thumbnail = false;
@@ -111,8 +115,10 @@
           <br/>
           <?=$doi->renderTemplate()?>
         <?php endif; ?>
+
+        <!-- LOTS show or not media buttons in search -->
         <?php if (!is_array($urls)) $urls = [];
-          if(false and !$this->driver->isCollection()):
+          if($lots_show_media_file_buttons and !$this->driver->isCollection()):
             foreach ($urls as $current): ?>
               <a href="<?=$this->escapeHtmlAttr($this->proxyUrl($current['url']))?>" class="fulltext" target="new"><i class="fa fa-external-link" aria-hidden="true"></i> <?=($current['url'] == $current['desc']) ? $this->transEsc('Get full text') : $this->escapeHtml($current['desc'])?></a><br/>
           <?php endforeach; ?>
