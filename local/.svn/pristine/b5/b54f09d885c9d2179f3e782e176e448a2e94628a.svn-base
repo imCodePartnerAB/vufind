@@ -23,12 +23,12 @@ autoConfigure = false
 [Site]
 ; Base URL is normally auto-detected, but this setting is used when autodetection is
 ; not possible (i.e. during sitemap generation at the command line).
-url = Nope
+url = "http://lots.bibblo.se/vufind"
 ; Set to true if VuFind is behind a reverse proxy (typically Apache with mod_proxy),
 ; make sure your reverse proxy sets the necessary headers.
-reverse_proxy    = true
+;reverse_proxy    = true
 ;email           = support@imcode.com
-email = Nope
+email           = redaktion@bibblo.se
 title           = "LOTS bibliotek"
 ; This is the default theme for non-mobile devices (or all devices if mobile_theme
 ; is disabled below). Available standard themes:
@@ -85,12 +85,12 @@ alternate_themes = bootstrap3:bootstrap3,lots:lots
 ; as a drop-down.  Each entry has two parts: a value for the "ui" GET parameter and
 ; an on-screen description.  "standard" refers to the "theme" setting above, "mobile"
 ; refers to the "mobile_theme" setting, and all other values must be defined in
-; alternate_themes above.  When commented out, no drop-down theme list will display.
+; alternate_themes above.  When commented out, no drop-down theme list will display.:k
 ;selectable_themes = "standard:Standard Theme,mobile:Mobile Theme"
 
 ; Use the browser language setting to set the VuFind language.
 browserDetectLanguage = true
-language        = sv    ; default -- more options available in [Languages] below. ; default -- more options available in [Languages] below. ; default -- more options available in [Languages] below.
+language        = sv    ; default -- more options available in [Languages] below.
 locale          = sv_SE
 ; Set this to specify a default ISO 4217 currency code (used on the fines screen).
 ; If omitted, the default currency for the locale above will be used.
@@ -125,7 +125,7 @@ defaultRecordTab = Holdings
 hideHoldingsTabWhenEmpty = false
 ; Whether to load the default tab through AJAX (which brings some performance
 ; gain but breaks compatibility with non-Javascript-enabled browsers; off by default)
-loadInitialTabWithAjax = false
+;loadInitialTabWithAjax = true
 ; The holdingsTemplate to use to display the ILS holdings (defaults to standard).
 ; See the templates/RecordTab/holdingsils subdirectory of your theme for options.
 ;holdingsTemplate = extended
@@ -167,7 +167,7 @@ allowSavedSearches = true
 ; features (such as display of hierarchies).
 nonJavascriptSupportEnabled = false
 ; Generator value to display in an HTML header <meta> tag:
-generator = "LOTS"
+generator = "VuFind"
 
 ; This section allows you to configure the mechanism used for storing user
 ; sessions.  Available types: File, Memcache, Database, Redis.
@@ -184,7 +184,7 @@ secure = false
 ; Default is 0 (disabled). When keep-alive is enabled, session lifetime above can be
 ; reduced to e.g. 600.
 ;keepAlive = 60
-file_save_path              = /tmp/vufind_sessions
+;file_save_path              = /tmp/vufind_sessions
 ;memcache_host               = localhost
 ;memcache_port               = 11211
 ;memcache_connection_timeout = 1
@@ -224,7 +224,7 @@ file_save_path              = /tmp/vufind_sessions
 ; PHP_SESS_ID value. If running multiple versions of VuFind (or multiple PHP
 ; applications) on the same host, it is strongly recommended to give each a
 ; different session_name setting to avoid data contamination.
-session_name = Nope
+session_name = LOTS_SESSION_VUPRODBIN
 ; Set the SameSite attribute used for cookies. Default is Lax. See e.g.
 ; https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite for
 ; more information
@@ -294,7 +294,7 @@ loadNoILSOnFailure = true
 ; - holds (Only show links for available items)
 ; - recalls (Only show links for unavailable items)
 ; default is "all"
-holds_mode = "driver"
+holds_mode = "all"
 
 ; Set this to true if you want to allow your ILS driver to override your holds_mode
 ; setting on a record-by-record basis; this may be useful for local customizations,
@@ -309,7 +309,7 @@ cancel_holds_enabled = true
 ; Determines if storage retrieval requests can be cancelled or not.
 ; Options are true or false.
 ; default is false
-cancel_storage_retrieval_requests_enabled = true
+cancel_storage_retrieval_requests_enabled = false
 
 ; Determines if ILL requests can be cancelled or not.
 ; Options are true or false.
@@ -318,7 +318,7 @@ cancel_ill_requests_enabled = true
 
 ; Determines if item can be renewed or not. Options are true or false.
 ; default is false
-renewals_enabled = true
+renewals_enabled = false
 
 ; Determines if title level holds are displayed or not.
 ; Legal values:
@@ -372,7 +372,7 @@ title_level_holds_mode = "driver"
 
 ; The number of historic loans to display per page; 0 for no limit (may cause
 ; memory problems for users with a large number of historic loans). Default = 50
-historic_loan_page_size = 50
+;historic_loan_page_size = 50
 
 ; Whether to display the item barcode for each loan. Default is false.
 ;display_checked_out_item_barcode = true
@@ -468,7 +468,7 @@ recover_hash_lifetime = 1209600
 ; Allow users to set change their email address (if supported by Auth method).
 ; When turning this on, it is also strongly recommended to turn on verify_email
 ; below.
-change_email = true
+change_email = false
 
 ; Allow users to set change their passwords (if supported by Auth method)
 change_password = true
@@ -478,14 +478,14 @@ change_password = true
 ; If you wish to customize the email messages used by the system, see the
 ; translation strings starting with verify and change_notification, as well as
 ; the notify-email-change.phtml and verify-email.phtml Email templates.
-verify_email = true
+verify_email = false
 
 ; Set this to false if you would like to store catalog passwords in plain text
 encrypt_ils_password = true
 
 ; This is the key used to encrypt and decrypt catalog passwords.  This must be
 ; filled in with a random string value when encrypt_ils_passwords is set to true.
-ils_encryption_key = Nope
+ils_encryption_key = "Fe96L24oyuA6xHTbLVP6x4fQ6osxE"
 
 ; This is the algorithm used to encrypt and decrypt catalog passwords.
 ; A symmetrical encryption algorithm must be used.
@@ -632,7 +632,7 @@ disable_from = false
 ; may be "enabled" or "disabled" ("enabled" by default).
 ; Should you choose to leave it enabled, see also sms.ini for further
 ; configuration options.
-sms = enabled
+sms = disable
 
 ; Set this value to "database" to shorten links sent via email/SMS and
 ; store its path in the database (default "none").
@@ -662,8 +662,7 @@ url_shortener_key_type = md5
 ; [host] = host of database server
 ; [port] = port of database server (optional)
 ; [db] = database name
-;database          = mysql://vudev03:mej11iY4soSe@proddb-01-s1/vudev03
-database = Nope
+database          = mysql://vudev03:mej11iY4soSe@proddb-01-s1/vudev03
 
 ; Should SSL be enabled on connections? (Currently only supported for MySQL).
 ; IMPORTANT: when using Linux, if your database connection string above uses
@@ -877,17 +876,17 @@ verify_server_certificate = false
 ; multiple sizes in a particular order. All legal template values and default
 ; values are reflected in the examples below. Uncomment the appropriate lines to
 ; make changes.
-coversize[checkedout] = large
-coversize[collection-info] = large
-coversize[core] = large
-coversize[holds] = large
-coversize[illrequests] = large
-coversize[list-entry] = large
-coversize[RandomRecommend] = "large:medium"
-coversize[result-grid] = large
-coversize[result-list] = large
-coversize[similar-items] = large
-coversize[storageretrievalrequests] = large
+;coversize[checkedout] = small
+;coversize[collection-info] = medium
+;coversize[core] = medium
+;coversize[holds] = small
+;coversize[illrequests] = small
+;coversize[list-entry] = small
+;coversize[RandomRecommend] = "small:medium"
+;coversize[result-grid] = large
+;coversize[result-list] = small
+;coversize[similar-items] = large
+;coversize[storageretrievalrequests] = small
 
 ; Alternatively, if you wish to disable covers completely, you may set the
 ; coversize setting to false:
@@ -922,7 +921,7 @@ coversize[storageretrievalrequests] = large
 ;          %vufind-local-dir% - The VUFIND_LOCAL_DIR environment variable
 ;        Example: LocalFile:%vufind-local-dir%/path/to/file/%size%/issn/%issn%.%anyimage%
 ;coverimages     = Syndetics:MySyndeticsId,Booksite,LibraryThing:MyLibraryThingId,Google,ObalkyKnih,OpenLibrary,Summon:MySerialsSolutionsClientKey,Contentcafe:MyContentCafeID,BrowZine,LocalFile:PathToFile,Orb
-coverimages = Nope
+coverimages = Syndetics:norrbotten
 ; This setting controls which services will have images cached on your local disk.
 ; Set to true to cache all applicable services. Set to false to disable caching. Set
 ; to a comma-separated list of services (e.g. "Syndetics,OpenLibrary") to cache only
@@ -1667,7 +1666,7 @@ hi          = "Hindi"
 ; This section contains special cases for languages such as right-to-left support
 [LanguageSettings]
 ; Comma-separated list of languages to display in right-to-left mode
-rtl_langs = "ar,he"
+rtl_langs = "se,en"
 
 ; This section controls the behavior of the Browse module.  The result_limit
 ; setting controls the maximum number of results that may display in any given
@@ -1908,7 +1907,7 @@ dewey = title
 ; to prevent users from tampering with certain URLs (for example, "place hold" form
 ; submissions)
 [Security]
-HMACkey = Nope
+HMACkey = LWYx4bCwsv0FCqqF3vD815NQ01Ehz
 
 ; This section sets global defaults for caches; file caching is used by default.
 ; A custom directory for caching can be defined by the environment variable
@@ -2016,25 +2015,25 @@ treeSearchLimit = 100
 ; Uncomment this section and provide your Matomo server address and site id to enable
 ; Matomo analytics.
 [Matomo]
-url = Nope
-site_id = 6
+;url = "http://server.address/matomo/"
+;site_id = 1
 ; Uncomment and modify the following settings to track additional information about
 ; searches and displayed records with Matomo's custom dimensions. Each entry maps an
 ; information field to a custom dimension. The list of settings below contains all
 ; the fields available. Note that you may need to increase the custom dimensions
 ; limit in Matomo to track all the information needed (see the custom dimensions
 ; configuration page in Matomo for more information).
-custom_dimensions[Facets] = 1
-custom_dimensions[FacetTypes] = 2
-custom_dimensions[SearchType] = 3
-custom_dimensions[SearchBackend] = 4
-custom_dimensions[Sort] = 5
-custom_dimensions[Page] = 6
-custom_dimensions[Limit] = 7
-custom_dimensions[View] = 8
-custom_dimensions[RecordFormat] = 9
-custom_dimensions[RecordData] = 10
-custom_dimensions[RecordInstitution] = 11
+;custom_dimensions[Facets] = 1
+;custom_dimensions[FacetTypes] = 2
+;custom_dimensions[SearchType] = 3
+;custom_dimensions[SearchBackend] = 4
+;custom_dimensions[Sort] = 5
+;custom_dimensions[Page] = 6
+;custom_dimensions[Limit] = 7
+;custom_dimensions[View] = 8
+;custom_dimensions[RecordFormat] = 9
+;custom_dimensions[RecordData] = 10
+;custom_dimensions[RecordInstitution] = 11
 ; Uncomment the following setting to track additional information about searches
 ; and displayed records with Matomo's custom variables. Matomo recommends using
 ; custom dimensions instead, but you can choose to use either or both.
@@ -2178,7 +2177,7 @@ custom_dimensions[RecordInstitution] = 11
 ; This section controls VuFind's social features.
 [Social]
 ; Comments may be "enabled" or "disabled" (default = "enabled")
-;comments = enabled
+comments = enabled
 ; Favorite lists may be "enabled", "disabled", "public_only" or "private_only"
 ; (default = "enabled")
 ; The public_only/private_only settings restrict the type of list users may
@@ -2187,7 +2186,7 @@ custom_dimensions[RecordInstitution] = 11
 lists = enabled
 ; The following two settings are equivalent to default_limit / limit_options in
 ; searches.ini, but used to control the page sizes of lists of favorites:
-lists_default_limit   = 10
+lists_default_limit   = 20
 ;lists_limit_options   = 10,20,40,60,80,100
 ; This section controls what happens when a record title in a favorites list
 ; is clicked. VuFind can either embed the full result directly in the list using

@@ -7,21 +7,19 @@
 id = 999c, first
 # Uncomment the following settings to insert appropriate values for your site:
 
-institution = 952b
+#institution = "Mellansjö"
+#institution = #952b
+institution = "Tryckt och AV-media" 
 building = 952a
-#category_facet = 942c
-category_facet = 952y
+category_facet = 942c 
+;category_facet = 942c, category_map.properties
 collection = 9528
 format = 942c
-#format = 952y
-
-delete_942_n = 942n
 
 title = 245ab, first, (pattern_map.title_slash_remove)
 
-pattern_map.title_slash_remove.pattern_0=(.*) +[/]=>$1
+pattern_map.title_slash_remove.pattern_0=[ ]*(.*)[/]*=>$1
 pattern_map.title_slash_remove.pattern_1=keepRaw
-
 
 # Uncomment the following lines to track history of indexing times for RSS feeds,
 # OAI-PMH server and other updates.  The parameter to these functions must be the

@@ -16,15 +16,7 @@
 
 [Catalog]
 ; The API address without any version such as v1
-;DEV
-;host = "https://kovudev3-intra.dev.imcode.com/api"
-;clientId = "982a04a8-2dc8-44cf-992a-fd19f451aa04"
-;clientSecret = "bfc6f586-2711-4bdf-ae5e-5294cae4d15a"
-;PROD
-host = Nope
-clientId = Nope
-clientSecret = Nope
-http_timeout = 15
+host = "https://personal.bibblo.se/api"
 ; N.B. The KohaRest driver uses OAuth2 authentication with Koha. Please follow the
 ; steps below to configure OAuth2 in Koha and setup the credentials for a patron
 ; account. Patron's user name and password are not used here, as OAuth2 relies on a
@@ -60,10 +52,16 @@ http_timeout = 15
 ; To add an API key in Koha, go to the patron screen and click More -> Manage API
 ; keys. On this screen you can generate a new ID/Secret pair for OAuth2
 ; authentication.
+;3dd23b06-cb6c-493c-b00a-f939a608932f	d4ca0665-4571-4447-a498-8d314371677c	
 ;
 ; Koha API Client ID for OAuth2 authentication
+;clientId = "2b69fc0d-ad00-42db-896d-df94f0938eaa"
+clientId = "3dd23b06-cb6c-493c-b00a-f939a608932f"
+;
 ; Koha API Client Secret for OAuth2 authentication
-
+;clientSecret = "1892b860-218c-4c8f-b397-1d5efb39343e"
+clientSecret = "d4ca0665-4571-4447-a498-8d314371677c"
+;
 ; This section controls hold behavior; note that you must also ensure that Holds are
 ; enabled in the [Catalog] section of config.ini in order to take advantage of these
 ; settings. Additional notes about some of these settings are available in the wiki:
@@ -77,13 +75,12 @@ HMACKeys = item_id:holdtype:level
 ; defaultRequiredDate - A colon-separated list used to set the default "not required
 ; after" date for holds in the format days:months:years
 ; e.g. 0:1:0 will set a "not required after" date of 1 month from the current date
-;defaultRequiredDate = 0:1:0
+defaultRequiredDate = 0:1:0
 ; extraHoldFields - A colon-separated list used to display extra visible fields in the
 ; place holds form. Supported values are "startDate", "requiredByDate" and
 ; "pickUpLocation"
 ;extraHoldFields = startDate:requiredByDate:pickUpLocation
-;extraHoldFields = requiredByDate:pickUpLocation
-extraHoldFields = pickUpLocation
+extraHoldFields = requiredByDate:pickUpLocation
 
 ; A Pick Up Location Code used to pre-select the pick up location drop down list and
 ; provide a default option if others are not available. Must be one of the following:
@@ -129,7 +126,6 @@ HMACKeys = item_id:holdings_id:StorageRetrievalRequest
 ; place request form. Supported values are "comments", "pickUpLocation",
 ; "item-issue" and "acceptTerms"
 extraFields = item-issue:acceptTerms:pickUpLocation
-allow_checked_out = true
 
 ; Optional help texts that can be displayed on the request form. Displayed as is;
 ; HTML tags can be used, and everything needs to be properly escaped.
@@ -153,17 +149,13 @@ helpText[*] = "Help text for all languages."
 ; Uncomment the following lines to enable password (PIN) change
 [changePassword]
 ; PIN change parameters. The default limits are taken from the interface documentation.
-minLength = 4
-maxLength = 4
+minLength = 6
+maxLength = 40
 ; See the password_pattern/password_hint settings in the [Authentication] section
 ; of config.ini for notes on these settings. When set here, these will override the
 ; config.ini defaults when Voyager is used for authentication.
-pattern = "numeric"
+;pattern = "numeric"
 ;hint = "Your optional custom hint can go here."
 
 [Holdings]
 useHomeLibrary=true
-
-[TransactionHistory]
-enabled = true
-
