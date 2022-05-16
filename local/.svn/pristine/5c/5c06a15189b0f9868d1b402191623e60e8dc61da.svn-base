@@ -21,10 +21,10 @@
 ;clientId = "982a04a8-2dc8-44cf-992a-fd19f451aa04"
 ;clientSecret = "bfc6f586-2711-4bdf-ae5e-5294cae4d15a"
 ;PROD
-host = Nope
-clientId = Nope
-clientSecret = Nope
-http_timeout = 15
+host = "https://personal.bibblo.se/api"
+clientId = "3dd23b06-cb6c-493c-b00a-f939a608932f"
+clientSecret = "d4ca0665-4571-4447-a498-8d314371677c"
+
 ; N.B. The KohaRest driver uses OAuth2 authentication with Koha. Please follow the
 ; steps below to configure OAuth2 in Koha and setup the credentials for a patron
 ; account. Patron's user name and password are not used here, as OAuth2 relies on a
@@ -61,8 +61,7 @@ http_timeout = 15
 ; keys. On this screen you can generate a new ID/Secret pair for OAuth2
 ; authentication.
 ;
-; Koha API Client ID for OAuth2 authentication
-; Koha API Client Secret for OAuth2 authentication
+
 
 ; This section controls hold behavior; note that you must also ensure that Holds are
 ; enabled in the [Catalog] section of config.ini in order to take advantage of these
@@ -129,7 +128,6 @@ HMACKeys = item_id:holdings_id:StorageRetrievalRequest
 ; place request form. Supported values are "comments", "pickUpLocation",
 ; "item-issue" and "acceptTerms"
 extraFields = item-issue:acceptTerms:pickUpLocation
-allow_checked_out = true
 
 ; Optional help texts that can be displayed on the request form. Displayed as is;
 ; HTML tags can be used, and everything needs to be properly escaped.
@@ -163,7 +161,3 @@ pattern = "numeric"
 
 [Holdings]
 useHomeLibrary=true
-
-[TransactionHistory]
-enabled = true
-
