@@ -46,16 +46,28 @@ def iterate_biblio_items_to_delete():
             b.biblionumber NOT IN (
         	SELECT bi.biblionumber FROM biblioitems bi, items i
 				WHERE i.biblioitemnumber = bi.biblioitemnumber AND
-					i.homebranch NOT IN ('BJORKNAS', 'CENTRALELE', 'FRIDHEM', 'FURUHED', 'HJALMARLUN', 'KAPPRUM', 'KNUTLUNDMA', 'LULEAGYMNA', 'LULEAKULT', 'LULEAVUXEN', 'MANHEM', 'MUSIKDANS', 'NYBORG', 'PARKSKOLAN', 'RINGEL', 'SANDBACKA', 'STROMBACKA', 'TUNASKOLAN', 'VISTTRASK')
+					i.homebranch NOT IN ('BJORKNAS', 'CENTRALELE', 'FRIDHEM', 'FURUHED', 'HJALMARLUN', 'KAPPRUM', 'KNUTLUNDMA', 'LULEAGYMNA', 
+                                        'LULEAKULT', 'LULEAVUXEN', 'MANHEM', 'MUSIKDANS', 'NYBORG', 'PARKSKOLAN', 'RINGEL', 'SANDBACKA', 'TUNASKOLAN', 'VISTTRASK')
 	)
+        GROUP BY i.homebranch
 
             """)
     mysql.execute(query,)
+    homebranch_tmp = ""
     for (biblionumber, homebranch, ) in mysql:
+        if homebranch != homebranch_tmp:
+            if homebranch_tmp != "":
+                print("Deleting branch: ",homebranch_tmp)
+                delete_institution_building_values(homebranch_tmp)
+            homebranch_tmp = homebranch
+            
         print(biblionumber, " " , homebranch)
         delete_biblio_item(biblionumber)
-        delete_institution_building_values(homebranch)
-        time.sleep(0.2)
+        #delete_institution_building_values(homebranch)
+        #time.sleep(0.1)
+    if homebranch_tmp != "":
+        print("Deleting branch: ",homebranch_tmp)
+        delete_institution_building_values(homebranch_tmp)
 
 def delete_biblio_item(biblionumber):
     solr = pysolr.Solr(solr_url, timeout=100)
@@ -70,8 +82,8 @@ def delete_institution_building_values(value):
     solr = pysolr.Solr(solr_url, timeout=100)
     print('')
     #results = solr.search('institution:(BJORKNAS) OR institution:(FRIDHEM) OR institution:(FURUHED) OR institution:(LULEAGYMNA) OR institution:(LULEAVUXEN) OR institution:(LULEAKULT) OR institution:(MUSIKDANS) OR institution:(NYBORG) OR institution:(RINGEL) OR institution:(SANDBACKA) OR institution:(TUNASKOLAN) OR institution:(KNUTLUNDMA) OR institution:(PARKSKOLAN) OR institution:(VISTTRASK)', rows=10)
-    results = solr.search('institution:('+value+')', rows=0)
-    results = solr.search('institution:('+value+')', rows=results.hits+1)
+    results = solr.search('institution:('+value+') OR building:('+value+')', rows=0)
+    results = solr.search('institution:('+value+') OR building:('+value+')', rows=results.hits+1)
     print('hits: ',results.hits)
     print()
     #results = solr.search('institution:(BJORKNAS)')
