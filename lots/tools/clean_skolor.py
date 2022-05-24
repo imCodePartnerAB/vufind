@@ -14,7 +14,7 @@ sys.path.append('/srv/script')
 import python_config
 
 
-solr_url = 'http://192.168.96.154:8983/solr/biblio'
+solr_url = 'http://127.0.0.1:8983/solr/biblio'
 
 # Main is called last in file, as python needs function above.
 # Having them in order seem easier for me.
