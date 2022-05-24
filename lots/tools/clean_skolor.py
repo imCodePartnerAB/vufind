@@ -49,7 +49,7 @@ def iterate_biblio_items_to_delete():
 					i.homebranch NOT IN ('BJORKNAS', 'CENTRALELE', 'FRIDHEM', 'FURUHED', 'HJALMARLUN', 'KAPPRUM', 'KNUTLUNDMA', 'LULEAGYMNA', 
                                         'LULEAKULT', 'LULEAVUXEN', 'MANHEM', 'MUSIKDANS', 'NYBORG', 'PARKSKOLAN', 'RINGEL', 'SANDBACKA', 'TUNASKOLAN', 'VISTTRASK')
 	)
-        GROUP BY i.homebranch
+        ORDER BY i.homebranch
 
             """)
     mysql.execute(query,)
