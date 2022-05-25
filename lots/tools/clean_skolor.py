@@ -19,25 +19,20 @@ solr_url = 'http://127.0.0.1:8983/solr/biblio'
 # Main is called last in file, as python needs function above.
 # Having them in order seem easier for me.
 def main():
-    iterate_biblio_items_to_delete()
     print('iterate_biblio_items_to_delete')
-    #delete_institution_building_values('BJORKNAS')
-    #delete_institution_building_values('FRIDHEM')
-    #delete_institution_building_values('FURUHED')
-    #delete_institution_building_values('LULEAGYMNA')
-    #delete_institution_building_values('LULEAVUXEN')
-    #delete_institution_building_values('LULEAKULT')
-    #delete_institution_building_values('MUSIKDANS')
-    #delete_institution_building_values('NYBORG')
-    #delete_institution_building_values('RINGEL')
-    #delete_institution_building_values('SANDBACKA')
-    #delete_institution_building_values('TUNASKOLAN')
-    #delete_institution_building_values('KNUTLUNDMA')
-    #delete_institution_building_values('PARKSKOLAN')
-    #delete_institution_building_values('VISTTRASK')
-    delete_biblio_all_empty()
+    schools = ('BJORKNAS', 'CENTRALELE', 'FRIDHEM', 'FURUHED', 'HJALMARLUN', 'KAPPRUM', 'KNUTLUNDMA', 'LULEAGYMNA', 
+               'LULEAKULT', 'LULEAVUXEN', 'MANHEM', 'MUSIKDANS', 'NYBORG', 'PARKSKOLAN', 'RINGEL', 'SANDBACKA', 
+               'TUNASKOLAN', 'VISTTRASK')
+    iterate_biblio_items_to_delete(schools)
+    for school in schools:
+        print("delete_institution_building_values(%s)" % school)
+        #delete_institution_building_values(school)
 
-def iterate_biblio_items_to_delete():
+    #delete_institution_building_values('VISTTRASK')
+    print("delete_biblio_all_empty()")
+    #delete_biblio_all_empty()
+
+def iterate_biblio_items_to_delete(schools):
     mydb = connect(**python_config.bin_mysql)
     mysql = mydb.cursor(buffered=True)
     query = ("""
@@ -46,28 +41,43 @@ def iterate_biblio_items_to_delete():
             b.biblionumber NOT IN (
         	SELECT bi.biblionumber FROM biblioitems bi, items i
 				WHERE i.biblioitemnumber = bi.biblioitemnumber AND
-					i.homebranch NOT IN ('BJORKNAS', 'CENTRALELE', 'FRIDHEM', 'FURUHED', 'HJALMARLUN', 'KAPPRUM', 'KNUTLUNDMA', 'LULEAGYMNA', 
-                                        'LULEAKULT', 'LULEAVUXEN', 'MANHEM', 'MUSIKDANS', 'NYBORG', 'PARKSKOLAN', 'RINGEL', 'SANDBACKA', 'TUNASKOLAN', 'VISTTRASK')
+					i.homebranch NOT IN {}
 	)
         ORDER BY i.homebranch
 
-            """)
+            """.format(schools))
     mysql.execute(query,)
     homebranch_tmp = ""
+    biblionumbers = ""
+    nr_boolean_clause = 0
     for (biblionumber, homebranch, ) in mysql:
-        if homebranch != homebranch_tmp:
-            if homebranch_tmp != "":
-                print("Deleting branch: ",homebranch_tmp)
-                delete_institution_building_values(homebranch_tmp)
-            homebranch_tmp = homebranch
-            
-        print(biblionumber, " " , homebranch)
-        delete_biblio_item(biblionumber)
+        if biblionumbers == "":
+            biblionumbers = biblionumber
+        else:
+            biblionumbers = "{} OR {}".format(biblionumbers, biblionumber)
+        nr_boolean_clause += 1
+        if nr_boolean_clause >= 300:
+            delete_biblio_item_bulk(biblionumbers)
+            nr_boolean_clause = 0
+            biblionumbers = ""
+
+    delete_biblio_item_bulk(biblionumbers)
+        #if homebranch != homebranch_tmp:
+        #    delete_biblio_item_bulk(biblionumbers)
+        #    biblionumbers = ""
+        #    #if homebranch_tmp != "":
+        #    #    print("Deleting branch: ",homebranch_tmp)
+        #    #    #delete_institution_building_values(homebranch_tmp)
+        #    homebranch_tmp = homebranch
+        #    
+        #print(biblionumber, " " , homebranch)
+        
+        #delete_biblio_item(biblionumber)
         #delete_institution_building_values(homebranch)
         #time.sleep(0.1)
-    if homebranch_tmp != "":
-        print("Deleting branch: ",homebranch_tmp)
-        delete_institution_building_values(homebranch_tmp)
+    #if homebranch_tmp != "":
+        #print("Deleting branch: ",homebranch_tmp)
+        #delete_institution_building_values(homebranch_tmp)
 
 def delete_biblio_item(biblionumber):
     solr = pysolr.Solr(solr_url, timeout=100)
@@ -77,6 +87,19 @@ def delete_biblio_item(biblionumber):
     for result in results:
         print('Deleting: ', result)
         solr.delete(id=result['id'], commit=True)
+
+def delete_biblio_item_bulk(biblionumbers):
+    solr = pysolr.Solr(solr_url, timeout=100)
+    print("String: %s" % biblionumbers)
+    
+    results = solr.search('id:'+str(biblionumbers), rows=0)
+    print("Hits: %s" % str(results.hits+1))
+    results = solr.search('id:'+str(biblionumbers), rows=results.hits+1)
+    for result in results:
+        #print('Deleting: ', result)
+        solr.delete(id=result['id'], commit=False)
+
+    solr.commit()
 
 def delete_institution_building_values(value):
     solr = pysolr.Solr(solr_url, timeout=100)
