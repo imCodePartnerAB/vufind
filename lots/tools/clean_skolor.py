@@ -24,13 +24,13 @@ def main():
                'LULEAKULT', 'LULEAVUXEN', 'MANHEM', 'MUSIKDANS', 'NYBORG', 'PARKSKOLAN', 'RINGEL', 'SANDBACKA', 
                'TUNASKOLAN', 'VISTTRASK')
     iterate_biblio_items_to_delete(schools)
+    
     for school in schools:
         print("delete_institution_building_values(%s)" % school)
-        #delete_institution_building_values(school)
+        delete_institution_building_values(school)
 
-    #delete_institution_building_values('VISTTRASK')
     print("delete_biblio_all_empty()")
-    #delete_biblio_all_empty()
+    delete_biblio_all_empty()
 
 def iterate_biblio_items_to_delete(schools):
     mydb = connect(**python_config.bin_mysql)
@@ -46,6 +46,7 @@ def iterate_biblio_items_to_delete(schools):
         ORDER BY i.homebranch
 
             """.format(schools))
+    
     mysql.execute(query,)
     homebranch_tmp = ""
     biblionumbers = ""
@@ -56,50 +57,32 @@ def iterate_biblio_items_to_delete(schools):
         else:
             biblionumbers = "{} OR {}".format(biblionumbers, biblionumber)
         nr_boolean_clause += 1
-        if nr_boolean_clause >= 300:
+        if nr_boolean_clause >= 1000:
             delete_biblio_item_bulk(biblionumbers)
             nr_boolean_clause = 0
             biblionumbers = ""
-
     delete_biblio_item_bulk(biblionumbers)
-        #if homebranch != homebranch_tmp:
-        #    delete_biblio_item_bulk(biblionumbers)
-        #    biblionumbers = ""
-        #    #if homebranch_tmp != "":
-        #    #    print("Deleting branch: ",homebranch_tmp)
-        #    #    #delete_institution_building_values(homebranch_tmp)
-        #    homebranch_tmp = homebranch
-        #    
-        #print(biblionumber, " " , homebranch)
-        
-        #delete_biblio_item(biblionumber)
-        #delete_institution_building_values(homebranch)
-        #time.sleep(0.1)
-    #if homebranch_tmp != "":
-        #print("Deleting branch: ",homebranch_tmp)
-        #delete_institution_building_values(homebranch_tmp)
-
-def delete_biblio_item(biblionumber):
-    solr = pysolr.Solr(solr_url, timeout=100)
-    
-    results = solr.search('id:'+str(biblionumber), rows=0)
-    results = solr.search('id:'+str(biblionumber), rows=results.hits+1)
-    for result in results:
-        print('Deleting: ', result)
-        solr.delete(id=result['id'], commit=True)
 
 def delete_biblio_item_bulk(biblionumbers):
     solr = pysolr.Solr(solr_url, timeout=100)
-    print("String: %s" % biblionumbers)
+    print("id:(%s)" % biblionumbers)
+    results = solr.search("id:(%s)" % biblionumbers, rows=0)
+    print("Hits: %s" % str(results.hits))
+    if results.hits == 0:
+        return
+    #results = solr.search("id:({})".format(str(biblionumbers)), rows=results.hits+1)
+    solr.delete(q="id:(%s)" % biblionumbers, commit=False)
+    payload = [{
+        "id":"(%s)" % biblionumbers,
+        }]
     
-    results = solr.search('id:'+str(biblionumbers), rows=0)
-    print("Hits: %s" % str(results.hits+1))
-    results = solr.search('id:'+str(biblionumbers), rows=results.hits+1)
-    for result in results:
-        #print('Deleting: ', result)
-        solr.delete(id=result['id'], commit=False)
+    response=requests.post(
+            solr_url+'/update?commit=true',
+            data=json.dumps(payload),
+            headers={'content-type': "application/json"}
+            )
+    print(response.content)
 
-    solr.commit()
 
 def delete_institution_building_values(value):
     solr = pysolr.Solr(solr_url, timeout=100)
@@ -111,26 +94,26 @@ def delete_institution_building_values(value):
     print()
     #results = solr.search('institution:(BJORKNAS)')
     #print("Saw {0} result(s).".format(len(results)))
-    for result in results:
-        print(result['id'])
-        print('============')
-        #print(result)
-        print()
-        payload = [{
-            "id":result['id'],
-            "institution":{"remove":value},
-            "building":{"remove":value}
-            }]
-        
-        print('Deleting: ', result['id'])
-        response=requests.post(
-                solr_url+'/update?commit=true',
-                data=json.dumps(payload),
-                headers={'content-type': "application/json"}
-                )
-        print(response.content)
-        print()
-        print('============')
+    #for result in results:
+    #    print(result['id'])
+    print('============')
+    #print(result)
+    print()
+    payload = [{
+        "id":"*",
+        "institution":{"remove":value},
+        "building":{"remove":value}
+        }]
+    
+    #print('Deleting: ', result['id'])
+    response=requests.post(
+            solr_url+'/update?commit=true',
+            data=json.dumps(payload),
+            headers={'content-type': "application/json"}
+            )
+    print(response.content)
+    print()
+    print('============')
 
     #solr.delete(id=value, commit=True)
 
