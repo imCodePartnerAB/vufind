@@ -50,48 +50,48 @@ def main():
     delete_biblio_all_empty()
 
 
-def iterate_biblio_items_to_delete(schools):
-    mydb = connect(**python_config.bin_mysql)
-    mysql = mydb.cursor(buffered=True)
-    query = """
-    SELECT b.biblionumber, i.homebranch FROM biblio b, items i
-  WHERE i.biblionumber = b.biblionumber AND
-            b.biblionumber NOT IN (
-          SELECT bi.biblionumber FROM biblioitems bi, items i
-        WHERE i.biblioitemnumber = bi.biblioitemnumber AND
-          i.homebranch NOT IN {}
-  )
-        ORDER BY i.homebranch
-
-            """.format(
-        schools
-    )
-
-    mysql.execute(
-        query,
-    )
-    homebranch_tmp = ""
-    biblionumbers = ""
-    nr_boolean_clause = 0
-    for (
-        biblionumber,
-        homebranch,
-    ) in mysql:
-        if biblionumbers == "":
-            biblionumbers = biblionumber
-        else:
-            biblionumbers = "{} OR {}".format(biblionumbers, biblionumber)
-        nr_boolean_clause += 1
-        if nr_boolean_clause >= 1000:
-            delete_biblio_item_bulk(biblionumbers)
-            nr_boolean_clause = 0
-            biblionumbers = ""
-    delete_biblio_item_bulk(biblionumbers)
+#def iterate_biblio_items_to_delete(schools):
+#    mydb = connect(**python_config.bin_mysql)
+#    mysql = mydb.cursor(buffered=True)
+#    query = """
+#    SELECT b.biblionumber, i.homebranch FROM biblio b, items i
+#  WHERE i.biblionumber = b.biblionumber AND
+#            b.biblionumber NOT IN (
+#          SELECT bi.biblionumber FROM biblioitems bi, items i
+#        WHERE i.biblioitemnumber = bi.biblioitemnumber AND
+#          i.homebranch NOT IN {}
+#  )
+#        ORDER BY i.homebranch
+#
+#            """.format(
+#        schools
+#    )
+#
+#    mysql.execute(
+#        query,
+#    )
+#    homebranch_tmp = ""
+#    biblionumbers = ""
+#    nr_boolean_clause = 0
+#    for (
+#        biblionumber,
+#        homebranch,
+#    ) in mysql:
+#        if biblionumbers == "":
+#            biblionumbers = biblionumber
+#        else:
+#            biblionumbers = "{} OR {}".format(biblionumbers, biblionumber)
+#        nr_boolean_clause += 1
+#        if nr_boolean_clause >= 1000:
+#            delete_biblio_item_bulk(biblionumbers)
+#            nr_boolean_clause = 0
+#            biblionumbers = ""
+#    delete_biblio_item_bulk(biblionumbers)
 
 
 def delete_biblio_item_bulk(biblionumbers):
     solr = pysolr.Solr(solr_url, timeout=100)
-    print("id:(%s)" % biblionumbers)
+    #print("id:(%s)" % biblionumbers)
     results = solr.search("id:(%s)" % biblionumbers, rows=0)
     print("Hits: %s" % str(results.hits))
     if results.hits == 0:
@@ -114,7 +114,7 @@ def delete_biblio_item_bulk(biblionumbers):
 
 def delete_institution_building_values(value):
     solr = pysolr.Solr(solr_url, timeout=100)
-    print("")
+    #print("")
     # results = solr.search('institution:(BJORKNAS) OR institution:(FRIDHEM) OR institution:(FURUHED) OR institution:(LULEAGYMNA) OR institution:(LULEAVUXEN) OR institution:(LULEAKULT) OR institution:(MUSIKDANS) OR institution:(NYBORG) OR institution:(RINGEL) OR institution:(SANDBACKA) OR institution:(TUNASKOLAN) OR institution:(KNUTLUNDMA) OR institution:(PARKSKOLAN) OR institution:(VISTTRASK)', rows=10)
     results = solr.search(
         "institution:(" + value + ") OR building:(" + value + ")", rows=0
@@ -123,12 +123,12 @@ def delete_institution_building_values(value):
         "institution:(" + value + ") OR building:(" + value + ")", rows=results.hits + 1
     )
     print("hits: ", results.hits)
-    print()
+    #print()
     payload = []
     # results = solr.search('institution:(BJORKNAS)')
     # print("Saw {0} result(s).".format(len(results)))
     for result in results:
-        print(result["id"])
+        #print(result["id"])
         payload.append(
             {
                 "id": result["id"],
@@ -154,9 +154,9 @@ def delete_institution_building_values(value):
     #        data=json.dumps(payload),
     #        headers={"content-type": "application/json"},
     #    )
-    print(response.content)
-    print()
-    print("============")
+    #print(response.content)
+    #print()
+    #print("============")
 
     # solr.delete(id=value, commit=True)
 
@@ -169,7 +169,7 @@ def delete_biblio_all_empty():
     biblionumbers = ""
     nr_boolean_clause = 0
     for result in results:
-        print(result["id"], " : ", nr_boolean_clause)
+        #print(result["id"], " : ", nr_boolean_clause)
         nr_boolean_clause += 1
         
         if biblionumbers == "":
@@ -183,7 +183,7 @@ def delete_biblio_all_empty():
             biblionumbers = ""
 
     delete_biblio_item_bulk(biblionumbers)
-    print(biblionumbers)
+    #print(biblionumbers)
     # print("Saw {0} result(s).".format(len(results)))
 
 
