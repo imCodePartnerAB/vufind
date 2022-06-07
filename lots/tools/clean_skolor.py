@@ -109,7 +109,7 @@ def delete_biblio_item_bulk(biblionumbers):
         data=json.dumps(payload),
         headers={"content-type": "application/json"},
     )
-    print(response.content)
+    #print(response.content)
 
 
 def delete_institution_building_values(value):
@@ -165,6 +165,7 @@ def delete_biblio_all_empty():
     solr = pysolr.Solr(solr_url, timeout=10)
     results = solr.search("NOT institution:* AND NOT building:*", rows=0)
     results = solr.search("NOT institution:* AND NOT building:*", rows=results.hits + 1)
+    print("hits: ", results.hits)
 
     biblionumbers = ""
     nr_boolean_clause = 0
@@ -177,19 +178,12 @@ def delete_biblio_all_empty():
         else:
             biblionumbers = "{} OR {}".format(biblionumbers, result["id"])
         
-        if nr_boolean_clause >= 1000:
+        if nr_boolean_clause >= 500:
             delete_biblio_item_bulk(biblionumbers)
             nr_boolean_clause = 0
             biblionumbers = ""
 
     delete_biblio_item_bulk(biblionumbers)
-    #print(biblionumbers)
-    # print("Saw {0} result(s).".format(len(results)))
-
-
-#    for result in results:
-#        print("Deleting: ", result["id"])
-#        solr.delete(id=result["id"], commit=True)
 
 
 main()
