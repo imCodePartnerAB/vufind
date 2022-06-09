@@ -35,12 +35,14 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org/wiki/development:plugins:ils_drivers Wiki
  */
+
 namespace VuFind\ILS\Driver;
 
 use VuFind\Date\DateException;
 use VuFind\Exception\AuthToken as AuthTokenException;
 use VuFind\Exception\ILS as ILSException;
 use VuFind\View\Helper\Root\SafeMoneyFormat;
+
 //use VuFind\Db\Row\User;
 
 /**
@@ -560,7 +562,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
         }
 
         $result = $result['data'];
-        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username); 
+        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username);
         if (isset($dbUser) && empty($dbUser->home_library)) {
             $dbUser->changeHomeLibrary($result['library_id']);
         }
@@ -2608,6 +2610,9 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
      */
     protected function formatMoney($amount)
     {
+        # LOTS workaround where user did fail to open his home page, 
+        # if owing money. TODO remove if fixed
+        return $amount;
         if (null === $this->safeMoneyFormat) {
             throw new \Exception('SafeMoneyFormat helper not available');
         }
