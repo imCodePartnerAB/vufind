@@ -620,7 +620,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
             'zip' => $result['postal_code'],
             'city' => $result['city'],
             'country' => $result['country'],
-'loan_history' => $result['privacy'],
             'expiration_date' => $this->convertDate($result['expiry_date'] ?? null)
         ];
     }
@@ -714,6 +713,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     {
         return $this->getTransactions($patron, $params, true);
     }
+
     /** Added for LOTS to set history. LOBININTEG-19
       * Update Patron Transaction History State
       *
@@ -728,7 +728,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     {
         return $this->updatePatron($patron, ['privacy' => (int)$state]);
     }
-
     /**
      * Update a patron in Koha with the data in $fields
      *
