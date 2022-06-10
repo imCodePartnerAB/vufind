@@ -1,12 +1,5 @@
 <?php
 /**
- * LOTS Changes
- *
- * 2021-12
- * Mostly changes to get more data for templates to access.
- */
-
-/**
  * VuFind Driver for Koha, using REST API
  *
  * PHP version 7
@@ -43,8 +36,6 @@ use VuFind\Exception\AuthToken as AuthTokenException;
 use VuFind\Exception\ILS as ILSException;
 use VuFind\View\Helper\Root\SafeMoneyFormat;
 
-//use VuFind\Db\Row\User;
-
 /**
  * VuFind Driver for Koha, using REST API
  *
@@ -60,7 +51,6 @@ use VuFind\View\Helper\Root\SafeMoneyFormat;
  * @link     https://vufind.org/wiki/development:plugins:ils_drivers Wiki
  */
 class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
-\VuFind\Db\Table\DbTableAwareInterface,
     \VuFindHttp\HttpServiceAwareInterface,
     \VuFind\I18n\Translator\TranslatorAwareInterface,
     \Laminas\Log\LoggerAwareInterface
@@ -69,7 +59,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     use \VuFind\I18n\Translator\TranslatorAwareTrait;
     use \VuFind\ILS\Driver\CacheTrait;
     use \VuFind\ILS\Driver\OAuth2TokenTrait;
-    use \VuFind\Db\Table\DbTableAwareTrait;
 
     /**
      * Library prefix
@@ -562,10 +551,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
         }
 
         $result = $result['data'];
-        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username);
-        if (isset($dbUser) && empty($dbUser->home_library)) {
-            $dbUser->changeHomeLibrary($result['library_id']);
-        }
         return [
             'id' => $result['patron_id'],
             'firstname' => $result['firstname'],
@@ -635,6 +620,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
             'zip' => $result['postal_code'],
             'city' => $result['city'],
             'country' => $result['country'],
+'loan_history' => $result['privacy'],
             'expiration_date' => $this->convertDate($result['expiry_date'] ?? null)
         ];
     }
@@ -728,18 +714,75 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     {
         return $this->getTransactions($patron, $params, true);
     }
+    /** Added for LOTS to set history. LOBININTEG-19
+      * Update Patron Transaction History State
+      *
+      * Enable or disable patron's transaction history
+      *
+      * @param array $patron The patron array from patronLogin
+      * @param mixed $state  Any of the configured values
+      *
+      * @return array Associative array of the results
+      */
+    public function updateTransactionHistoryState($patron, $state)
+    {
+        return $this->updatePatron($patron, ['privacy' => (int)$state]);
+    }
 
     /**
-     * Get Patron Holds
-     *
-     * This is responsible for retrieving all holds by a specific patron.
+     * Update a patron in Koha with the data in $fields
      *
      * @param array $patron The patron array from patronLogin
+     * @param array $fields Patron fields to update
      *
-     * @throws DateException
-     * @throws ILSException
-     * @return array        Array of the patron's holds on success.
+     * @return array ILS driver response
      */
+    protected function updatePatron($patron, $fields)
+    {
+        $result = $this->makeRequest(['v1', 'patrons', $patron['id']]);
+
+        $request = $result['data'];
+        // Unset read-only fields
+        unset($request['anonymized']);
+        unset($request['restricted']);
+
+        $request = array_merge($request, $fields);
+
+        $result = $this->makeRequest(
+            [
+                'path' => ['v1', 'patrons', $patron['id']],
+                'json' => $request,
+                'method' => 'PUT',
+                'errors' => true
+            ]
+        );
+        if ($result['code'] >= 300) {
+            return [
+                'success' => false,
+                'status' => 'Updating of patron information failed',
+                'sys_message' => $result['data']['error'] ?? $result['code']
+            ];
+        }
+
+        return [
+            'success' => true,
+            'status' => 202 === $result['code']
+                ? 'request_change_done' : 'request_change_accepted',
+            'sys_message' => ''
+        ];
+    }
+
+    /**
+         * Get Patron Holds
+         *
+         * This is responsible for retrieving all holds by a specific patron.
+         *
+         * @param array $patron The patron array from patronLogin
+         *
+         * @throws DateException
+         * @throws ILSException
+         * @return array        Array of the patron's holds on success.
+         */
     public function getMyHolds($patron)
     {
         $result = $this->makeRequest(
@@ -1087,9 +1130,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
             'patron_id' => (int)$patron['id'],
             'pickup_library_id' => $pickUpLocation,
             'notes' => $comment,
-            'expiration_date' => $holdDetails['requiredByTS']
-                ? date('Y-m-d', $holdDetails['requiredByTS'])
-                : null,
+            'expiration_date' => date('Y-m-d', $holdDetails['requiredByTS']),
         ];
         if ($level == 'copy') {
             $request['item_id'] = (int)$itemId;
@@ -1848,9 +1889,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 'errors' => true
             ]
         );
-        if (400 == $result['code']) {
-            return [];
-        }
         if (404 == $result['code']) {
             return [];
         }
@@ -1879,7 +1917,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
 
             $entry = [
                 'id' => $id,
-                'item' => $item,
                 'item_id' => $item['item_id'],
                 'location' => $this->getItemLocationName($item),
                 'availability' => $available,
@@ -1891,7 +1928,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 'number' => $item['serial_issue_number'],
                 'barcode' => $item['external_id'],
                 'sort' => $i,
-                'item_location_description' => $item["location_description"],
                 'requests_placed' => max(
                     [$item['hold_queue_length'],
                     $result['data']['hold_queue_length']]
@@ -2610,10 +2646,10 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
      */
     protected function formatMoney($amount)
     {
-        # LOTS workaround where user did fail to open his home page, 
-        # if owing money. TODO remove if fixed
-        return $amount;
-        if (null === $this->safeMoneyFormat) {
+        # LOTS  SafeMoney does not work
+        if (isset($this->config['LOTS']['bypasSafeMoneyFormat']) && $this->config['LOTS']['bypasSafeMoneyFormat']) {
+            return $amount;
+        } elseif (null === $this->safeMoneyFormat) {
             throw new \Exception('SafeMoneyFormat helper not available');
         }
         return ($this->safeMoneyFormat)($amount);
