@@ -714,62 +714,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
         return $this->getTransactions($patron, $params, true);
     }
 
-    /** Added for LOTS to set history. LOBININTEG-19
-      * Update Patron Transaction History State
-      *
-      * Enable or disable patron's transaction history
-      *
-      * @param array $patron The patron array from patronLogin
-      * @param mixed $state  Any of the configured values
-      *
-      * @return array Associative array of the results
-      */
-    public function updateTransactionHistoryState($patron, $state)
-    {
-        return $this->updatePatron($patron, ['privacy' => (int)$state]);
-    }
-    /**
-     * Update a patron in Koha with the data in $fields
-     *
-     * @param array $patron The patron array from patronLogin
-     * @param array $fields Patron fields to update
-     *
-     * @return array ILS driver response
-     */
-    protected function updatePatron($patron, $fields)
-    {
-        $result = $this->makeRequest(['v1', 'patrons', $patron['id']]);
-
-        $request = $result['data'];
-        // Unset read-only fields
-        unset($request['anonymized']);
-        unset($request['restricted']);
-
-        $request = array_merge($request, $fields);
-
-        $result = $this->makeRequest(
-            [
-                'path' => ['v1', 'patrons', $patron['id']],
-                'json' => $request,
-                'method' => 'PUT',
-                'errors' => true
-            ]
-        );
-        if ($result['code'] >= 300) {
-            return [
-                'success' => false,
-                'status' => 'Updating of patron information failed',
-                'sys_message' => $result['data']['error'] ?? $result['code']
-            ];
-        }
-
-        return [
-            'success' => true,
-            'status' => 202 === $result['code']
-                ? 'request_change_done' : 'request_change_accepted',
-            'sys_message' => ''
-        ];
-    }
 
     /**
          * Get Patron Holds
