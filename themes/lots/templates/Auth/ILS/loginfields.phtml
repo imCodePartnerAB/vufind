@@ -1,3 +1,10 @@
+<?php
+  $config = $this->config()->get('LOTS');
+  $allowRecreatePassword = $config->PasswordRecovery->enable;
+?>
+
+
+
 <?php $loginMethod = $this->auth()->getManager()->getILSLoginMethod(); ?>
 <?php if ('email' === $loginMethod): ?>
   <div class="form-group">
@@ -13,6 +20,12 @@
     <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_password"><?=$this->transEsc('Password')?>:</label>
     <input type="password" name="password" id="login_<?=$this->escapeHtmlAttr($topClass)?>_password" class="form-control"/>
   </div>
-    <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_forgot"><a href="" ><?=$this->transEsc('Forgot login')?></a></label>
+
+
+
+<!-- Added for LOTS LOBININTEG-12 -->
+<?php if ($allowRecreatePassword == 1) {?>
+    <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_forgot"><a href="<?=$this->url('home') ?>ForgotPassword/" ><?=$this->transEsc('Forgot login')?></a></label>
+<?php } ?>
 
 <?php endif; ?>

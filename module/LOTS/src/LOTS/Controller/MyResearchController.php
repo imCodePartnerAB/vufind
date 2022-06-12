@@ -6,7 +6,7 @@ class MyResearchController extends \VuFind\Controller\MyResearchController
 {
     /**
      * Gather user transaction history
-     * LOTS added here for transaction history relating to LOBININTEG-19 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+     * LOTS added here for transaction history relating to LOBININTEG-19
      *
      * @return mixed
      */
