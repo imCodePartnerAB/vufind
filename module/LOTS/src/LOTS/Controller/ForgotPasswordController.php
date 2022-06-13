@@ -48,6 +48,7 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
                'username'     => $username,
                'email'        =>$email,
                'resendEmail'  => 'true',
+               'language'     => 'sv-SE',
             ];
             $url = $opacUrl."/cgi-bin/koha/opac-password-recovery.pl";
             $resp =  $this->httpPost($url, $fields, 'GET');
@@ -61,7 +62,8 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
             $typeOfCall = 'recover';
             $fields = [
                'username'      => $username,
-               'sendEmail'     => 'Submit'
+               'sendEmail'     => 'Submit',
+               'language'     => 'sv-SE',
             ];
             $url = $opacUrl."/cgi-bin/koha/opac-password-recovery.pl";
             $resp =  $this->httpPost($url, $fields, 'POST');
@@ -103,6 +105,7 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
      */
     public function httpPost($url, $data, $type)
     {
+
         $client = $this->httpService->createClient($url);
         $adapter = $client->getAdapter();
         $adapter->setCurlOption(CURLOPT_SSL_VERIFYHOST, false);
@@ -110,6 +113,7 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
         $adapter->setCurlOption(CURLOPT_POSTFIELDS, http_build_query($data));
         $adapter->setCurlOption(CURLOPT_ENCODING, '');
         $adapter->setCurlOption(CURLOPT_RETURNTRANSFER, true);
+        $adapter->setCurlOption(CURLOPT_COOKIE, "KohaOpacLanguage=sv-SE;a=a");
         $response = $client->send();
         return $response->getBody();
     }
