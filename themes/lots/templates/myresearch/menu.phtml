@@ -4,8 +4,8 @@
   $capabilityParams = $patron ? ['patron' => $patron] : [];
   $ilsOnline = ('ils-none' !== $this->ils()->getOfflineMode());
 
-  $config = $this->config()->get('LOTS');
-  $lots_show_fines = $config->UserMenu->showFinesMenu ?? false;
+  $lotscfg = $this->config()->get('LOTS');
+  $lots_show_fines = $lotscfg->UserMenu->showFinesMenu ?? false;
 ?>
 <button class="close-offcanvas btn btn-link" data-toggle="offcanvas"><?=$this->transEsc('navigate_back') ?></button>
 <h3><?=$this->transEsc('Your Account')?></h3>

@@ -35,6 +35,7 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org/wiki/development:plugins:ils_drivers Wiki
  */
+
 namespace VuFind\ILS\Driver;
 
 use VuFind\Date\DateException;
@@ -726,6 +727,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     {
         return $this->getTransactions($patron, $params, true);
     }
+
 
     /**
      * Get Patron Holds
@@ -2608,7 +2610,10 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
      */
     protected function formatMoney($amount)
     {
-        if (null === $this->safeMoneyFormat) {
+        # LOTS  SafeMoney does not work
+        if (isset($this->config['LOTS']['bypasSafeMoneyFormat']) && $this->config['LOTS']['bypasSafeMoneyFormat']) {
+            return $amount;
+        } elseif (null === $this->safeMoneyFormat) {
             throw new \Exception('SafeMoneyFormat helper not available');
         }
         return ($this->safeMoneyFormat)($amount);
