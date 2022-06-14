@@ -35,7 +35,7 @@ return array (
       array (
         'factories' => 
         array (
-          'LOTS\\ILS\\Driver\\KohaRest' => 'VuFind\\ILS\\Driver\\KohaRestFactory',
+          'LOTS\\ILS\\Driver\\KohaRest' => 'LOTS\\ILS\\Driver\\KohaRestFactory',
         ),
         'aliases' => 
         array (

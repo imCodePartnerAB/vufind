@@ -42,7 +42,6 @@ use VuFind\Date\DateException;
 use VuFind\Exception\AuthToken as AuthTokenException;
 use VuFind\Exception\ILS as ILSException;
 use VuFind\View\Helper\Root\SafeMoneyFormat;
-//use VuFind\Db\Row\User;
 
 /**
  * VuFind Driver for Koha, using REST API
@@ -59,7 +58,7 @@ use VuFind\View\Helper\Root\SafeMoneyFormat;
  * @link     https://vufind.org/wiki/development:plugins:ils_drivers Wiki
  */
 class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
-\VuFind\Db\Table\DbTableAwareInterface,
+    \VuFind\Db\Table\DbTableAwareInterface,
     \VuFindHttp\HttpServiceAwareInterface,
     \VuFind\I18n\Translator\TranslatorAwareInterface,
     \Laminas\Log\LoggerAwareInterface
@@ -561,7 +560,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
         }
 
         $result = $result['data'];
-        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username); 
+        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username);
         if (isset($dbUser) && empty($dbUser->home_library)) {
             $dbUser->changeHomeLibrary($result['library_id']);
         }

@@ -1,4 +1,7 @@
 <?php
+  $config = $this->config()->get('LOTS');
+  $AllowHistoryConfiguration = $config->History->allowConfiguration;
+
     // Set up page title:
     $this->headTitle($this->translate('My Profile'));
 
@@ -10,8 +13,12 @@
     $user = $this->auth()->isLoggedIn();
     $patron = $user ? $this->auth()->getILSPatron() : false;
     $capabilityParams = $patron ? ['patron' => $patron] : [];
-    $updateLoanHistory = $this->ils()->checkFunction('updateTransactionHistoryState', $capabilityParams);
-    $updateLoanHistory = $updateLoanHistory['options'];
+    if ($AllowHistoryConfiguration) {
+        $updateLoanHistory = $this->ils()->checkFunction('updateTransactionHistoryState', $capabilityParams);
+        if (isset($updateLoanHistory['options'])) {
+            $updateLoanHistory = $updateLoanHistory['options'];
+        }
+    }
 ?>
 
 <a class="search-filter-toggle visible-xs" href="#myresearch-sidebar" data-toggle="offcanvas" title="Expand Sidebar">
@@ -39,7 +46,7 @@
       <tr>
         <th><?=$this->transEsc('Preferred Library')?>:</th>
         <td>
-          <?php if (count($this->pickup ?? []) > 1): // case 1: set home library allowed ?>
+          <?php if (count($this->pickup ?? []) > 1): // case 1: set home library allowed?>
             <?php
               $selected = (strlen($this->profile['home_library'] ?? '') > 0)
                 ? $this->profile['home_library'] : $this->defaultPickupLocation
@@ -47,7 +54,7 @@
             <form id="profile_form" class="form-inline" method="post">
               <select id="home_library" name="home_library" class="form-control flex-grow-1">
                 <?php foreach ($this->pickup as $lib): ?>
-                  <option value="<?=$this->escapeHtmlAttr($lib['locationID'])?>"<?=($selected == $lib['locationID'])?' selected="selected"':''?>><?=$this->transEscWithPrefix('location_', $lib['locationDisplay'])?></option>
+                  <option value="<?=$this->escapeHtmlAttr($lib['locationID'])?>"<?=($selected == $lib['locationID']) ? ' selected="selected"' : ''?>><?=$this->transEscWithPrefix('location_', $lib['locationDisplay'])?></option>
                 <?php endforeach; ?>
               </select>
               <input class="btn btn-default" type="submit" value="<?=$this->transEscAttr('Save')?>" />
@@ -60,6 +67,7 @@
     <?php endif; ?>
 
     <?php /* this section renders under two distinct circumstances; see if/else below: */ ?>
+    <?php if (isset($updateLoanHistory) && isset($this->profile['loan_history'])) {  ?>
       <tr>
         <th><?=$this->transEsc('Save history')?>:</th>
         <td>
@@ -76,6 +84,7 @@
             </form>
         </td>
       </tr>
+    <?php } ?>
   </table>
 
   <div id="account-actions">
