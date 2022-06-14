@@ -1,4 +1,9 @@
 <?php
+// LOTS We use this to allow or not the medialinks in the search results
+// See more in LOTS.ini
+  $config = $this->config()->get('LOTS');
+  $lots_show_media_file_buttons = $config->Search->showMediaFileButtons ?? true;
+
   $coverDetails = $this->record($this->driver)->getCoverDetails('result-list', 'medium', $this->recordLink()->getUrl($this->driver));
   $cover = $coverDetails['html'];
   $thumbnail = false;

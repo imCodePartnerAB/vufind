@@ -4,6 +4,20 @@ namespace LOTS\ILS\Driver;
 
 class KohaRest extends \VuFind\ILS\Driver\KohaRest
 {
+    protected $lotsConfig;
+
+    public function __construct(
+        \VuFind\Date\Converter $dateConverter,
+        $sessionFactory,
+        ?SafeMoneyFormat $safeMoneyFormat
+    ) {
+        parent::__construct($dateConverter,$sessionFactory,$safeMoneyFormat);
+    }
+
+public function setLotsConfig($lotsConfig)
+{
+$this->lotsConfig = $lotsConfig;
+}
 
     /** Added for LOTS to set history. LOBININTEG-19
       * Update Patron Transaction History State
@@ -97,5 +111,24 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
             'sys_message' => ''
         ];
     }
+    /**
+     * Helper function for formatting currency
+     *
+     * @param $amount Number to format
+     *
+     * @return string
+     */
+    protected function formatMoney($amount)
+    {
+        $byPass = $this->lotsConfig->General->byPassSafeMoneyFormat;
+        # LOTS  SafeMoney does not work
+        if (isset($byPass) && $byPass == "1") {
+            return $amount;
+        } elseif (null === $this->safeMoneyFormat) {
+            throw new \Exception('SafeMoneyFormat helper not available');
+        }
+        return ($this->safeMoneyFormat)($amount);
+    }
+
 }
 
