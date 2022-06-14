@@ -35,7 +35,6 @@ use VuFind\Date\DateException;
 use VuFind\Exception\AuthToken as AuthTokenException;
 use VuFind\Exception\ILS as ILSException;
 use VuFind\View\Helper\Root\SafeMoneyFormat;
-//use VuFind\Db\Row\User;
 
 /**
  * VuFind Driver for Koha, using REST API
