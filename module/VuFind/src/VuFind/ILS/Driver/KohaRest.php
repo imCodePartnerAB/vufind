@@ -1,5 +1,12 @@
 <?php
 /**
+ * LOTS Changes
+ *
+ * 2021-12
+ * Mostly changes to get more data for templates to access.
+ */
+
+/**
  * VuFind Driver for Koha, using REST API
  *
  * PHP version 7
@@ -60,6 +67,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     use \VuFind\I18n\Translator\TranslatorAwareTrait;
     use \VuFind\ILS\Driver\CacheTrait;
     use \VuFind\ILS\Driver\OAuth2TokenTrait;
+    use \VuFind\Db\Table\DbTableAwareTrait;
 
     /**
      * Library prefix
@@ -721,16 +729,16 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
 
 
     /**
-         * Get Patron Holds
-         *
-         * This is responsible for retrieving all holds by a specific patron.
-         *
-         * @param array $patron The patron array from patronLogin
-         *
-         * @throws DateException
-         * @throws ILSException
-         * @return array        Array of the patron's holds on success.
-         */
+     * Get Patron Holds
+     *
+     * This is responsible for retrieving all holds by a specific patron.
+     *
+     * @param array $patron The patron array from patronLogin
+     *
+     * @throws DateException
+     * @throws ILSException
+     * @return array        Array of the patron's holds on success.
+     */
     public function getMyHolds($patron)
     {
         $result = $this->makeRequest(
@@ -1078,7 +1086,9 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
             'patron_id' => (int)$patron['id'],
             'pickup_library_id' => $pickUpLocation,
             'notes' => $comment,
-            'expiration_date' => date('Y-m-d', $holdDetails['requiredByTS']),
+            'expiration_date' => $holdDetails['requiredByTS']
+                ? date('Y-m-d', $holdDetails['requiredByTS'])
+                : null,
         ];
         if ($level == 'copy') {
             $request['item_id'] = (int)$itemId;
@@ -1837,6 +1847,9 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 'errors' => true
             ]
         );
+        if (400 == $result['code']) {
+            return [];
+        }
         if (404 == $result['code']) {
             return [];
         }
@@ -1865,6 +1878,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
 
             $entry = [
                 'id' => $id,
+                'item' => $item,
                 'item_id' => $item['item_id'],
                 'location' => $this->getItemLocationName($item),
                 'availability' => $available,
@@ -1876,6 +1890,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 'number' => $item['serial_issue_number'],
                 'barcode' => $item['external_id'],
                 'sort' => $i,
+                'item_location_description' => $item["location_description"],
                 'requests_placed' => max(
                     [$item['hold_queue_length'],
                     $result['data']['hold_queue_length']]
