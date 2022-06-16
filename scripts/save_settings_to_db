@@ -1,4 +1,4 @@
 #!/bin/bash
 #
-sudo /srv/github/tools/musikverket/save_settings_to_db.py
+sudo /srv/github/tools/musikverket/restore_settings_db.py
 

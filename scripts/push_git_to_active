@@ -1,4 +1,4 @@
 #!/bin/bash
 #
-sudo /srv/github/tools/musikverket/python_config.py
+sudo /srv/github/tools/musikverket/push_git_to_active.py
 
