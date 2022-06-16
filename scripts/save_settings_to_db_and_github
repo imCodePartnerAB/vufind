@@ -1,0 +1,4 @@
+#!/bin/bash
+#
+sudo /srv/github/tools/musikverket/save_settings_to_db_and_github.py
+
