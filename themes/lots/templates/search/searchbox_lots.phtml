@@ -55,7 +55,7 @@
       );?>
   </div>
 <?php else: ?>
-  <form id="searchForm2" class="searchForm navbar-form navbar-left flip" method="get" action="<?=$this->url($basicSearch)?>" name="searchForm" autocomplete="off">
+  <form id="searchForm" class="searchForm navbar-form navbar-left flip" method="get" action="<?=$this->url($basicSearch)?>" name="searchForm" autocomplete="off">
     <?=$this->context($this)->renderInContext(
       'search/filters.phtml',
       [

@@ -1,11 +1,5 @@
 <?php
 /**
- * LOTS Changes
- * We had problems with CSRF validation so we temporarily removed it. 2021-12
- * TODO: Enable it again and find a better solution.
- */
-
-/**
  * VuFind Action Helper - Renewals Support Methods
  *
  * PHP version 7
@@ -112,8 +106,8 @@ class Renewals extends AbstractPlugin
         if (is_array($ids) && !empty($ids)) {
             if (null !== $csrfValidator) {
                 if (!$csrfValidator->isValid($request->get('csrf'))) {
-                    //$flashMsg->addErrorMessage('csrf_validation_failed');
-                    //return [];
+                    $flashMsg->addErrorMessage('csrf_validation_failed');
+                    return [];
                 }
                 // After successful token verification, clear list to shrink session
                 // and prevent double submit:

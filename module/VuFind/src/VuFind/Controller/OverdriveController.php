@@ -1,11 +1,5 @@
 <?php
 /**
- * LOTS Changes
- * Changed driver to work with Overdrive imported to KOHA 2021-12
- * TODO: Maybe make it its own driver?
- */
-
-/**
  * Overdrive Controller
  *
  * PHP version 7
@@ -67,7 +61,6 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
     public function mycontentAction()
     {
         $this->debug("ODC mycontent action");
-        $searchService = $this->serviceLocator->get(\VuFindSearch\Service::class);
         //force login
         if (!is_array($patron = $this->catalogLogin())) {
             return $patron;
@@ -105,17 +98,10 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
             } else {
                 foreach ($checkoutResults->data as $checkout) {
                     $mycheckout['checkout'] = $checkout;
-                    $query = new \VuFindSearch\Query\Query("overdrive:\"$checkout->reserveId\"");
-                    $marcRec = $searchService->search('Solr', $query, 0, 5);
-                    if ($marcRec->getRecords()[0]) { // if it does not exist in solr, do not add it.
-
-                        $mycheckout['record']
-                            = $this->serviceLocator->get(\VuFind\Record\Loader::class)
-                           // ->load(strtolower($checkout->reserveId));
-                            ->load($marcRec->getRecords()[0]->getUniqueId());
-                            
-                        $checkouts[] = $mycheckout;
-                    }
+                    $mycheckout['record']
+                        = $this->serviceLocator->get(\VuFind\Record\Loader::class)
+                        ->load(strtolower($checkout->reserveId));
+                    $checkouts[] = $mycheckout;
                 }
             }
             //get the current Overdrive holds for this user and add to
@@ -190,16 +176,13 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
     public function holdAction()
     {
         $this->debug("ODC Hold action");
-        $searchService = $this->serviceLocator->get(\VuFindSearch\Service::class);
 
         if (!is_array($patron = $this->catalogLogin())) {
             return $patron;
         }
         $this->debug("patron: " . print_r($patron, true));
 
-        $od_id = strtoupper($this->params()->fromQuery('od_id'));
-        $id = $this->params()->fromQuery('id');
-        
+        $od_id = $this->params()->fromQuery('od_id');
         $rec_id = $this->params()->fromQuery('rec_id');
         $action = $this->params()->fromQuery('action');
 
@@ -216,16 +199,12 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
         $format = $this->params()->fromQuery('getTitleFormat');
 
         $this->debug("ODRC od_id=$od_id rec_id=$rec_id action=$action");
-
-        $query = new \VuFindSearch\Query\Query("overdrive:\"$od_id\"");
-        $marcRec = $searchService->search('Solr', $query, 0, 5);
-
         //load the Record Driver.  Should be a SolrOverdrive  driver.
         $driver = $this->serviceLocator->get(\VuFind\Record\Loader::class)->load(
-            $marcRec->getRecords()[0]->getUniqueId()
+            $rec_id
         );
 
-         $formats = $driver->getDigitalFormats();
+        $formats = $driver->getDigitalFormats();
         $title = $driver->getTitle();
         $cover = $driver->getThumbnail('small');
         $listAuthors = $driver->getPrimaryAuthors();

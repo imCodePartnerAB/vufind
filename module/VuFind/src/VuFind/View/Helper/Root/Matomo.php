@@ -173,7 +173,6 @@ class Matomo extends \Laminas\View\Helper\AbstractHelper
             $code = $this->trackPageView();
         }
 
-        $code = str_replace('%%USER%%', $params['username'], $code);
         $inlineScript = $this->getView()->plugin('inlinescript');
         return $inlineScript(\Laminas\View\Helper\HeadScript::SCRIPT, $code, 'SET');
     }
@@ -442,7 +441,6 @@ class Matomo extends \Laminas\View\Helper\AbstractHelper
         $code = <<<EOT
 var _paq = window._paq = window._paq || [];
 _paq.push(['enableLinkTracking']);
-_paq.push(['setUserId', '%%USER%%']);
 
 EOT;
         if ($this->disableCookies) {
@@ -460,14 +458,15 @@ EOT;
     protected function getClosingTrackingCode(): string
     {
         $escape = $this->getView()->plugin('escapejs');
-$url = $this->url;
-        $pageUrl = $this->getPageUrl();
+        $url = $escape($this->url);
+        $trackerUrl = $escape($this->getTrackerUrl());
+        $pageUrl = $escape($this->getPageUrl());
         return <<<EOT
 (function() {
   var u='$url';
-  _paq.push(['setTrackerUrl', u+'matomo.php']);
+  _paq.push(['setTrackerUrl', '$trackerUrl']);
   _paq.push(['setSiteId', '{$this->siteId}']);
-  _paq.push(['setCustomDimension', 14, 'no_search_string']);
+  _paq.push(['setCustomUrl', '$pageUrl']);
   var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
   g.type='text/javascript'; g.async=true; g.src=u+'matomo.js';
   s.parentNode.insertBefore(g,s);
