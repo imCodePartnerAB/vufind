@@ -558,6 +558,7 @@ $config = [
             'comments'         => ['id', 'comments_id_seq'],
             'external_session' => ['id', 'external_session_id_seq'],
             'oai_resumption'   => ['id', 'oai_resumption_id_seq'],
+            'ratings'          => ['id', 'ratings_id_seq'],
             'record'           => ['id', 'record_id_seq'],
             'resource'         => ['id', 'resource_id_seq'],
             'resource_tags'    => ['id', 'resource_tags_id_seq'],
