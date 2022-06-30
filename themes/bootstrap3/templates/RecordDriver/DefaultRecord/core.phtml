@@ -21,12 +21,6 @@
         </span>
       <?php endif; ?>
 
-      <?php /* Display rating if enabled: */ ?>
-      <?php if ($this->record($this->driver)->isRatingEnabled()): ?>
-        <?=$this->record($driver)->renderTemplate('rating.phtml')?>
-      <?php endif; ?>
-
-
       <?php // if you have a preview tab but want to move or remove the preview link
          // from this area of the record view, this can be split into
          // getPreviewData() (should stay here) and

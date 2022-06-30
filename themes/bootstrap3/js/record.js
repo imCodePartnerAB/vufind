@@ -358,7 +358,3 @@ function recordDocReady() {
   registerTabEvents();
   applyRecordTabHash(false);
 }
-
-function addRecordRating() {
-  document.querySelector('.rating-average a').click();
-}
