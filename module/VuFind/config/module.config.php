@@ -655,7 +655,7 @@ $recordRoutes = [
 $nonTabRecordActions = [
     'AddComment', 'DeleteComment', 'AddTag', 'DeleteTag', 'Save', 'Email', 'SMS',
     'Cite', 'Export', 'RDF', 'Hold', 'Home', 'StorageRetrievalRequest',
-    'AjaxTab', 'ILLRequest', 'PDF', 'Epub', 'LinkedText', 'Permalink',
+    'AjaxTab', 'ILLRequest', 'PDF', 'Epub', 'LinkedText', 'Permalink', 'AddRating'
 ];
 // Define dynamic routes -- controller => [route name => action]
 $dynamicRoutes = [

@@ -30,15 +30,18 @@ $config = array (
   ),
   'vufind' => 
   array (
+    'allow_override' => true,
     'plugin_managers' => 
     array (
       'ils_driver' => 
       array (
         'factories' => 
         array (
+          'LOTS\\ILS\\Driver\\KohaRest' => 'LOTS\\ILS\\Driver\\KohaRestFactory',
         ),
         'aliases' => 
         array (
+          'VuFind\\ILS\\Driver\\KohaRest' => 'LOTS\\ILS\\Driver\\KohaRest',
         ),
       ),
       'db_table' => 
@@ -52,7 +55,7 @@ $config = array (
 //          'VuFind\\Db\\Table\\Ratings' => 'LOTS\\Db\Table\\Ratings',
         ),
       ),
-      'db_row' => 
+     'db_row' => 
       array (
         'factories' => 
         array (

@@ -75,20 +75,6 @@ class CommentRecord extends AbstractBase implements TranslatorAwareInterface
     protected $enabled;
 
     /**
-     * Record loader
-     *
-     * @var RecordLoader
-     */
-    protected $recordLoader;
-
-    /**
-     * Record helper
-     *
-     * @var RecordHelper
-     */
-    protected $recordHelper;
-
-    /**
      * Constructor
      *
      * @param Resource  $table   Resource database table
@@ -100,7 +86,7 @@ class CommentRecord extends AbstractBase implements TranslatorAwareInterface
         Resource $table,
         Captcha $captcha,
         $user,
-        $enabled
+        $enabled = true
     ) {
         $this->table = $table;
         $this->captcha = $captcha;
