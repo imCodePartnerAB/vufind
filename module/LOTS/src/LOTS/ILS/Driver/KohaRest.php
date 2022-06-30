@@ -11,13 +11,13 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
         $sessionFactory,
         ?SafeMoneyFormat $safeMoneyFormat
     ) {
-        parent::__construct($dateConverter,$sessionFactory,$safeMoneyFormat);
+        parent::__construct($dateConverter, $sessionFactory, $safeMoneyFormat);
     }
 
-public function setLotsConfig($lotsConfig)
-{
-$this->lotsConfig = $lotsConfig;
-}
+    public function setLotsConfig($lotsConfig)
+    {
+        $this->lotsConfig = $lotsConfig;
+    }
 
     /** Added for LOTS to set history. LOBININTEG-19
       * Update Patron Transaction History State
@@ -32,6 +32,45 @@ $this->lotsConfig = $lotsConfig;
     public function updateTransactionHistoryState($patron, $state)
     {
         return $this->updatePatron($patron, ['privacy' => (int)$state]);
+    }
+
+    /**
+     * Update patron's phone number
+     *
+     * @param array  $patron Patron array
+     * @param string $phone  Phone number
+     *
+     * @throws ILSException
+     *
+     * @return array Associative array of the results
+     */
+    public function updatePhone($patron, $phone)
+    {
+        return $this->updatePatron($patron, ['phone' => $phone]);
+    }
+
+    /**
+     * Update patron's SMS alert number
+     *
+     * @param array  $patron Patron array
+     * @param string $number SMS alert number
+     *
+     * @throws ILSException
+     *
+     * @return array Associative array of the results
+     */
+    public function updateSmsNumber($patron, $number)
+    {
+        $fields = !empty($this->config['updateSmsNumber']['fields'])
+            ? explode(',', $this->config['updateSmsNumber']['fields'])
+            : ['sms_number'];
+
+        $update = [];
+        foreach ($fields as $field) {
+            $update[$field] = $number;
+        }
+
+        return $this->updatePatron($patron, $update);
     }
 
     /**
@@ -129,6 +168,4 @@ $this->lotsConfig = $lotsConfig;
         }
         return ($this->safeMoneyFormat)($amount);
     }
-
 }
-

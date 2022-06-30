@@ -13,6 +13,8 @@
     $user = $this->auth()->isLoggedIn();
     $patron = $user ? $this->auth()->getILSPatron() : false;
     $capabilityParams = $patron ? ['patron' => $patron] : [];
+    $updatePhone = $this->ils()->checkFunction('updatePhone', $capabilityParams);
+    $updateSmsNumber = $this->ils()->checkFunction('updateSmsNumber', $capabilityParams);
     if ($AllowHistoryConfiguration) {
         $updateLoanHistory = $this->ils()->checkFunction('updateTransactionHistoryState', $capabilityParams);
         if (isset($updateLoanHistory['options'])) {
@@ -30,6 +32,7 @@
   <?=$this->flashmessages();?>
 
   <table class="table table-striped">
+    <form id="profile_form" class="form-inline" method="post">
     <?=
       $this->renderArray(
           $arrTemplate,
@@ -51,21 +54,17 @@
               $selected = (strlen($this->profile['home_library'] ?? '') > 0)
                 ? $this->profile['home_library'] : $this->defaultPickupLocation
             ?>
-            <form id="profile_form" class="form-inline" method="post">
               <select id="home_library" name="home_library" class="form-control flex-grow-1">
                 <?php foreach ($this->pickup as $lib): ?>
                   <option value="<?=$this->escapeHtmlAttr($lib['locationID'])?>"<?=($selected == $lib['locationID']) ? ' selected="selected"' : ''?>><?=$this->transEscWithPrefix('location_', $lib['locationDisplay'])?></option>
                 <?php endforeach; ?>
               </select>
-              <input class="btn btn-default" type="submit" value="<?=$this->transEscAttr('Save')?>" />
-            </form>
           <?php else: // case 2: set home library disallowed, but default provided by ILS?>
             <?=$this->transEscWithPrefix('location_', $this->preferredLibraryDisplay)?>
           <?php endif; ?>
         </td>
       </tr>
     <?php endif; ?>
-
     <?php /* this section renders under two distinct circumstances; see if/else below: */ ?>
     <?php if (isset($updateLoanHistory) && isset($this->profile['loan_history'])) {  ?>
       <tr>
@@ -74,19 +73,58 @@
             <?php
               $selected = $this->profile['loan_history'];
             ?>
-            <form id="profile_history_form" class="form-inline" method="post">
               <select id="loan_history" name="loan_history" class="form-control flex-grow-1">
                 <?php foreach ($updateLoanHistory as $id => $name): ?>
                   <option value="<?=$this->escapeHtmlAttr($id)?>"<?=($selected == $id) ? ' selected="selected"' : ''?>><?=$this->transEsc($name)?></option>
                 <?php endforeach; ?>
               </select>
-              <input class="btn btn-default" type="submit" name="saveLibraryProfile" value="<?=$this->transEscAttr('Save')?>" />
-            </form>
         </td>
       </tr>
     <?php } ?>
-  </table>
+            <?php if (!empty($this->profile['phone']) || $updatePhone): ?>
+              <?php if ($updatePhone): ?>
+      <tr>
+        <th><?=$this->transEsc('Phone')?>:</th>
+        <td>
+              <input type="tel" name="profile_tel" class="form-control flex-grow-1"
+              value="<?=empty($this->profile['phone']) ? '' : $this->escapeHtmlAttr($this->profile['phone']) ?>" 
+              title="<?=$this->transEscAttr('Phone') ?>" />
+              <?php else: ?>
+                <div class="my-profile-col profile-title"><?=$this->transEsc('Phone') ?>:</div>
+                <div class="profile-text-value"><?=$this->escapeHtml($this->profile['phone']) ?></div>
+              <?php endif; ?>
+</td>
+</tr>
+            <?php endif; ?>
+            <?php if (!empty($this->profile['mobile_phone']) || $updateSmsNumber): ?>
+              <?php if ($updateSmsNumber): ?>
+<tr>
+        <th><?=$this->transEsc('SMS Number')?>:</th>
+        <td>
+                  <input class="form-control flex-grow-1" type="tel" name="profile_sms_number" value="<?=empty($this->profile['mobile_phone']) ? '' : $this->escapeHtmlAttr($this->profile['mobile_phone']) ?>" title="<?=$this->transEscAttr('SMS Number') ?>" />
+              <?php else: ?>
+                <div class="my-profile-col profile-title"><?=$this->transEsc('SMS Number') ?>:</div>
+                <div class="profile-text-value"><?=$this->escapeHtml($this->profile['mobile_phone']) ?></div>
+              <?php endif; ?>
+        </td>
+      </tr>
+            <?php endif; ?>
+<tr>
+        <td>
+        </td>
+        <td>
+            <div class="my-profile-row" align="right">
+              <?php if ($updatePhone): ?>
+                <input id="save-library-profile" name="saveLibraryProfile" type="submit" value="<?=$this->transEscAttr("save_my_profile") ?>" 
+                  class="btn btn-primary my-profile-btn" />
+              <?php endif; ?>
+              <div class="clearfix"></div>
+            </div>
+</td>
+</tr>
 
+          </form>
+  </table>
   <div id="account-actions">
     <?php if ($this->auth()->getManager()->supportsEmailChange()): ?>
       <a class="btn btn-default" href="<?=$this->url('myresearch-changeemail') ?>">

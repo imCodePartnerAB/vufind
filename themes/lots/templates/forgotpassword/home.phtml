@@ -17,8 +17,9 @@ use Laminas\Log\Writer\Noop;
     echo $message;
     if ($typeOfCall == 'home') {
         echo $this->render('forgotpassword/whatuser.phtml');
-    } elseif ($typeOfCall=='recover') {
+    } elseif ($typeOfCall=='warning') {
         echo $this->render('forgotpassword/whatuser.phtml');
+    } elseif ($typeOfCall=='recover') {
     } elseif ($typeOfCall=='resend') {
         # Nothing to do, we do not want any more information
         # than the message when we are on resend.

@@ -106,12 +106,14 @@ var VuFind = (function VuFind() {
   // Icon shortcut methods
   var spinner = function spinner(extraClass = "") {
     let className = ("loading-spinner " + extraClass).trim();
-    return '<span class="' + className + '">' + icon('spinner') + '</span>';
+    return '';
+    //'<span class="' + className + '">' + icon('spinner') + '</span>';
   };
   var loading = function loading(text = null, extraClass = "") {
     let className = ("loading-spinner " + extraClass).trim();
     let string = translate(text === null ? "loading" : text);
-    return '<span class="' + className + '">' + icon('spinner') + string + '...</span>';
+    return '';
+    //'<span class="' + className + '">' + icon('spinner') + string + '...</span>';
   };
 
   /**
@@ -495,7 +497,10 @@ $(document).ready(function commonDocReady() {
       // under normal usage outside of the Phing startup process.
       if (document.cookie.indexOf('VuFindTestSuiteRunning=') === -1) {
         window.addEventListener("afterprint", function goBackAfterPrint() { history.back(); }, { once: true });
-        window.print();
+        // Trigger print after a minimal timeout. This is done to avoid
+        // problems with some browsers, which might not fully update
+        // ajax loaded page content before showing the print dialog.
+        setTimeout(function doPrint() { window.print(); }, 10);
       } else {
         console.log("Printing disabled due to test mode."); // eslint-disable-line no-console
       }

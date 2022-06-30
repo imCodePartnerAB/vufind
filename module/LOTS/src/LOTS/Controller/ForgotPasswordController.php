@@ -77,6 +77,9 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
          * the html response. And then we use preg_replace to rewrite
          * "known" urls to our own.
          */
+        if (preg_match("/alert-warning/i",$resp)) {
+            $typeOfCall = 'warning';
+        }
         preg_match('/<div class="alert alert-(warning|info)">(.*?)<\/div>/s', $resp, $message);
         $message = preg_replace('/\<a.*href.*opac-password-recovery\.pl(.*)">(.*)\<\/a\>/m', '<a href="/vufind/ForgotPassword$1">'.$this->translate('SendNewEmail').'</a>', $message);
         $message = preg_replace('/\<a.*href.*opac-main\.pl(.*)">(.*)\<\/a\>/m', '<a href="/">'.$this->translate('Go to homepage').'</a>', $message);

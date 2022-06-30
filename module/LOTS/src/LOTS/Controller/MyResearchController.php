@@ -46,9 +46,45 @@ class MyResearchController extends \VuFind\Controller\MyResearchController
         $catalog = $this->getILS();
 
         $success = true;
+        if (isset($values->profile_email)) {
+            $validator = new \Laminas\Validator\EmailAddress();
+            if ($validator->isValid($values->profile_email)
+                && $catalog->checkFunction('updateEmail', compact('patron'))
+            ) {
+                // Update email
+                $result = $catalog->updateEmail($patron, $values->profile_email);
+                if (!$result['success']) {
+                    $this->flashMessenger()->addErrorMessage($result['status']);
+                    $success = false;
+                }
+            }
+        }
+        // Update phone
+        if (isset($values->profile_tel)
+            && $catalog->checkFunction('updatePhone', compact('patron'))
+        ) {
+            $result = $catalog->updatePhone($patron, $values->profile_tel);
+            if (!$result['success']) {
+                $this->flashMessenger()->addErrorMessage($result['status']);
+                $success = false;
+            }
+        }
+        // Update SMS Number
+        if (isset($values->profile_sms_number)
+            && $catalog->checkFunction('updateSmsNumber', compact('patron'))
+        ) {
+            $result = $catalog->updateSmsNumber(
+                $patron,
+                $values->profile_sms_number
+            );
+            if (!$result['success']) {
+                $this->flashMessenger()->addErrorMessage($result['status']);
+                $success = false;
+            }
+        }
         // Update checkout history state
         $updateState = $catalog
-        ->checkFunction('updateTransactionHistoryState', compact('patron'));
+            ->checkFunction('updateTransactionHistoryState', compact('patron'));
         if (isset($values->loan_history) && $updateState) {
             $result = $catalog->updateTransactionHistoryState(
                 $patron,

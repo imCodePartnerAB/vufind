@@ -1,6 +1,6 @@
 <?php
 
-return array (
+$config = array (
   'controllers' => 
   array (
     'factories' => 
@@ -18,6 +18,7 @@ return array (
   ),
   'service_manager' => 
   array (
+    'allow_override' => true,
     'factories' => 
     array (
       'LOTS\\ILS\\Connection' => 'VuFind\\ILS\\ConnectionFactory',
@@ -35,13 +36,45 @@ return array (
       array (
         'factories' => 
         array (
-          'LOTS\\ILS\\Driver\\KohaRest' => 'LOTS\\ILS\\Driver\\KohaRestFactory',
         ),
         'aliases' => 
         array (
-          'VuFind\\ILS\\Driver\\KohaRest' => 'LOTS\\ILS\\Driver\\KohaRest',
+        ),
+      ),
+      'db_table' => 
+      array (
+        'factories' => 
+        array (
+//          'LOTS\\Db\\Table\\Ratings' => 'VuFind\\Db\\Row\\GatewayFactory',
+        ),
+        'aliases' => 
+        array (
+//          'VuFind\\Db\\Table\\Ratings' => 'LOTS\\Db\Table\\Ratings',
+        ),
+      ),
+      'db_row' => 
+      array (
+        'factories' => 
+        array (
+          'LOTS\\Db\\Row\\Ratings' => 'VuFind\\Db\\Row\\RowGatewayFactory',
+        ),
+        'aliases' => 
+        array (
+          'VuFind\\Db\\Row\\Ratings' => 'LOTS\\Db\Row\\Ratings',
         ),
       ),
     ),
   ),
 );
+
+// Define non tab record actions
+$nonTabRecordActions = [
+    'AddComment', 'DeleteComment', 'AddTag', 'DeleteTag', 'Save', 'Email', 'SMS',
+    'Cite', 'Export', 'RDF', 'Hold', 'Home', 'StorageRetrievalRequest',
+    'AjaxTab', 'ILLRequest', 'PDF', 'Epub', 'LinkedText', 'Permalink', 'AddRating'
+];
+
+$routeGenerator = new \VuFind\Route\RouteGenerator();
+$routeGenerator->addNonTabRecordActions($config, $nonTabRecordActions);
+
+return $config;

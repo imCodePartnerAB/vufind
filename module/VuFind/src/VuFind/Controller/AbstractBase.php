@@ -323,11 +323,11 @@ class AbstractBase extends AbstractActionController
 
         // We don't want to return to the lightbox
         $serverUrl = $this->getServerUrl();
-        $serverUrl = str_replace(
-            ['?layout=lightbox', '&layout=lightbox'],
-            ['?', '&'],
-            $serverUrl
-        );
+#        $serverUrl = str_replace(
+#            ['?layout=lightbox', '&layout=lightbox'],
+#            ['?', '&'],
+#            $serverUrl
+#        );
 
         // Store the current URL as a login followup action
         $this->followup()->store($extras, $serverUrl);
