@@ -1,0 +1,3 @@
+#!/bin/bash
+#
+sudo su solr /usr/local/vufind/solr.sh restart
