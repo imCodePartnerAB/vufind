@@ -1,0 +1,4 @@
+<!-- START ./Auth/Shibboleth/logindesc.phtml -->
+<h3><?=$this->transEsc('Institutional Login')?></h3>
+<p><?=$this->transEsc('institutional_login_desc')?></p>
+<!-- STOP ./Auth/Shibboleth/logindesc.phtml -->

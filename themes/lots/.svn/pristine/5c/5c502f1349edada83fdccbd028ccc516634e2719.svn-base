@@ -1,0 +1,3 @@
+<!-- START ./RecordDriver/Primo/link-issn.phtml -->
+<?=$this->url('primo-search')?>?lookfor=<?=urlencode($this->lookfor)?>&amp;type=ISSN
+<!-- STOP ./RecordDriver/Primo/link-issn.phtml -->

@@ -429,7 +429,7 @@ class OverdriveConnector implements LoggerAwareInterface,
 
         $this->debug("doOverdriveCheckout: overdriveID: " . $overDriveId);
         if (!$user = $this->getUser()) {
-            $this->error("user is not logged in", false, true);
+            $this->error("user is not logged in", [], true);
             return $result;
         }
         if ($config = $this->getConfig()) {
@@ -482,7 +482,7 @@ class OverdriveConnector implements LoggerAwareInterface,
         $this->debug("placeOverdriveHold");
         $holdResult = $this->getResultObject();
         if (!$user = $this->getUser()) {
-            $this->error("user is not logged in", false, true);
+            $this->error("user is not logged in",  [], true);
             return $holdResult;
         }
 
@@ -533,7 +533,7 @@ class OverdriveConnector implements LoggerAwareInterface,
         $holdResult = $this->getResultObject();
         $this->debug("OverdriveConnector: cancelHold");
         if (!$user = $this->getUser()) {
-            $this->error("user is not logged in", false, true);
+            $this->error("user is not logged in", [], true);
             return $holdResult;
         }
         if ($config = $this->getConfig()) {
@@ -550,7 +550,8 @@ class OverdriveConnector implements LoggerAwareInterface,
             if ($response) {
                 $holdResult->status = true;
             } else {
-                $holdResult->msg = $response->message;
+                //$result->msg = "Responce error";// $response->message;
+                $holdResult->msg = "Responce message error";//$response->message;
             }
         }
         return $holdResult;
@@ -568,7 +569,7 @@ class OverdriveConnector implements LoggerAwareInterface,
     {
         $result = $this->getResultObject();
         if (!$user = $this->getUser()) {
-            $this->error("user is not logged in", false, true);
+            $this->error("user is not logged in", [], true);
             return $result;
         }
         if ($config = $this->getConfig()) {
@@ -585,7 +586,7 @@ class OverdriveConnector implements LoggerAwareInterface,
             if ($response) {
                 $result->status = true;
             } else {
-                $result->msg = $response->message;
+                $result->msg = "Responce error";// $response->message;
             }
         }
         return $result;
@@ -607,7 +608,7 @@ class OverdriveConnector implements LoggerAwareInterface,
         $result = $this->getResultObject();
         $downloadLink = false;
         if (!$user = $this->getUser()) {
-            $this->error("user is not logged in", false, true);
+            $this->error("user is not logged in", [], true);
             return $result;
         }
         $checkout = $this->getCheckout($overDriveId, false);
@@ -682,7 +683,7 @@ class OverdriveConnector implements LoggerAwareInterface,
      * @param object $checkout The checkout object
      * @param string $format   The name of the format to check
      *
-     * @return bool
+     * @return object
      */
     protected function getLinkTemplate($checkout, $format)
     {
@@ -708,7 +709,7 @@ class OverdriveConnector implements LoggerAwareInterface,
         $result = $this->getResultObject();
 
         if (!$user = $this->getUser()) {
-            $this->error("user is not logged in", false, true);
+            $this->error("user is not logged in", [], true);
             return $result;
         }
         // shouldn't need to refresh.  This should be in the cache if it exists
@@ -1322,7 +1323,7 @@ class OverdriveConnector implements LoggerAwareInterface,
                 if (!isset($returnVal->message)
                     || $returnVal->message != 'An unexpected error has occurred.'
                 ) {
-                    return $returnVal;
+                    return false; //$returnVal;
                 } else {
                     $this->debug(
                         "Overdrive API problem: " . $returnVal->message

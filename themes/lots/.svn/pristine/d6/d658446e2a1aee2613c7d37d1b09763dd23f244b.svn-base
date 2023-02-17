@@ -1,0 +1,3 @@
+<!-- START ./search2/home.phtml -->
+<?=$this->render('search/home.phtml');?>
+<!-- STOP ./search2/home.phtml -->

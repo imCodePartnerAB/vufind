@@ -1,0 +1,14 @@
+<?php
+
+  // Disable top search box -- this page has a special layout.
+  $this->layout()->searchbox = true;
+
+  if (!isset($this->searchClassId)) {
+    $this->searchClassId = 'Solr';
+  }
+
+  $this->layout()->breadcrumbs = false;
+?>
+
+
+<?=implode('', array_map([$this, 'contentBlock'], $blocks ?? []))?>

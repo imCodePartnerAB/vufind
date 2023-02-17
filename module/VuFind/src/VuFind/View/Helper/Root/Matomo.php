@@ -460,14 +460,20 @@ EOT;
     protected function getClosingTrackingCode(): string
     {
         $escape = $this->getView()->plugin('escapejs');
+ //       $url = $escape($this->url);
+//       $trackerUrl = $escape($this->getTrackerUrl());
+//       $pageUrl = $escape($this->getPageUrl());
 $url = $this->url;
+//$trackerUrl = $this->getTrackerUrl();
         $pageUrl = $this->getPageUrl();
+// _paq.push(['setCustomUrl', '$pageUrl']);r
         return <<<EOT
 (function() {
   var u='$url';
   _paq.push(['setTrackerUrl', u+'matomo.php']);
   _paq.push(['setSiteId', '{$this->siteId}']);
   _paq.push(['setCustomDimension', 14, 'no_search_string']);
+
   var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
   g.type='text/javascript'; g.async=true; g.src=u+'matomo.js';
   s.parentNode.insertBefore(g,s);

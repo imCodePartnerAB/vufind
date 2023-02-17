@@ -1,0 +1,3 @@
+<!-- START ./RecordDriver/Pazpar2/link-author.phtml -->
+<?=$this->url('pazpar2-search')?>?lookfor=<?=urlencode($this->lookfor)?>&amp;type=author
+<!-- STOP ./RecordDriver/Pazpar2/link-author.phtml -->

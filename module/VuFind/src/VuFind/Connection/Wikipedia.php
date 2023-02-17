@@ -28,6 +28,7 @@
 namespace VuFind\Connection;
 
 use VuFind\I18n\Translator\TranslatorAwareInterface;
+use \SimpleXMLElement;
 
 /**
  * Wikipedia connection class
@@ -85,6 +86,16 @@ class Wikipedia implements TranslatorAwareInterface
         $this->lang = substr($lang, 0, 2); // strip off regional suffixes
     }
 
+public function getAlexPage($author){                                                                                                             
+    $ch = curl_init();                                                                                                                     
+    $url = 'https://www.alex.se/partnerintegration/Writer/?Password=zryyn05wNN&Writer=' . $author . '&Title=a&LibraryCard=900559914987A';   
+    curl_setopt($ch, CURLOPT_URL, $url);                                                                                                   
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);                                                                                           
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');   
+    $xmlstr = curl_exec($ch);                                                                                                              
+    curl_close($ch);                                                                                                                       
+    return new SimpleXMLElement($xmlstr);                                                                                                  
+}   
     /**
      * This method is responsible for connecting to Wikipedia via the REST API
      * and pulling the content for the relevant author.
@@ -95,22 +106,19 @@ class Wikipedia implements TranslatorAwareInterface
      */
     public function get($author)
     {
-        // Don't retrieve the same page multiple times; this indicates a loop
-        // that needs to be broken!
-        if ($this->alreadyRetrieved($author)) {
-            return [];
-        }
 
-        // Get information from Wikipedia API
-        $uri = 'http://' . $this->lang . '.wikipedia.org/w/api.php' .
-               '?action=query&prop=revisions&rvprop=content&format=php' .
-               '&list=allpages&titles=' . urlencode($author);
+        $xml = $this->getAlexPage($author); 
+       //$xml = $xml->writers->writer[0]->born[0];
 
-        $response = $this->client->setUri($uri)->setMethod('GET')->send();
-        if ($response->isSuccess()) {
-            return $this->parseWikipedia(unserialize($response->getBody()));
-        }
-        return null;
+        $info = [
+            'name' => $xml->writers->writer[0]->name[0],
+            'description' => $xml->writers->writer[0]->article[0] . '... <a href="'.$xml->writers->writer[0]->publicLinkUrl[0] .'" ><br>Läs mer...</a><br /><br />'. $xml->writers->writer[0]->imageText[0],// . $xml->writers->write:r[0]->alexAbout[0] ,
+            'wiki_lang' => "Language",
+            'image' => $xml->writers->writer[0]->imageUrlSsl[0]."",
+                        'alt_image' => "https://www.alex.se/images/writer/661/wm_BR_5d890d5646f68bfb01c5709382cf4e2a8daf0e2dea531.jpg"
+        ];
+
+        return $info;
     }
 
     /**
@@ -135,7 +143,7 @@ class Wikipedia implements TranslatorAwareInterface
      *
      * @param string $infoboxStr Infobox text
      *
-     * @return array Array with two values values: image name and image caption
+     * @return string
      */
     protected function extractImageFromInfoBox($infoboxStr)
     {
@@ -143,8 +151,7 @@ class Wikipedia implements TranslatorAwareInterface
 
         // Get rid of the last pair of braces and split
         $infobox = explode(
-            "\n|",
-            preg_replace('/^\s+|/m', '', substr($infoboxStr, 2, -2))
+            "\n|", preg_replace('/^\s+|/m', '', substr($infoboxStr, 2, -2))
         );
 
         // Look through every row of the infobox
@@ -415,15 +422,13 @@ class Wikipedia implements TranslatorAwareInterface
      */
     protected function parseWikipedia($rawBody)
     {
-        $imageName = null;
-        $imageCaption = null;
         // Check if data exists or not
         if (isset($rawBody['query']['pages']['-1'])) {
             return null;
         }
 
         // Check for redirects; get some basic information:
-        [$name, $redirectTo, $bodyArr] = $this->checkForRedirect($rawBody);
+        list($name, $redirectTo, $bodyArr) = $this->checkForRedirect($rawBody);
 
         // Recurse if we only found redirects:
         if ($redirectTo) {
@@ -436,20 +441,20 @@ class Wikipedia implements TranslatorAwareInterface
         /* Body */
         $bodyStr = $this->extractBodyText($bodyArr, $infoboxStr);
         $info = [
-            'name' => $name,
-            'description' => $this->sanitizeWikipediaBody($bodyStr),
-            'wiki_lang' => $this->lang,
+            'name' => "Gurkmeja ".$name,
+            'description' => "Gurkmeja ".$this->sanitizeWikipediaBody($bodyStr),
+            'wiki_lang' => "Gurkmeja ".$this->lang,
         ];
 
         /* Image */
 
         // Try to find an image in either the infobox or the body:
         if ($infoboxStr) {
-            [$imageName, $imageCaption]
+            list($imageName, $imageCaption)
                 = $this->extractImageFromInfoBox($infoboxStr);
         }
         if (!isset($imageName)) {
-            [$imageName, $imageCaption] = $this->extractImageFromBody($bodyArr);
+            list($imageName, $imageCaption) = $this->extractImageFromBody($bodyArr);
         }
 
         // Given an image name found above, look up the associated URL and add it to
@@ -474,7 +479,6 @@ class Wikipedia implements TranslatorAwareInterface
      */
     protected function getWikipediaImageURL($imageName)
     {
-        $imageUrl = null;
         $url = "http://{$this->lang}.wikipedia.org/w/api.php" .
                '?prop=imageinfo&action=query&iiprop=url&iiurlwidth=150&format=php' .
                '&titles=Image:' . urlencode($imageName);

@@ -1,0 +1,16 @@
+<!-- START ./RecordDriver/DefaultRecord/data-publicationDetails.phtml -->
+<?php foreach ($data as $field): ?>
+  <span property="publisher" typeof="Organization">
+  <?php $pubPlace = $field->getPlace(); if (!empty($pubPlace)): ?>
+    <?=$this->transEscAttr('data_location_prep')?>&nbsp<span property="location"><?=$this->escapeHtml(trim($pubPlace,':[]'))?><br></span>
+  <?php endif; ?>
+  <?php $pubName = $field->getName(); if (!empty($pubName)): ?>
+    <?=$this->transEscAttr('data_name_prep')?>&nbsp<span property="name"><?=$this->escapeHtml(trim($pubName,':[]'))?><br></span>
+  <?php endif; ?>
+  </span>
+  <?php $pubDate = $field->getDate(); if (!empty($pubDate)): ?>
+    <?=$this->transEscAttr('data_published_prep')?>&nbsp<span property="datePublished"><?=$this->escapeHtml(trim($pubDate,':[]'))?><br></span>
+  <?php endif; ?>
+  <br/>
+<?php endforeach; ?>
+<!-- STOP ./RecordDriver/DefaultRecord/data-publicationDetails.phtml -->

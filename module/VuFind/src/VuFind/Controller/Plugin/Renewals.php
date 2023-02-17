@@ -1,11 +1,5 @@
 <?php
 /**
- * LOTS Changes
- * We had problems with CSRF validation so we temporarily removed it. 2021-12
- * TODO: Enable it again and find a better solution.
- */
-
-/**
  * VuFind Action Helper - Renewals Support Methods
  *
  * PHP version 7

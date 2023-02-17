@@ -1,0 +1,2 @@
+<!-- START ./RecordTab/search2collectionlist.phtml -->
+<?=$this->render('RecordTab/collectionlist.phtml')?><!-- STOP ./RecordTab/search2collectionlist.phtml -->

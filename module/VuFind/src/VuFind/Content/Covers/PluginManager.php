@@ -1,10 +1,4 @@
 <?php
-
-/**
- * LOTS changes
- * We added bokinfo 2021-12
- */
-
 /**
  * Covers content loader plugin manager
  *

@@ -1,0 +1,3 @@
+<!-- START ./Auth/AbstractBase/logindesc.phtml -->
+<h3><?=$this->transEsc('Login')?></h3>
+<!-- STOP ./Auth/AbstractBase/logindesc.phtml -->

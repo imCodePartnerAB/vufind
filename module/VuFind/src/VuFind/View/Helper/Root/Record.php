@@ -382,7 +382,7 @@ class Record extends \Laminas\View\Helper\AbstractHelper
      */
     public function getSearchResult($view)
     {
-        return $this->renderTemplate('result-' . $view . '.phtml');
+     return $this->renderTemplate('result-' . $view . '.phtml');
     }
 
     /**

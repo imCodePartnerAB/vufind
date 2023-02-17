@@ -149,17 +149,7 @@ class File extends AbstractBase
     {
         $sessFile = $this->path . '/sess_' . $sessId;
         if ($handle = fopen($sessFile, "w")) {
-            $return = false;
-            // Lock the file for exclusive access to avoid issues with multiple
-            // processes writing session simultaneously:
-            if (flock($handle, LOCK_EX)) {
-                $return = fwrite($handle, $data);
-                // Make sure that there's no trailing data by truncating the file to
-                // the correct length:
-                ftruncate($handle, strlen($data));
-                fflush($handle);
-                flock($handle, LOCK_UN);
-            }
+            $return = fwrite($handle, $data);
             fclose($handle);
             if ($return !== false) {
                 return true;

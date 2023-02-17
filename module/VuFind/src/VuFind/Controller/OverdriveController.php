@@ -1,11 +1,5 @@
 <?php
 /**
- * LOTS Changes
- * Changed driver to work with Overdrive imported to KOHA 2021-12
- * TODO: Maybe make it its own driver?
- */
-
-/**
  * Overdrive Controller
  *
  * PHP version 7
@@ -22,6 +16,7 @@ use Laminas\Log\LoggerAwareInterface;
 use Laminas\ServiceManager\ServiceLocatorInterface;
 use VuFind\DigitalContent\OverdriveConnector;
 
+
 /**
  * Overdrive Controller supports actions for Overdrive Integration
  *
@@ -37,6 +32,8 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
         logError as error;
     }
 
+    
+
     /**
      * Overdrive Connector
      *
@@ -49,6 +46,7 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
      *
      * @param ServiceLocatorInterface $sm Service locator
      */
+    
     public function __construct(ServiceLocatorInterface $sm)
     {
         $this->setLogger($sm->get(\VuFind\Log\Logger::class));
@@ -66,8 +64,11 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
      */
     public function mycontentAction()
     {
-        $this->debug("ODC mycontent action");
+        $holds = $this->debug("ODC mycontent action");
+
+
         $searchService = $this->serviceLocator->get(\VuFindSearch\Service::class);
+ 
         //force login
         if (!is_array($patron = $this->catalogLogin())) {
             return $patron;

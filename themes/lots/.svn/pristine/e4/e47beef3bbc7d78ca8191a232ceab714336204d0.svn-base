@@ -1,0 +1,3 @@
+<!-- START ./ContentBlock/TemplateBased.phtml -->
+<?=$this->render('ContentBlock/TemplateBased/' . $this->templateName); ?>
+<!-- STOP ./ContentBlock/TemplateBased.phtml -->

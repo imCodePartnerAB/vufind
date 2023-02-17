@@ -603,7 +603,10 @@ class DefaultRecord extends AbstractBase
      */
     public function getLanguages()
     {
-        return (array)($this->fields['language'] ?? []);
+      //if ($this->fields['language'])
+      //$marr = array("Kalle","Stina");
+      //return (array)($marr ?? []);
+      return (array)($this->fields['language'] ?? []);
     }
 
     /**

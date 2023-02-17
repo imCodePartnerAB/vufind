@@ -1,0 +1,3 @@
+<!-- START ./ajax/status-available.phtml -->
+<span class="label label-success"><?=$this->transEsc("Available")?></span>
+<!-- STOP ./ajax/status-available.phtml -->

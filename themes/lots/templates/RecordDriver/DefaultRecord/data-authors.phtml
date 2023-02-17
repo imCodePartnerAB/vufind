@@ -1,3 +1,4 @@
+<!-- START ./RecordDriver/DefaultRecord/data-authors.phtml -->
 <?php
 $formatProperty = function ($datafield, $name, $label) {
     if (count($datafield) == 0) {
@@ -16,7 +17,7 @@ $formattedAuthors = [];
     
     <?php ob_start(); ?>
     <span class="author-data" property="<?=$this->escapeHtml($schemaLabel)?>">
-      <a href="<?=$this->record($this->driver)->getLink('author', $author)?>">
+      <?=$this->transEscAttr('data_author_prep')?>&nbsp<a href="<?=$this->record($this->driver)->getLink('author', $author)?>">
         <?=$this->escapeHtml(rtrim($author, ','))?>
       </a>
     </span>
@@ -28,3 +29,4 @@ $formattedAuthors = [];
   <?php endforeach; ?>
 <?php endif; ?>
 <?=implode(', ', $formattedAuthors)?>
+<!-- STOP ./RecordDriver/DefaultRecord/data-authors.phtml -->

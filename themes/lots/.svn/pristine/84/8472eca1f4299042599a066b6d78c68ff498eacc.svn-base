@@ -1,0 +1,5 @@
+<!-- START ./eds/home.phtml -->
+<?php
+  echo $this->render('search/home.phtml');
+?>
+<!-- STOP ./eds/home.phtml -->

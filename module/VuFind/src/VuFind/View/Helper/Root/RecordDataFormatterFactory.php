@@ -275,7 +275,7 @@ class RecordDataFormatterFactory implements FactoryInterface
             'getLanguages',
             null,
             ['itemPrefix' => '<span property="availableLanguage" typeof="Language">'
-                           . '<span property="name">',
+                           . '<!-- Språk --><span property="name">',
              'itemSuffix' => '</span></span>']
         );
         $spec->setTemplateLine(

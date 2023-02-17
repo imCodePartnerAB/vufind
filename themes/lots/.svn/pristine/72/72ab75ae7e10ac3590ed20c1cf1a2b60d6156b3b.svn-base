@@ -1,0 +1,139 @@
+<!-- START ./RecordTab/holdingsils.phtml -->
+
+<?php
+    // Set up convenience variables:
+    $account = $this->auth()->getManager();
+    $user = $account->isLoggedIn();
+    $openUrl = $this->openUrl($this->driver, 'holdings');
+    $openUrlActive = $openUrl->isActive();
+    $doi = $this->doi($this->driver, 'holdings');
+    $doiActive = $doi->isActive();
+    // Account for replace_other_urls setting
+    $urls = $this->record($this->driver)->getLinkDetails($openUrlActive);
+    $offlineMode = $this->ils()->getOfflineMode();
+    try {
+        $holdings = $this->driver->getRealTimeHoldings();
+    } catch (\VuFind\Exception\ILS $e) {
+        $holdings = [
+          'holdings' => [],
+          'electronic_holdings' => [],
+          'total' => 0,
+          'page' => 0,
+          'itemLimit' => 0
+        ];
+        $offlineMode = 'ils-offline';
+    }
+    // Set page title.
+    $this->headTitle($this->translate('Holdings') . ': ' . $this->driver->getBreadcrumb());
+
+    function holdsColor($status)
+    {
+      switch ($status) {
+        case "On Hold":
+          return "item-reserved";
+        case "On Shelf":
+          return "item-avail";
+        default:
+        return "item-reserved"; // Röd som default
+        return "item-default";
+      }
+    }
+
+
+?>
+
+  <?php //endforeach; ?>
+<?=$this->context($this)->renderInContext('librarycards/selectcard.phtml', ['user' => $this->auth()->isLoggedIn()]); ?>
+
+<?php if (!empty($holdings['blocks'])):?>
+  <div id="account-block-msg" class="alert alert-danger">
+    <?=$this->transEsc('account_block_options_missing', ['%%details%%' => implode('; ', $holdings['blocks'])]) ?>
+  </div>
+<?php endif; ?>
+
+<?=($offlineMode == "ils-offline") ? $this->render('Helpers/ils-offline.phtml', ['offlineModeMsg' => 'ils_offline_holdings_message']) : ''?>
+<table class="table table-striped">
+<tr>
+<th><?=$this->transEsc("holds_library")?></th>
+<th><?=$this->transEsc("holds_status")?></th>
+<th><?=$this->transEsc("holds_placing")?></th>
+</tr>
+<tr>
+<?php 
+//< ?php if (!empty($urls) || $openUrlActive || $doiActive): ? >
+//  <!--h3>< ?=$this->transEsc("Internet")? ></h3-->
+//
+//  
+//  <td>  
+//  < ?=$this->transEsc("Internet")? >:
+//  < ?php if (!empty($urls)): ? >
+//    < ?php foreach ($urls as $current): ? >
+//      <a href="< ?=$this->escapeHtmlAttr($this->proxyUrl($current['url']))? >">< ?=$this->escapeHtml($current['desc'])? ></a><br/>
+//    < ?php endforeach; ? >
+//  < ?php endif; ? >
+//  < ?php if ($openUrlActive): ? >< ?=$openUrl->renderTemplate()? >< ?php endif; ? >
+//  < ?php if ($doiActive): ? >< ?=$doi->renderTemplate()? >< ?php endif; ? >
+//    </td>
+//
+//< ?php endif; ? >
+?>
+
+<?php if (!empty($holdings['electronic_holdings'])): ?>
+  <?=
+    $this->context($this)->renderInContext(
+        'RecordTab/holdingsils/electronic.phtml',
+        ['holdings' => $holdings['electronic_holdings']]
+    );
+  ?>
+<?php endif; ?>
+<?php 
+$nravailable = 0;
+$nrtotal = 0;
+foreach ($holdings['holdings'] ?? [] as $holding){
+        $nrtotal = $nrtotal + count($holding["items"]);
+    foreach ($holding["items"] ?? [] as $item) {
+        if ($item['status'] == "On Shelf"){
+          $nravailable++;
+        }
+    }
+  }
+  printf($this->translate("ils_availability"), $nravailable, $nrtotal);
+
+?>
+
+<?php foreach ($holdings['holdings'] ?? [] as $holding): ?>
+  <?php $holdStatus = $holding["items"]["0"]['status'] ?>
+  <?php $locationTextEsc = $this->transEscWithPrefix('location_', $holding['location']); ?>
+  <?php if ($holding['locationhref'] ?? false): ?>
+    <a href="<?=$this->escapeHtmlAttr($holding['locationhref'])?>" target="_blank"><?=$locationTextEsc?></a>
+  <?php else: ?>
+
+    <td width="40%"><?=$locationTextEsc?></td>
+      <td class="<?= holdsColor($holdStatus) ?>">
+        <?=$this->transEsc($holdStatus)?>
+    </td>
+      <td >
+  <?=(isset($holding["items"][0]["item"]["collection_code_description"])) ? $this->transEsc($holding["items"][0]["item"]["collection_code_description"]) : ''; ?>
+  <?=(isset($holding["items"][0]["item"]["location_description"])) ? ', '.$this->transEsc($holding["items"][0]["item"]["location_description"]) : '' ?>
+  <?=(isset($holding["items"][0]["item"]["callnumber"]) && empty($holding["items"][0]["item"]["callnumber"])) ? ', '.$this->transEsc($holding["items"][0]["item"]["callnumber"]) : ''; ?>    
+    
+    </td>
+    
+
+  </tr>
+  <?php endif; ?>
+<?php endforeach; ?>
+<?php if (!empty($holdings['total']) && $paginator = $this->tab->getPaginator($holdings['total'], $holdings['page'], $holdings['itemLimit'])): ?>
+  <?=$this->paginationControl($paginator, 'Sliding', 'Helpers/pagination.phtml', ['page' => $holdings['page']])?>
+<?php endif; ?>
+<?php $history = $this->driver->getRealTimeHistory(); ?>
+<?php if (is_array($history) && !empty($history)): ?>
+  <h3><?=$this->transEsc("Most Recent Received Issues")?></h3>
+
+    <?php foreach ($history as $row): ?>
+      <tr><td><?=$this->escapeHtml($row['issue'])?></td></tr>
+    <?php endforeach; ?>
+
+<?php endif; ?>
+</table>
+<!-- STOP ./RecordTab/holdingsils.phtml -->

@@ -1,0 +1,8 @@
+<!-- START ./eds/search.phtml -->
+<?php
+  // Load standard settings from the default search results screen:
+  $this->slot('side-facet-caption')->set('Refine Results');
+  $this->paginationOptions = ['disableFirst' => true, 'disableLast' => true];
+  echo $this->render('search/results.phtml');
+?>
+<!-- STOP ./eds/search.phtml -->
