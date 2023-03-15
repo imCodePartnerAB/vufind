@@ -100,6 +100,7 @@
     <table class="table table-noborder table-details">
         <caption class="sr-only"><?=$this->transEsc('Bibliographic Details')?></caption>
         <?php foreach ($coreFields as $current): ?>
+          <!-- AAAAAAAAAAAAAAA <?=$current['label']?> -->
           <?php if ($current['label']=='Language'): ?>
             <tr><td><td><?=$this->transEsc('Language')?>:</td></td></tr>
            <?php 
@@ -118,10 +119,19 @@
           <?php endif; ?> 
         <?php endforeach; ?>
       </table>
+      <br>
+      <br>
+      <!-- TESTA HÄR -->
+      <!-- ?=$this->render('RecordDriver/DefaultRecord/data-allSubjectHeadings.phtml');? -->
+      <br>
+      <br>
+      <br>
       <div id="collapseDetailsLink">
  <a data-toggle="collapse" href="#collapseDetails" role="button" aria-expanded="false" aria-controls="collapseDetails" class="btn btn-link collapsed">
     Visa/dölj mer information
-  </a>
+          </a>
+
+          
 </div>
 <div class="collapse" id="collapseDetails" style="">
 <?=$this->render('RecordTab/description.phtml');?> <!-- Testar att lägga in beskrivning -->

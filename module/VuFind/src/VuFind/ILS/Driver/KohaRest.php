@@ -2612,9 +2612,10 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
      */
     protected function formatMoney($amount)
     {
-        if (null === $this->safeMoneyFormat) {
-            throw new \Exception('SafeMoneyFormat helper not available');
-        }
-        return ($this->safeMoneyFormat)($amount);
+        // if (null === $this->safeMoneyFormat) {
+        //     throw new \Exception('SafeMoneyFormat helper not available');
+        // }
+        // return ($this->safeMoneyFormat)($amount);
+        return $amount;
     }
 }

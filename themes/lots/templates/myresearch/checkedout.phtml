@@ -189,9 +189,9 @@
               <?php endif; ?>
             <?php endif; ?>
 
-            <?php if ($showStatus && isset($ilsDetails['message']) && !empty($ilsDetails['message'])): ?>
-              <div class="alert alert-info"><?=$this->transEsc($ilsDetails['message'])?></div>
-            <?php endif; ?>
+            <!-- SUPMSJO-76 we did not understand ?php if ($showStatus && isset($ilsDetails['message']) && !empty($ilsDetails['message'])): ? >
+              <div class="alert alert-info">< ?=$this->transEsc($ilsDetails['message'])? ></div>
+            < ?php endif; ? -->
             <?php if (isset($ilsDetails['renewable']) && $ilsDetails['renewable'] && isset($ilsDetails['renew_link'])): ?>
               <a href="<?=$this->escapeHtmlAttr($ilsDetails['renew_link'])?>"><?=$this->transEsc('renew_item')?></a>
             <?php endif; ?>

@@ -65,7 +65,8 @@ class SafeMoneyFormat extends AbstractHelper
     {
         // Initialize number formatter:
         $locale = setlocale(LC_MONETARY, 0);
-        $this->formatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
+        $locales = ['se_SV.UTF-8'];
+        $this->formatter = new NumberFormatter($locales, NumberFormatter::CURRENCY);
 
         // Initialize default currency:
         if (null === $defaultCurrency) {

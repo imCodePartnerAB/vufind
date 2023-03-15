@@ -1,2 +1,36 @@
 <!-- START ./RecordDriver/DefaultRecord/data-allSubjectHeadings.phtml -->
+<?php
+$marc = $this->driver->tryMethod('getMarcReader');
+$lotscfg = $this->config()->get('LOTS');
+$markcodes = $lotscfg->RecordPage->subject_codes;
+
+if (is_object($marc)) {
+    Print('<div style="width: 300px;">'."\r\n".$this->transEsc("Subjects")."\r\n");
+    foreach ($markcodes as $pos) {
+        $posArr = explode(":",$pos);
+        $code = $posArr[0];
+        if (isset($posArr[1]) and $posArr[1][0]=='/' and $posArr[1][strlen($posArr[1])-1]=='/'){
+            $posRegex = $posArr[1];
+        } else {
+            $posRegex = '/[a-zA-Z]/';
+        }
+        $markfields[$code]['marc'] = $marc->getFields($code); //fields        
+        foreach ($markfields[$code]['marc'] as $field) {
+            if (isset($field['subfields'])) {
+                    foreach ($field['subfields'] as $subfield) { //field
+                        if (preg_match($posRegex, $subfield['code'])) {
+                            if (isset($subfield)) {
+                                $subject = trim($subfield['data']);
+                                $a_html = '<div class="subject-line" property="keywords"><a title="%s" href="%s" rel="nofollow">%s</a></div>'."\r\n";
+                               printf($a_html,trim($this->escapeHtmlAttr($subject)),trim($this->record($this->driver)->getLink('subject', $subject)),trim($this->escapeHtml($subfield['data'])));
+                            }
+                        }
+                    }
+                   
+                }
+            }
+    }
+    Print('</div>'."\r\n");
+}
+?>
 <!-- STOP ./RecordDriver/DefaultRecord/data-allSubjectHeadings.phtml -->
