@@ -61,10 +61,18 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
 
             $typeOfCall = 'recover';
             $fields = [
-               'username'      => $username,
-               'sendEmail'     => 'Submit',
-               'language'     => 'sv-SE',
-            ];
+                'username'      => $username,
+                'sendEmail'     => 'Submit',
+                'language'     => 'sv-SE',
+             ];
+ 
+            if(strpos("$username", "@") !== false){
+                    $fields = [
+                        'email'      => $username,
+                        'sendEmail'     => 'Submit',
+                        'language'     => 'sv-SE',
+                    ];
+            } 
             $url = $opacUrl."/cgi-bin/koha/opac-password-recovery.pl";
             $resp =  $this->httpPost($url, $fields, 'POST');
         }
