@@ -109,7 +109,7 @@
             foreach ($fields as $field) {
               foreach ($field['subfields'] as $subfield) {
                 if ($subfield['code'] !== 'h') {
-                  echo('<tr><td>&nbsp;&nbsp;'.$this->transEsc($subfield['data']).'</td></tr>');
+                  echo('<tr><td>&nbsp;&nbsp;'.$this->transEsc($this->transEsc($subfield['data'])).'</td></tr>');
                 }
               }
             }

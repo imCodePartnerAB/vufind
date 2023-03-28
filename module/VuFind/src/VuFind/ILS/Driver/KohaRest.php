@@ -34,7 +34,6 @@ use VuFind\Date\DateException;
 use VuFind\Exception\AuthToken as AuthTokenException;
 use VuFind\Exception\ILS as ILSException;
 use VuFind\View\Helper\Root\SafeMoneyFormat;
-use VuFind\Db\Row\User;
 
 /**
  * VuFind Driver for Koha, using REST API
@@ -51,7 +50,7 @@ use VuFind\Db\Row\User;
  * @link     https://vufind.org/wiki/development:plugins:ils_drivers Wiki
  */
 class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
-\VuFind\Db\Table\DbTableAwareInterface,
+    \VuFind\Db\Table\DbTableAwareInterface,
     \VuFindHttp\HttpServiceAwareInterface,
     \VuFind\I18n\Translator\TranslatorAwareInterface,
     \Laminas\Log\LoggerAwareInterface
@@ -374,8 +373,8 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
 //    }   
 
     public function getHolding($id, array $patron = null, array $options = [])
-    {    
-         return $this->getItemStatusesForBiblio($id, $patron);
+    {
+        return $this->getItemStatusesForBiblio($id, $patron);
     }
 
     /**
@@ -563,11 +562,10 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
         }
 
         $result = $result['data'];
-        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username); 
+        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username);
         if (isset($dbUser) && empty($dbUser->home_library)) {
             $dbUser->changeHomeLibrary($result['library_id']);
         }
-
         return [
             'id' => $result['patron_id'],
             'firstname' => $result['firstname'],
@@ -730,6 +728,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     {
         return $this->getTransactions($patron, $params, true);
     }
+
 
     /**
      * Get Patron Holds
@@ -2612,10 +2611,12 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
      */
     protected function formatMoney($amount)
     {
-        // if (null === $this->safeMoneyFormat) {
-        //     throw new \Exception('SafeMoneyFormat helper not available');
-        // }
-        // return ($this->safeMoneyFormat)($amount);
-        return $amount;
+        # LOTS  SafeMoney does not work
+        if (isset($this->config['LOTS']['bypasSafeMoneyFormat']) && $this->config['LOTS']['bypasSafeMoneyFormat']) {
+            return $amount;
+        } elseif (null === $this->safeMoneyFormat) {
+            throw new \Exception('SafeMoneyFormat helper not available');
+        }
+        return ($this->safeMoneyFormat)($amount);
     }
 }
