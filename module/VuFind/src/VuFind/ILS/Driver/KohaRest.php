@@ -1,5 +1,12 @@
 <?php
 /**
+ * LOTS Changes
+ *
+ * 2021-12
+ * Mostly changes to get more data for templates to access.
+ */
+
+/**
  * VuFind Driver for Koha, using REST API
  *
  * PHP version 7
@@ -363,19 +370,9 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-
-//    public function getConsortialHoldings(
-//        $id,
-//        array $patron = null,
-//        array $ids = null
-//    )
-//    {
-//         return $this->getItemStatusesForBiblio($id, $patron);
-//    }   
-
     public function getHolding($id, array $patron = null, array $options = [])
-    {    
-         return $this->getItemStatusesForBiblio($id, $patron);
+    {
+        return $this->getItemStatusesForBiblio($id, $patron);
     }
 
     /**
@@ -567,7 +564,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
         if (isset($dbUser) && empty($dbUser->home_library)) {
             $dbUser->changeHomeLibrary($result['library_id']);
         }
-
         return [
             'id' => $result['patron_id'],
             'firstname' => $result['firstname'],
