@@ -172,8 +172,9 @@ class Matomo extends \Laminas\View\Helper\AbstractHelper
         } else {
             $code = $this->trackPageView();
         }
-
-        $code = str_replace('%%USER%%', $params['username'], $code);
+        if (isset($params['username'])) {
+          $code = str_replace('%%USER%%', $params['username'], $code);
+        }
         $inlineScript = $this->getView()->plugin('inlinescript');
         return $inlineScript(\Laminas\View\Helper\HeadScript::SCRIPT, $code, 'SET');
     }

@@ -1,0 +1,27 @@
+<?php
+
+use Laminas\Log\Writer\Noop;
+    #Lots extention to recover password template for
+    #LOTS\Controller\ForgotPasswordController
+    
+    
+    #ini_set("xdebug.var_display_max_children", '-1');
+    #ini_set("xdebug.var_display_max_data", '-1');
+    #ini_set("xdebug.var_display_max_depth", '-1');
+    #echo $typeOfCall;
+    #var_dump($message);
+    #var_dump($resp);
+    #
+    # message and typeOfCall is set in the controller
+    # and determines what response the user gets
+    echo $message;
+    if ($typeOfCall == 'home') {
+        echo $this->render('forgotpassword/whatuser.phtml');
+    } elseif ($typeOfCall=='warning') {
+        echo $this->render('forgotpassword/whatuser.phtml');
+    } elseif ($typeOfCall=='recover') {
+    } elseif ($typeOfCall=='resend') {
+        # Nothing to do, we do not want any more information
+        # than the message when we are on resend.
+    }
+?>

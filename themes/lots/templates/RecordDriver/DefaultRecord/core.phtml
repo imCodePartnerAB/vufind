@@ -57,6 +57,12 @@
         </span>
       <?php endif; ?>
 
+      <?php /* Display rating if enabled: */ ?>
+      <?php if ($this->record($this->driver)->isRatingEnabled()): ?>
+        <?=$this->record($driver)->renderTemplate('rating.phtml')?>
+      <?php endif; ?>
+
+
       <?php // if you have a preview tab but want to move or remove the preview link
          // from this area of the record view, this can be split into
          // getPreviewData() (should stay here) and
@@ -137,9 +143,15 @@
 <?php $holdingTitleHold = $this->driver->tryMethod('getRealTimeTitleHold'); if (!empty($holdingTitleHold)): ?>
     <a class="placehold" data-light-box title="<?=$this->transEscAttr('request_place_text')?>" href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holdingTitleHold))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('title_hold_place')?></a>
 <?php else: ?>
+  <?php if ($this->auth()->isLoggedIn()): ?>
+    <div class="alert alert-info">
+            <?=$this->translate('no_rights_to_hold')?>
+    </div>
+  <?php else: ?>
     <div class="alert alert-info">
             <?=$this->translate("hold_profile_html", ['%%url%%' => $this->escapeHtmlAttr($this->recordLinker()->getTabUrl($this->driver, 'Holdings', ['catalogLogin' => 'true']))])?>
     </div>
+  <?php endif; ?>
 <?php endif; ?>
      <?php if ($this->userlist()->getMode() !== 'disabled'): ?>
         <?php if ($this->permission()->allowDisplay('feature.Favorites')): ?>
