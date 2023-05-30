@@ -859,7 +859,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function kUpLgetPicocations($patron = false, $holdDetails = null)
+    public function getPickUpLocations($patron = false, $holdDetails = null)
     {
         $bibId = $holdDetails['id'] ?? null;
         $itemId = $holdDetails['item_id'] ?? false;
