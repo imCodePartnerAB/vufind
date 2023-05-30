@@ -7,6 +7,7 @@ $config = array (
     array (
       'LOTS\\Controller\\MyResearchController' => 'VuFind\\Controller\\AbstractBaseFactory',
       'LOTS\\Controller\\ForgotPasswordController' => 'VuFind\\Controller\\AbstractBaseFactory',
+      'LOTS\\Controller\\SuggestionsController' => 'VuFind\\Controller\\AbstractBaseFactory',
     ),
     'aliases' => 
     array (
@@ -14,6 +15,8 @@ $config = array (
       'myresearch' => 'LOTS\\Controller\\MyResearchController',
       'ForgotPassword' => 'LOTS\\Controller\\ForgotPasswordController',
       'forgotpassword' => 'LOTS\\Controller\\ForgotPasswordController',
+      'Suggestions' => 'LOTS\\Controller\\SuggestionsController',
+      'suggestions' => 'LOTS\\Controller\\SuggestionsController',
     ),
   ),
   'service_manager' => 
