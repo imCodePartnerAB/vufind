@@ -1,90 +1,28 @@
 <?php
 use Laminas\Log\Writer\Noop;
 
-echo 'Title: '.$title.'<br>';
-echo 'Author: '.$author.'<br>';
-echo 'copyrightdate: '.$copyrightdate.'<br>';
-echo 'isbn: '.$isbn.'<br>';
-echo 'publishercode: '.$publishercode.'<br>';
-echo 'collectiontitle: '.$collectiontitle.'<br>';
-echo 'place: '.$place.'<br>';
-echo 'quantity: '.$quantity.'<br>';
-echo 'itemtype: '.$itemtype.'<br>';
-echo 'branchcode: '.$branchcode.'<br>';
-echo 'note: '.$note.'<br>';
+// echo 'Title: '.$title.'<br>';
+// echo 'Author: '.$author.'<br>';
+// echo 'copyrightdate: '.$copyrightdate.'<br>';
+// echo 'isbn: '.$isbn.'<br>';
+// echo 'publishercode: '.$publishercode.'<br>';
+// echo 'collectiontitle: '.$collectiontitle.'<br>';
+// echo 'place: '.$place.'<br>';
+// echo 'quantity: '.$quantity.'<br>';
+// echo 'itemtype: '.$itemtype.'<br>';
+// echo 'branchcode: '.$branchcode.'<br>';
+// echo 'note: '.$note.'<br>';
 
-echo 'ret_http: '.$ret_http.'<br>';
+// echo 'ret_http: '.$ret_http.'<br>';
 
-echo 'http_data: '.$http_data.'<br>';
-
+//echo 'http_data: '.$http_data.'<br>';
+ if (!empty($title)) {
+    echo $this->render('suggestions/done.phtml');
+    //exit;
+ } else {
+    echo $this->render('suggestions/suggest.phtml');
+    //exit;
+ }
 ?>
-<div id="usersuggestions" class="maincontent">
-    <h1>Dina inköpsförslag</h1>
-    <h2>Ange ett nytt inköpsförslag</h2>
-    <p>Fyll i formuläret för att lämna ett inköpsförslag. Biblioteket kommer att underrätta dig via e-post när ditt förslag behandlas.</p>
-    <p>Bara titeln (rödmarkerad) är obligatorisk, men ju mer information du anger desto lättare blir det för bibliotekspersonalen att hitta det du vill ha. I fältet "Kommentarer" kan du ange ytterligare information.</p>
+
     
-    <form action="#" method="post" id="add_suggestion_form">
-        <fieldset class="rows">
-            <ol>
-                <li>
-                    <label for="title" class="required">Titel:</label>
-                    <input type="text" id="title" name="title" class="span6" maxlength="255" value="" required="required" />
-                    <span class="required">Obligatoriskt</span>
-                </li>
-                <li>
-                    <label for="author">Författare:</label>
-                    <input type="text" id="author" name="author" class="span6" maxlength="80" value="" />
-                </li>
-                <li>
-                    <div title="Copyright eller publikationsår, exempelvis: 2016">
-                        <label for="copyrightdate">Utgivningsår:</label>
-                        <input type="text" id="copyrightdate" name="copyrightdate" pattern="[12]\d{3}" size="4" maxlength="4" value="" />
-                    </div>
-                </li>
-                <li>
-                    <label for="isbn">Standardnummer (ISBN, ISSN eller annat):</label>
-                    <input type="text" id="isbn" name="isbn" maxlength="80" value="" />
-                </li>
-                <li>
-                    <label for="publishercode">Förläggare:</label>
-                    <input type="text" id="publishercode" name="publishercode" class="span6" maxlength="80" value="" />
-                </li>
-                <li>
-                    <label for="collectiontitle">Samlingstitel:</label>
-                    <input type="text" id="collectiontitle" name="collectiontitle" class="span6" maxlength="80" value="" />
-                </li>
-                <li>
-                    <label for="place">Förlagsort:</label>
-                    <input type="text" id="place" name="place" maxlength="80" value="" />
-                </li>
-                <li id="opac-suggestion-quantity">
-                    <label for="quantity">Antal:</label>
-                    <input type="text" id="quantity" name="quantity" maxlength="4" size="4" value="" />
-                </li>
-                <li>
-                    <label for="itemtype">Exemplartyp:</label>
-                    <input type="text" id="itemtype" name="itemtype" size="20" value="" class="" />
-                </li>
-                <li>
-                    <label for="branch">Bibliotek:</label>
-                    <select name="branchcode" id="branch">
-                        <?php foreach ($libraries as $library): ?>
-                            <option value="<?php echo $library->library_id; ?>"><?php echo $library->name; ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </li>
-                <li>
-                    <label for="note">Kommentarer:</label>
-                    <textarea name="note" id="note" rows="5" cols="40"></textarea>
-                </li>
-                <!-- Add a hidden 'negcap' field -->
-                <!-- li id="negcap" style="position: absolute; left: -2000px;">
-                    negcap <input type="text" name="negcap" />
-                </li-->
-            </ol>
-        </fieldset>
-        <fieldset class="action">
-            <input class="btn btn-primary" type="submit" name="sendEmail" value="<?=$this->transEsc('Submit')?>">
-        </fieldset>
-    </form>
