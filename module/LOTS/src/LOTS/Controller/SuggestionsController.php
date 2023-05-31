@@ -26,21 +26,33 @@ class SuggestionsController extends \VuFind\Controller\AbstractBase implements
         # Geting LOTS.ini file for reading config.
         $config = $this->getConfig('LOTS');
         $anonymous = $config->Suggestions->allowAnonymous;
-        
-        if (!$anonymous == true) {
-            $user = $this->getUser();
-            if ($user == false) {
-                return $this->forceLogin();
-            }
+
+        $userid=null;
+        $user = $this->getUser();
+        if ($user == false and $anonymous == false) {
+            return $this->forceLogin();
+        } elseif ($user == false and $anonymous == true) {
+            $userid=null;
+        } else {
+            $userid=$user->cat_id;
         }
+
         
         //Get the OAuth2 token
         $token=$this->getOAuth2Token(false);
 
-        //Get the libraries json and stort it by name
+        //Get the libraries json
         $test_json = $this->json_http("GET","/libraries",$token);
         $libraries = json_decode($test_json);
 
+        //Filter libraries
+        $librariesToRemove = explode(',', $config->Suggestions->librariesToRemove);
+
+        $libraries = array_filter($libraries, function($library) use ($librariesToRemove) {
+            return !in_array($library->library_id, $librariesToRemove);
+        });
+
+        //Sort libraries by name
         usort($libraries, function($a, $b) {
             return strcmp($a->name, $b->name);
         });
@@ -58,6 +70,7 @@ class SuggestionsController extends \VuFind\Controller\AbstractBase implements
         $note = $this->params()->fromPost('note');
 
         $data = array();
+        $ret_http = "";
         if (empty($title) != true) {
             $data = array(
                 "title" => $title,
@@ -71,7 +84,7 @@ class SuggestionsController extends \VuFind\Controller\AbstractBase implements
                 "item_type" => $itemtype,
                 "library_id" => $branchcode,
                 "note" => $note,
-                "suggested_by" => 1111
+                "suggested_by" => $userid
             );
             
             $jsonData = json_encode($data);

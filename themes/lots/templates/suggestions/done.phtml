@@ -1,0 +1,60 @@
+<?php 
+#echo 'http_data: '.$http_data.'<br>';
+$http_data = json_decode($http_data, true);
+?>
+
+<div id="usersuggestions">
+	<h1><?=$this->transEsc('suggestion_done_header1') ?></h1>
+
+	<table class="table table-sm table-borderless table-striped">
+		<tbody>
+		<tr>
+			<th><?=$this->transEsc('suggest_title')?></th>
+			<td><?= $http_data['title']; ?></td>
+		</tr>
+		<tr>
+			<th><?=$this->transEsc('suggest_author')?></th>
+			<td><?= $http_data['author']; ?></td>
+		</tr>
+		<tr>
+			<th><?=$this->transEsc('suggest_copyrightdate')?></th>
+			<td><?= $http_data['publication_year']; ?></td>
+		</tr>
+		<tr>
+			<th><?=$this->transEsc('suggest_isbn')?></th>
+			<td><?= $http_data['isbn']; ?></td>
+		</tr>
+		<tr>
+			<th><?=$this->transEsc('suggest_publishercode')?></th>
+			<td><?= $http_data['publisher_code']; ?></td>
+		</tr>
+		<tr>
+			<th><?=$this->transEsc('suggest_collectiontitle')?></th>
+			<td><?= $http_data['collection_title']; ?></td>
+		</tr>
+		<tr>
+			<th><?=$this->transEsc('suggest_place')?></th>
+			<td><?= $http_data['publication_place']; ?></td>
+		</tr>
+		<tr>
+			<th><?=$this->transEsc('suggest_quantity')?></th>
+			<td><?= $http_data['quantity']; ?></td>
+		</tr>
+		<tr>
+			<th><?=$this->transEsc('suggest_itemtype')?></th>
+			<td><?= $http_data['item_type']; ?></td>
+		</tr>
+		<?php foreach ($libraries as $library): if ($http_data['library_id'] == $library->library_id): ?>
+		<tr>
+			<th><?=$this->transEsc('suggest_branchcode')?></th>
+			<td><?= $library->name; ?> (<?= $http_data['library_id']; ?>)</td>
+		</tr>
+		<?php endif; endforeach; ?>
+
+		<tr>
+			<th><?=$this->transEsc('suggest_note')?></th>
+			<td><?= $http_data['note']; ?></td>
+		</tr>
+		</tbody>
+	</table>
+</div>
