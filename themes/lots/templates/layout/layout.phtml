@@ -5,62 +5,80 @@
   // Set default value if necessary:
     #$account = $this->auth()->getManager();
     $matomoparrams['url'] = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-    if ($this->auth()->isLoggedIn()) {
-        $user = $this->auth()->isLoggedIn();
-        $matomoparrams['username']=$user["username"];
-        setrawcookie("currentVufindUserHoldLibrary", $user["home_library"], 0, "/");
-        setrawcookie("currentVufindUser", $user["username"], 0, "/");
-        setcookie("currentVufindUserFirstName", $user["firstname"], 0, "/");
-        setcookie("currentVufindUserLastName", $user["lastname"], 0, "/");
-
-        $logedin_json='{"logedin":"true", "firstname": "'.$user["firstname"].'" , "lastname": "'.$user["lastname"].'", "username": "'.$user["username"].'", "library": "'.$user["home_library"].'"}';
+    if ($this->auth()->isLoggedIn()) 
+    {
+      $user = $this->auth()->isLoggedIn();
+      $matomoparrams['username']=$user["username"];
+     setrawcookie("currentVufindUserHoldLibrary",$user["home_library"],0,"/");
+     setrawcookie("currentVufindUser",$user["username"],0,"/");
+     setcookie("currentVufindUserFirstName",$user["firstname"],0,"/");
+     setcookie("currentVufindUserLastName",$user["lastname"],0,"/");
+     
+     $logedin_json='{"logedin":"true", "firstname": "'.$user["firstname"].'" , "lastname": "'.$user["lastname"].'", "username": "'.$user["username"].'", "library": "'.$user["home_library"].'"}';
 
     // setcookie("currentVufindUser");
     // setcookie("currentVufindUserFirstName");
     // setcookie("currentVufindUserLastName");
     } else {
-        $matomoparrams['username']="Unknown";
-        $logedin_json='{"logedin":"false"}';
-        setrawcookie("currentVufindUser", "", 0, "/");
-        setrawcookie("currentVufindUserFirstName", "", 0, "/");
-        setrawcookie("currentVufindUserLastName", "", 0, "/");
+     $matomoparrams['username']="Unknown";
+     $logedin_json='{"logedin":"false"}';
+     setrawcookie("currentVufindUser","",0,"/");
+     setrawcookie("currentVufindUserFirstName","",0,"/");
+     setrawcookie("currentVufindUserLastName","",0,"/");
     }
     if (isset($_GET["logedin"]) or isset($_POST["logedin"])) {
-        header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-        header("Cache-Control: post-check=0, pre-check=0", false);
-        header("Pragma: no-cache");
-        header('Content-Type: application/json;charset=utf-8');
-        print_r($logedin_json);
-        exit();
-    } else {
-    }
+       header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+       header("Cache-Control: post-check=0, pre-check=0", false);
+       header("Pragma: no-cache");
+       header('Content-Type: application/json;charset=utf-8');
+       print_r($logedin_json);
+       exit();
+   } else {
 
-
-   if (isset($_GET["lookfor"])) {
-       $matomoparrams['lookfor']= trim($_GET["lookfor"]);
-   } elseif (isset($_POST["lookfor"])) {
-       $matomoparrams['lookfor']= trim($_POST["lookfor"]);
    }
 
-   if ((isset($this->layout()->breadcrumbs) && $this->layout()->breadcrumbs == false)
-  && !(isset($_GET["logedin"]) or isset($_POST["logedin"]))) {
-       header('Location: '.'/');
-       die();
+   
+   if (isset($_GET["lookfor"])) {
+           $matomoparrams['lookfor']= trim($_GET["lookfor"]);
+   } elseif (isset($_POST["lookfor"])) {
+           $matomoparrams['lookfor']= trim($_POST["lookfor"]);
+   }
+
+   if((isset($this->layout()->breadcrumbs) && $this->layout()->breadcrumbs == false) 
+  && !(isset($_GET["logedin"]) or isset($_POST["logedin"])))
+   {
+      header('Location: '.'/');
+      die();
    }
 ?>
 
 <?php
-$rtl = '';
-if ($this->layout()->rtl) {
-    $rtl = ' rtl';
+set_error_handler(
+    function ($severity, $message, $file, $line) {
+        throw new ErrorException($message, $severity, $severity, $file, $line);
+    }
+);
+$arrContextOptions=array(
+    "ssl"=>array(
+        "verify_peer"=>false,
+        "verify_peer_name"=>false,
+    ),
+);
+
+try {
+  $rtl = '';
+  if ($this->layout()->rtl) $rtl = ' rtl';
+  $bodytxt = '<body class="template-dir-'.$this->templateDir.' template-name-'.$this->templateName.' '.$this->layoutClass('offcanvas-row').$rtl.'">';
+  #$header = file_get_contents('https://arkivet.regionvarmland.se/?cont=pageStart');
+  $header = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageStart', false, stream_context_create($arrContextOptions));
+  $bodytag = str_replace('<body id="startPage">', $bodytxt, $header);
+  echo $bodytag;
 }
-$bodytxt = '<body class="template-dir-'.$this->templateDir.' template-name-'.$this->templateName.' '.$this->layoutClass('offcanvas-row').$rtl.'">';
-$header = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageStart');
-$bodytag = str_replace('<body id="startPage">', $bodytxt, $header);
-echo $bodytag;
-
+catch (Exception $e) {
+    echo $e->getMessage();
+}
 ?>
-
+  
 
 
 
@@ -77,70 +95,75 @@ echo $bodytag;
         $this->layout()->searchbox = $this->render('search/searchbox.phtml');
       }
     ? -->
-<?=$this->context($this)->renderInContext("search/searchbox_lots.phtml", ['ignoreHiddenFilterMemory' => true])?>
+    <?=$this->context($this)->renderInContext("search/searchbox_lots.phtml", ['ignoreHiddenFilterMemory' => true])?>
 
-<nav class="breadcrumbs" aria-label="<?=$this->transEsc('Breadcrumbs') ?>">
-  <div class="container">
-    <?php if ((!isset($this->layout()->showBreadcrumbs) || $this->layout()->showBreadcrumbs == true)
+    <nav class="breadcrumbs" aria-label="<?=$this->transEsc('Breadcrumbs') ?>">
+      <div class="container">
+        <?php if((!isset($this->layout()->showBreadcrumbs) || $this->layout()->showBreadcrumbs == true)
           && !empty($this->layout()->breadcrumbs)
           && $this->layout()->breadcrumbs !== false
         ): ?>
-    <ul class="breadcrumb hidden-print">
-      <?php if (is_array($this->layout()->breadcrumbs)): ?>
-      <?php if (count($this->layout()->breadcrumbs) > 1): ?>
-      <?=$this->render('breadcrumbs/multi.phtml', [
+          <ul class="breadcrumb hidden-print">
+            <?php if(is_array($this->layout()->breadcrumbs)): ?>
+              <?php if(count($this->layout()->breadcrumbs) > 1): ?>
+                <?=$this->render('breadcrumbs/multi.phtml', [
                     'parents' => $this->layout()->breadcrumbs,
                     'title' => $this->layout()->title,
                     'from' => $this->layout()->from
                   ]) ?>
-      <?php else: ?>
-      <?=$this->render('breadcrumbs/default.phtml', [
+              <?php else: ?>
+                <?=$this->render('breadcrumbs/default.phtml', [
                     'parents' => $this->layout()->breadcrumbs,
                     'title' => $this->layout()->title
                   ]) ?>
-      <?php endif; ?>
-      <?php else: ?>
-      <?=$this->layout()->breadcrumbs ?>
-      <?php endif; ?>
-    </ul>
-    <?php endif; ?>
-  </div>
-</nav>
-<div role="main" class="main">
-  <div id="content" class="container">
-    <?=$this->layout()->content ?>
-  </div>
-</div>
+              <?php endif; ?>
+            <?php else: ?>
+              <?=$this->layout()->breadcrumbs ?>
+            <?php endif; ?>
+          </ul>
+        <?php endif; ?>
+      </div>
+    </nav>
+    <div role="main" class="main">
+      <div id="content" class="container">
+        <?=$this->layout()->content ?>
+      </div>
+    </div>
 
 <?php
-$footer = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageEnd');
+try {
+$footer = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageEnd', false, stream_context_create($arrContextOptions));
+#$footer = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageEnd');
+#$footer = file_get_contents('https://arkivet.regionvarmland.se?cont=pageEnd');
 
 
 $footer = str_replace('</body>', '', $footer);
 $footer = str_replace('</html>', '', $footer);
 
 echo $footer;
+}
+catch (Exception $e) {
+    echo $e->getMessage();
+}
+restore_error_handler();
+
 ?>
-<!-- MODAL IN CASE WE NEED ONE -->
-<div id="modal" class="modal fade hidden-print" tabindex="-1" role="dialog" aria-labelledby="modal-title"
-  aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-      <div class="modal-body">
-        <?=$this->transEsc('Loading') ?>...
+    <!-- MODAL IN CASE WE NEED ONE -->
+    <div id="modal" class="modal fade hidden-print" tabindex="-1" role="dialog" aria-labelledby="modal-title" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <div class="modal-body"><?=$this->transEsc('Loading') ?>...</div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-<div class="offcanvas-overlay" data-toggle="offcanvas"></div>
-<?=$this->googleanalytics()?>
-<?=$this->piwik()?>
-<?=$this->matomo($matomoparrams)?>
-<?php foreach ($this->captcha()->js() as $jsInclude):?>
-<?=$this->inlineScript(\Laminas\View\Helper\HeadScript::FILE, $jsInclude, 'SET')?>
-<?php endforeach; ?>
-</body>
-
+    <div class="offcanvas-overlay" data-toggle="offcanvas"></div>
+    <?=$this->googleanalytics()?>
+    <?=$this->piwik()?>
+    <?=$this->matomo($matomoparrams)?>
+    <?php foreach ($this->captcha()->js() as $jsInclude):?>
+      <?=$this->inlineScript(\Laminas\View\Helper\HeadScript::FILE, $jsInclude, 'SET')?>
+    <?php endforeach; ?>
+    </body>
 </html>
 <!-- STOP ./layout/layout.phtml -->
