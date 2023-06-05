@@ -118,9 +118,10 @@
         <?php endforeach; ?>
       </table>
       <div id="collapseDetailsLink">
- <a data-toggle="collapse" href="#collapseDetails" role="button" aria-expanded="false" aria-controls="collapseDetails" class="btn btn-link collapsed">
-    Visa/dölj mer information
-  </a>
+
+<!-- added data-allSubjectHeadings.phtml VFM-44 -->
+<?php echo $this->render('RecordDriver/DefaultRecord/data-allSubjectHeadings.phtml');  ?>
+
 </div>
 <div class="collapse" id="collapseDetails" style="">
 <?=$this->render('RecordTab/description.phtml');?> <!-- Testar att lägga in beskrivning -->
