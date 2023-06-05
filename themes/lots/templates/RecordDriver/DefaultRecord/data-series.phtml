@@ -4,7 +4,7 @@
      name.  We should account for both cases to maximize compatibility. */ ?>
   <?php if (is_array($field)): ?>
     <?php if (!empty($field['name'])): ?>
-      <a href="<?=$this->record($this->driver)->getLink('series', $field['name'])?>"><?=$this->escapeHtml($field['name'])?></a>
+        <?=$this->escapeHtml($field['name'])?>
       <?php if (!empty($field['number'])): ?>
         <?=$this->escapeHtml($field['number'])?><?= $this->transEsc('PostSeriesNumber') == "PostSeriesNumber" ? "" : $this->transEsc('PostSeriesNumber') ?>
       <?php endif; ?>
