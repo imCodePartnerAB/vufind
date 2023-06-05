@@ -73,9 +73,9 @@
   <?php
     $out="";
     if ($this->driver->getSubtitle() == $this->driver->getTitleSection()) {
-        $out = $this->driver->getSubtitle();
+        $out = str_replace(',','',$this->driver->getSubtitle());
     } else {
-        $out = $this->driver->getSubtitle() . ' ' . $this->driver->getTitleSection();
+        $out = str_replace(',','',$this->driver->getSubtitle() . ' ' . $this->driver->getTitleSection());
     }
    ?>
     <h1 property="name"><?=$this->escapeHtml($this->driver->getShortTitle() . ' ' . $out)?></h1>
