@@ -43,4 +43,14 @@ function printDataValues($array,$url) {
     return $return;
 }
 
+
+function echoTableData($label, $value) {
+    if (strlen($value) > 0) {
+        echo '<tr>';
+        echo '<th width="150px;">' . $label . ':</th>';
+        echo '<td>' . $value . '</td>';
+        echo '</tr>';
+    }
+}
+
 ?>
