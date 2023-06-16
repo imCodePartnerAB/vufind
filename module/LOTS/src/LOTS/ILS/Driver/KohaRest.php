@@ -1,6 +1,8 @@
 <?php
 
 namespace LOTS\ILS\Driver;
+use VuFind\Exception\ILS as ILSException;
+use VuFind\View\Helper\Root\SafeMoneyFormat;
 
 class KohaRest extends \VuFind\ILS\Driver\KohaRest
 {
@@ -167,5 +169,192 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
             throw new \Exception('SafeMoneyFormat helper not available');
         }
         return ($this->safeMoneyFormat)($amount);
+    }
+
+
+    public function updateHolds(
+        array $holdsDetails,
+        array $fields,
+        array $patron
+    ): array {
+        $results = [];
+        foreach ($holdsDetails as $requestId) {
+            $updateFields = [];
+            // Suspension (bool) has its own endpoint, so we need to distinguish
+            // between the cases
+            if (isset($fields['frozen'])) {
+                if ($fields['frozen']) {
+                    if (isset($fields['frozenThrough'])) {
+                        $updateFields['suspended_until']
+                        = date('c', $fields['frozenThroughTS'] . ' 23:59:59'); //(rfc3339) else KOHA give internal error
+                        #= date('Y-m-d', $fields['frozenThroughTS']) . ' 23:59:59';
+                        $result = false;
+                    } else {
+                        $result = $this->makeRequest(
+                            [
+                                'path' => ['v1', 'holds', $requestId, 'suspension'],
+                                'method' => 'POST',
+                                'errors' => true
+                            ],
+                            true
+                        );
+                        $results[$requestId]['success'] = empty($results[$requestId]['status']);
+                    }
+                } else {
+                    $result = $this->makeRequest(
+                        [
+                            'path' => ['v1', 'holds', $requestId, 'suspension'],
+                            'method' => 'DELETE',
+                            'errors' => true
+                        ]
+                    );
+                }
+                if ($result && $result['code'] >= 300) {
+                    $results[$requestId]['status']
+                        = $result['data']['error'] ?? 'hold_error_update_failed';
+                }
+            }
+            if (empty($results[$requestId]['errors'])) {
+                if (isset($fields['pickUpLocation'])) {
+                    $updateFields['pickup_library_id'] = $fields['pickUpLocation'];
+                }
+                if ($updateFields) {
+                    $result = $this->makeRequest(
+                        [
+                            'path' => ['v1', 'holds', $requestId],
+                            'method' => 'PUT',
+                            'json' => $updateFields,
+                            'errors' => true
+                        ]
+                    );
+                    if ($result['code'] >= 300) {
+                        $results[$requestId]['status']
+                            = $result['data']['error'] ?? 'hold_error_update_failed';
+                    }
+                }
+            }
+
+            $results[$requestId]['success'] = empty($results[$requestId]['status']);
+        }
+
+        return $results;
+    }    
+
+    protected function makeRequest($request, $dojson = false)
+    {
+        // Set up the request
+        $apiUrl = $this->config['Catalog']['host'] . '/';
+
+        // Handle the simple case of just a path in $request
+        if (is_string($request) || !isset($request['path'])) {
+            $request = [
+                'path' => $request
+            ];
+        }
+
+        if (is_array($request['path'])) {
+            $apiUrl .= implode('/', array_map('urlencode', $request['path']));
+        } else {
+            $apiUrl .= $request['path'];
+        }
+
+        $client = $this->createHttpClient($apiUrl);
+        $client->getRequest()->getHeaders()
+            ->addHeaderLine('Authorization', $this->getOAuth2Token());
+
+        if ($dojson) {
+            $client->getRequest()->getHeaders()
+                ->addHeaderLine(
+                    'Content-Type',
+                    'application/json'
+                );
+        }
+
+        // Add params
+        if (!empty($request['query'])) {
+            $client->setParameterGet($request['query']);
+        }
+        if (!empty($request['form'])) {
+            $client->setParameterPost($request['form']);
+        } elseif (!empty($request['json'])) {
+            $client->getRequest()->setContent(json_encode($request['json']));
+            $client->getRequest()->getHeaders()->addHeaderLine(
+                'Content-Type',
+                'application/json'
+            );
+        }
+
+        if (!empty($request['headers'])) {
+            $requestHeaders = $client->getRequest()->getHeaders();
+            foreach ($request['headers'] as $name => $value) {
+                $requestHeaders->addHeaderLine($name, [$value]);
+            }
+        }
+
+        // Send request and retrieve response
+        $method = $request['method'] ?? 'GET';
+        $startTime = microtime(true);
+        $client->setMethod($method);
+
+        try {
+            $response = $client->send();
+        } catch (\Exception $e) {
+            $this->logError(
+                "$method request for '$apiUrl' failed: " . $e->getMessage()
+            );
+            throw new ILSException('Problem with Koha REST API.');
+        }
+
+        // If we get a 401, we need to renew the access token and try again
+        if ($response->getStatusCode() == 401) {
+            $client->getRequest()->getHeaders()
+                ->addHeaderLine('Authorization', $this->getOAuth2Token(true));
+
+            try {
+                $response = $client->send();
+            } catch (\Exception $e) {
+                $this->logError(
+                    "$method request for '$apiUrl' failed: " . $e->getMessage()
+                );
+                throw new ILSException('Problem with Koha REST API.');
+            }
+        }
+
+        $result = $response->getBody();
+
+        $fullUrl = $apiUrl;
+        if ($method == 'GET') {
+            $fullUrl .= '?' . $client->getRequest()->getQuery()->toString();
+        }
+        $this->debug(
+            '[' . round(microtime(true) - $startTime, 4) . 's]'
+            . " $method request $fullUrl" . PHP_EOL . 'response: ' . PHP_EOL
+            . $result
+        );
+
+        // Handle errors as complete failures only if the API call didn't return
+        // valid JSON that the caller can handle
+        $decodedResult = json_decode($result, true);
+        if (empty($request['errors']) && !$response->isSuccess()
+            && (null === $decodedResult || !empty($decodedResult['error'])
+            || !empty($decodedResult['errors']))
+        ) {
+            $params = $method == 'GET'
+                ? $client->getRequest()->getQuery()->toString()
+                : $client->getRequest()->getPost()->toString();
+            $this->logError(
+                "$method request for '$apiUrl' with params '$params' and contents '"
+                . $client->getRequest()->getContent() . "' failed: "
+                . $response->getStatusCode() . ': ' . $response->getReasonPhrase()
+                . ', response content: ' . $response->getBody()
+            );
+            throw new ILSException('Problem with Koha REST API.');
+        }
+
+        return [
+            'data' => $decodedResult,
+            'code' => (int)$response->getStatusCode(),
+            'headers' => $response->getHeaders()->toArray(),
+        ];
     }
 }
