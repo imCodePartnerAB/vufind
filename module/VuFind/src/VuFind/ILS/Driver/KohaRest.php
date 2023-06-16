@@ -6,7 +6,7 @@
  * Mostly changes to get more data for templates to access.
  */
 
-/**
+/*
  * VuFind Driver for Koha, using REST API
  *
  * PHP version 7
