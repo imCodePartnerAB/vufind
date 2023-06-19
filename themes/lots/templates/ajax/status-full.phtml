@@ -1,0 +1,90 @@
+<?php
+$id = $this->statusItems[0]['id'];
+$holdings = $this->statusItems;
+$summary = array_pop($holdings);
+//echo __FILE__." summary: <pre style='font-size:10px;'>".print_r($summary,1)."</pre>";
+$onlyUnknownStatuses = true;
+$holdingsConfig = $this->ils()->getConfig('Holdings', [$id]);
+
+$itemsTotal = count($this->statusItems) ?? '';
+//$availableTotal = $summary['available'];
+$availableTotal = $summary['item']['availability']['available'];
+//echo "monk: ".$availableTotal;
+$reservationsTotal     = $summary['reservations'] ?? null;
+//$reservationsTotal     = $summary['reserve'] ?? null;
+$orderedTotal     = $summary['ordered'] ?? null;
+$locations = $summary['locations'] ?? null;
+
+?>
+<table class="table table-condensed">
+<?php 
+/*
+
+Kalle:
+I think that the most important part is that the information specified is displayed. 
+That is:
+
++Number of items
++Which signum/callnumber
++Number of available items.
+*/
+?>
+
+  <tr>
+    <th><?=$this->transEsc('Call Number')?></th>
+    <?php if ($availableTotal>0) { ?>
+    <th><?=$this->transEsc('Available items')?></th>
+    <?php } ?>
+  </tr>
+  <?php $i = 0; foreach ($this->statusItems as $item): ?>
+    <?php if (++$i == 5) break; // Show no more than 5 items ?>
+    <?php $callNumPrefix = !empty($item['callnumber_prefix']) ? $item['callnumber_prefix'] . ' ' : '';?>
+    <tr>
+      <td class="fullCallnumber">
+        <?php if ($this->callnumberHandler): ?>
+          <a href="<?=$this->url('alphabrowse-home') ?>?source=<?=$this->escapeHtmlAttr($this->callnumberHandler) ?>&amp;from=<?=$this->escapeHtmlAttr($item['callnumber']) ?>"><?=$this->escapeHtml($callNumPrefix)?><?=$this->escapeHtml($item['callnumber'])?></a>
+        <?php else: ?>
+          <?=$this->escapeHtml($callNumPrefix)?><?=$this->escapeHtml($item['callnumber'])?>
+        <?php endif; ?>
+      </td>
+      <?php if ($availableTotal>0) { ?>
+      <td class="fullAvailability"> 
+        <?=$availableTotal?>
+      </td>
+      <?php } ?>
+    </tr>
+
+  <?php endforeach; ?>
+<?php if (count($this->statusItems) > 5): ?>
+  <tr><td colspan="3"><a href="<?=$this->url('record', ['id' => $this->statusItems[0]['id']])?>"><?=count($this->statusItems) - 5?> <?=$this->transEsc('more')?> ...</a></td></tr>
+<?php endif; ?>
+</table>
+
+<table style="float: right;">
+    <th style="width:130px;"><?=$this->transEsc('Number of items')?></th>
+      <td style="width:30px; float:right;">
+          <?=$itemsTotal?>
+          <?php /*$locationText*/ ?>
+      </td>
+</table>
+
+<?php 
+/*
+<style>
+.info {
+    color: #3f3f3f;
+    float: right;
+    margin-top: 0.5em;
+}
+</style>
+<span class="info">
+    <?php if (!empty($reservationsTotal)): ?>
+        <span class="reservations"><?=$this->translate('status_requests_html', ['%%count%%' => $reservationsTotal]);?></span><br/>
+    <?php endif; ?>
+    <?php if (!empty($itemsTotal) && (!isset($holdingsConfig['display_total_item_count_in_results']) || $holdingsConfig['display_total_item_count_in_results'])): ?>
+        <span class="total"><?=$this->translate('status_items_total_html', ['%%count%%' => $itemsTotal]);?></span>
+    <?php endif; ?>
+</span>
+*/
+?>
+

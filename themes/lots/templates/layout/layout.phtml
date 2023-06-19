@@ -1,60 +1,58 @@
 <!-- START ./layout/layout.phtml -->
-
 <?php
    // use VuFind\Cookie\CookieManager;
   // Set default value if necessary:
     #$account = $this->auth()->getManager();
     $matomoparrams['url'] = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-    if ($this->auth()->isLoggedIn()) 
-    {
-      $user = $this->auth()->isLoggedIn();
-      $matomoparrams['username']=$user["username"];
-     setrawcookie("currentVufindUserHoldLibrary",$user["home_library"],0,"/");
-     setrawcookie("currentVufindUser",$user["username"],0,"/");
-     setcookie("currentVufindUserFirstName",$user["firstname"],0,"/");
-     setcookie("currentVufindUserLastName",$user["lastname"],0,"/");
-     
-     $logedin_json='{"logedin":"true", "firstname": "'.$user["firstname"].'" , "lastname": "'.$user["lastname"].'", "username": "'.$user["username"].'", "library": "'.$user["home_library"].'"}';
+    if ($this->auth()->isLoggedIn()) {
+        $user = $this->auth()->isLoggedIn();
+        $matomoparrams['username']=$user["username"];
+        setrawcookie("currentVufindUserHoldLibrary", $user["home_library"], 0, "/");
+        setrawcookie("currentVufindUser", $user["username"], 0, "/");
+        setcookie("currentVufindUserFirstName", $user["firstname"], 0, "/");
+        setcookie("currentVufindUserLastName", $user["lastname"], 0, "/");
+
+        $logedin_json='{"logedin":"true", "firstname": "'.$user["firstname"].'" , "lastname": "'.$user["lastname"].'", "username": "'.$user["username"].'", "library": "'.$user["home_library"].'"}';
 
     // setcookie("currentVufindUser");
     // setcookie("currentVufindUserFirstName");
     // setcookie("currentVufindUserLastName");
     } else {
-     $matomoparrams['username']="Unknown";
-     $logedin_json='{"logedin":"false"}';
-     setrawcookie("currentVufindUser","",0,"/");
-     setrawcookie("currentVufindUserFirstName","",0,"/");
-     setrawcookie("currentVufindUserLastName","",0,"/");
+        $matomoparrams['username']="Unknown";
+        $logedin_json='{"logedin":"false"}';
+        setrawcookie("currentVufindUser", "", 0, "/");
+        setrawcookie("currentVufindUserFirstName", "", 0, "/");
+        setrawcookie("currentVufindUserLastName", "", 0, "/");
     }
     if (isset($_GET["logedin"]) or isset($_POST["logedin"])) {
-       header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-       header("Cache-Control: post-check=0, pre-check=0", false);
-       header("Pragma: no-cache");
-       header('Content-Type: application/json;charset=utf-8');
-       print_r($logedin_json);
-       exit();
-   } else {
+        header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+        header("Cache-Control: post-check=0, pre-check=0", false);
+        header("Pragma: no-cache");
+        header('Content-Type: application/json;charset=utf-8');
+        print_r($logedin_json);
+        exit();
+    } else {
+    }
 
-   }
 
-   
    if (isset($_GET["lookfor"])) {
-           $matomoparrams['lookfor']= trim($_GET["lookfor"]);
+       $matomoparrams['lookfor']= trim($_GET["lookfor"]);
    } elseif (isset($_POST["lookfor"])) {
-           $matomoparrams['lookfor']= trim($_POST["lookfor"]);
+       $matomoparrams['lookfor']= trim($_POST["lookfor"]);
    }
 
-   if((isset($this->layout()->breadcrumbs) && $this->layout()->breadcrumbs == false) 
-  && !(isset($_GET["logedin"]) or isset($_POST["logedin"])))
-   {
-      header('Location: '.'/');
-      die();
+   if ((isset($this->layout()->breadcrumbs) && $this->layout()->breadcrumbs == false)
+  && !(isset($_GET["logedin"]) or isset($_POST["logedin"]))) {
+       header('Location: '.'/');
+       die();
    }
 ?>
 
 <?php
 $rtl = '';
-if ($this->layout()->rtl) $rtl = ' rtl';
+if ($this->layout()->rtl) {
+    $rtl = ' rtl';
+}
 $bodytxt = '<body class="template-dir-'.$this->templateDir.' template-name-'.$this->templateName.' '.$this->layoutClass('offcanvas-row').$rtl.'">';
 $header = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageStart');
 $bodytag = str_replace('<body id="startPage">', $bodytxt, $header);
@@ -65,7 +63,8 @@ echo $bodytag;
 
 
 
-
+<script src="/vufind/themes/lots/js/truncate.js"></script>
+<script src="/vufind/themes/lots/js/vendor/jsTree/jstree.min.js"></script>
 
 <!--body class="template-dir-<?=$this->templateDir?> template-name-<?=$this->templateName?> <?=$this->layoutClass('offcanvas-row')?><?php if ($this->layout()->rtl): ?> rtl<?php endif; ?>">
     <!- -?php // Set up the search box -- there are three possible cases:
@@ -82,13 +81,13 @@ echo $bodytag;
 
     <nav class="breadcrumbs" aria-label="<?=$this->transEsc('Breadcrumbs') ?>">
       <div class="container">
-        <?php if((!isset($this->layout()->showBreadcrumbs) || $this->layout()->showBreadcrumbs == true)
+        <?php if ((!isset($this->layout()->showBreadcrumbs) || $this->layout()->showBreadcrumbs == true)
           && !empty($this->layout()->breadcrumbs)
           && $this->layout()->breadcrumbs !== false
         ): ?>
           <ul class="breadcrumb hidden-print">
-            <?php if(is_array($this->layout()->breadcrumbs)): ?>
-              <?php if(count($this->layout()->breadcrumbs) > 1): ?>
+            <?php if (is_array($this->layout()->breadcrumbs)): ?>
+              <?php if (count($this->layout()->breadcrumbs) > 1): ?>
                 <?=$this->render('breadcrumbs/multi.phtml', [
                     'parents' => $this->layout()->breadcrumbs,
                     'title' => $this->layout()->title,

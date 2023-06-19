@@ -1,3 +1,4 @@
+<?php //echo "VFM-32: <pre>".print_r($holding,1)."</pre>";  ?>
 <?php if (strlen($holding['barcode'] ?? '') > 0): ?>
   <?php
     $check = $holding['check'] ?? false;
@@ -40,12 +41,10 @@
           <?php if (($holding['requests_placed'] ?? 0) > 0): ?>
             <span><?=$this->transEsc("Requests")?>: <?=$this->escapeHtml($holding['requests_placed'])?></span>
           <?php endif; ?>
-
-
-          <a class="<?=$check ? 'checkRequest' : ''?> placehold" <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['link']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Recall" : "Recall This")?></a>
-
-
-            <?=$this->relais()->renderButtonIfActive($this->driver ?? null)?>
+          <?php if ($holding['link'] ?? false): ?>
+            <a class="<?=$check ? 'checkRequest' : ''?> placehold" <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['link']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Recall" : "Recall This")?></a>
+          <?php endif; ?>
+          <?=$this->relais()->renderButtonIfActive($this->driver ?? null)?>
         <?php endif; ?>
         <?php if (isset($holding['item_notes'])): ?>
           <div class="item-notes">

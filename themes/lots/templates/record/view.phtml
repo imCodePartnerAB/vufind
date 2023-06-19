@@ -18,7 +18,6 @@
     '<li class="active" aria-current="page">' . $this->recordLink()->getBreadcrumb($this->driver) . '</li> ';
   $this->layout()->title = $this->driver->getShortTitle();
 ?>
-
  <?php 
 // TOJSDO Remove
  $holdingTitleHold = $this->driver->tryMethod('getRealTimeTitleHold');
@@ -58,9 +57,55 @@
     <?=$this->flashmessages()?>
     <?=$this->record($this->driver)->getCoreMetadata()?>
 
-
-
-
+    <script>
+        function _swith(name) {
+             if (name=="holdings"){
+               $("#holdings").removeClass("initiallyActive");
+               $("#versions").removeClass("active");
+               $("#details").removeClass("active");
+               $("#holdings").addClass("active");
+               $("#versions").addClass("initiallyActive");
+               $("#details").addClass("initiallyActive");
+               $("#toc").addClass("initiallyActive");
+             }
+             if (name=="details"){
+               $("#details").removeClass("initiallyActive");
+               $("#versions").removeClass("active");
+               $("#holdings").removeClass("active");
+               $("#details").addClass("active");
+               $("#versions").addClass("initiallyActive");
+               $("#holdings").addClass("initiallyActive");
+               $("#toc").addClass("initiallyActive");
+             }
+             if (name=="versions"){
+               $("#versions").removeClass("initiallyActive");
+               $("#holdings").removeClass("active");
+               $("#details").removeClass("active");
+               $("#versions").addClass("active");
+               $("#holdings").addClass("initiallyActive");
+               $("#details").addClass("initiallyActive");
+               $("#toc").addClass("initiallyActive");
+             }
+             if (name=="toc"){
+               $("#toc").removeClass("initiallyActive");
+               $("#versions").removeClass("active");
+               $("#holdings").removeClass("active");
+               $("#details").removeClass("active");
+               $("#toc").addClass("active");
+               $("#version").addClass("initiallyActive");
+               $("#holdings").addClass("initiallyActive");
+               $("#details").addClass("initiallyActive");
+             }
+             console.log('name: ',name);
+             //$("a").css({"background-color":"","color":""});
+             //$("a.active").css({"background-color":"white","color":"black"});
+             console.log("[monk] url hash js: ",window.location.hash);
+             //if (!window.location.hash) { console.clear(); }
+        }
+    </script>
+    <style>
+     a.active:active { color: red !importan; }
+    </style>
 
 
     <?php if (count($this->tabs) > 0): ?>
@@ -72,9 +117,12 @@
               $desc = $obj->getDescription();
               $tabName = preg_replace("/\W/", "-", strtolower($tab));
               $tabClasses = [ 'record-tab', $tabName ];
+              //echo "w: ".$tabName;
+              //echo "u: ".$_SERVER['REQUEST_URI'];
+              //echo "f: ".mb_stripos($_SERVER['REQUEST_URI'],$tabName);
               if (0 === strcasecmp($this->activeTab, $tab)) {
                 if (!$this->loadInitialTabWithAjax || !$obj->supportsAjax()) {
-                  $tabClasses[] = 'active';
+                  //$tabClasses[] = 'active';
                 }
                 $tabClasses[] = 'initiallyActive';
                 $this->layout()->breadcrumbs .= '<li class="active">' . $this->transEsc($desc) . '</li>';
@@ -83,9 +131,9 @@
               if (!$obj->isVisible()) { $tabClasses[] = 'hidden'; }
               if (!$obj->supportsAjax()) { $tabClasses[] = 'noajax'; }
             ?>
-            <li class="<?=implode(' ', $tabClasses)?>" data-tab="<?=$tabName?>"<?php if ($obj->supportsAjax() && in_array($tab, $this->backgroundTabs)):?> data-background<?php endif ?>>
-              <a href="<?=$this->recordLink()->getTabUrl($this->driver, $tab)?>#tabnav"><?=$this->transEsc($desc)?></a>
-            </li>
+            <li class="<?=implode(' ', $tabClasses)?>" id="<?=$tabName?>" data-tab="<?=$tabName?>"<?php if ($obj->supportsAjax() && in_array($tab, $this->backgroundTabs)):?> data-background<?php endif ?>>
+              <a onclick="_swith('<?=$tabName?>')" href="<?=$this->recordLink()->getTabUrl($this->driver, $tab)?>"><?=$this->transEsc($desc)?></a>
+	    </li>
           <?php endforeach; ?>
         </ul>
 
