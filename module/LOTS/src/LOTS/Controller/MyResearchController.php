@@ -1,5 +1,4 @@
 <?php
-
 namespace LOTS\Controller;
 
 class MyResearchController extends \VuFind\Controller\MyResearchController
