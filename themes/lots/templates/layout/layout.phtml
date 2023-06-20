@@ -124,7 +124,7 @@ echo $bodytag;
 </div>
 
 <?php
-$footer = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageEnd, false, stream_context_create($arrContextOptions));
+$footer = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageEnd', false, stream_context_create($arrContextOptions));
 
 
 $footer = str_replace('</body>', '', $footer);
