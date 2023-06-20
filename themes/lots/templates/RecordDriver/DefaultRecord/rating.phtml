@@ -1,15 +1,17 @@
 <?php
-  $ratingData = $this->driver->getRatingData();
-  $translationParams = [
-    '%%rating%%' => $this->localizedNumber($ratingData['rating']),
-    '%%count%%' => $this->localizedNumber($ratingData['count'])
-  ];
-  $addUrlEsc = $this->escapeHtmlAttr($this->recordLinker()->getActionUrl($this->driver, 'AddRating'));
-  #$addUrlEsc = 'https://lots-bin.dev.imcode.com' . $this->recordLinker()->getActionUrl($this->driver, 'AddRating');
-  $countKeys = [
-    0 => 'rating_summary_unrated',
-    1 => 'rating_summary_single',
-  ];
+  $config = $this->config()->get('LOTS');
+  $enableRatings = $config->Ratings->enableRatings;
+  if ($enableRatings) {
+    $ratingData = $this->driver->getRatingData();
+    $translationParams = [
+      '%%rating%%' => $this->localizedNumber($ratingData['rating']),
+      '%%count%%' => $this->localizedNumber($ratingData['count'])
+    ];
+    $addUrlEsc = $this->escapeHtmlAttr($this->recordLinker()->getActionUrl($this->driver, 'AddRating'));
+    $countKeys = [
+      0 => 'rating_summary_unrated',
+      1 => 'rating_summary_single',
+    ];
 ?>
 <div class="rating">
   <div class="rating-average">
@@ -26,3 +28,6 @@
     </span>
   </div>
 </div>
+<?php
+  }
+?>
