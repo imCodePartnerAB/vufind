@@ -357,4 +357,44 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
             'headers' => $response->getHeaders()->toArray(),
         ];
     }
+
+    public function getConfig($function, $params = null)
+    {
+        $transactionHistorySort = $this->lotsConfig->TransactionHistory->sort;
+        $transactionSort = $this->lotsConfig->Transaction->sort;
+        if ('getMyTransactionHistory' === $function) {
+            if (empty($this->config['TransactionHistory']['enabled'])) {
+                return false;
+            }
+            $limit = $this->config['TransactionHistory']['max_page_size'] ?? 100;
+            return [
+                'max_results' => $limit,
+                'sort' => [
+                    '-checkout_date' => 'sort_checkout_date_desc',
+                    '+checkout_date' => 'sort_checkout_date_asc',
+                    '-checkin_date' => 'sort_return_date_desc',
+                    '+checkin_date' => 'sort_return_date_asc',
+                    '-due_date' => 'sort_due_date_desc',
+                    '+due_date' => 'sort_due_date_asc',
+                    '+title' => 'sort_title'
+                ],
+                'default_sort' => $transactionHistorySort
+            ];
+        } elseif ('getMyTransactions' === $function) {
+            $limit = $this->config['Loans']['max_page_size'] ?? 100;
+            return [
+                'max_results' => $limit,
+                'sort' => [
+                    '-checkout_date' => 'sort_checkout_date_desc',
+                    '+checkout_date' => 'sort_checkout_date_asc',
+                    '-due_date' => 'sort_due_date_desc',
+                    '+due_date' => 'sort_due_date_asc',
+                    '+title' => 'sort_title'
+                ],
+                'default_sort' => $transactionSort
+            ];
+        }
+
+        return $this->config[$function] ?? false;
+    }
 }
