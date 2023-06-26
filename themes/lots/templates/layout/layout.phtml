@@ -47,6 +47,17 @@
        header('Location: '.'/');
        die();
    }
+
+   $arrContextOptions=array(
+    "ssl"=>array(
+        "verify_peer"=>false,
+        "verify_peer_name"=>false,
+        'http' => array(
+          'header'=> 'Cookie: gurka=arne\r\n',
+         ),
+    ),
+
+);
 ?>
 
 <?php
@@ -55,7 +66,7 @@ if ($this->layout()->rtl) {
     $rtl = ' rtl';
 }
 $bodytxt = '<body class="template-dir-'.$this->templateDir.' template-name-'.$this->templateName.' '.$this->layoutClass('offcanvas-row').$rtl.'">';
-$header = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageStart');
+$header = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageStart', false, stream_context_create($arrContextOptions));
 $bodytag = str_replace('<body id="startPage">', $bodytxt, $header);
 echo $bodytag;
 
@@ -113,7 +124,7 @@ echo $bodytag;
 </div>
 
 <?php
-$footer = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageEnd');
+$footer = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageEnd', false, stream_context_create($arrContextOptions));
 
 
 $footer = str_replace('</body>', '', $footer);
