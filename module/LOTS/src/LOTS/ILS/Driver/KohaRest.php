@@ -397,4 +397,22 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
 
         return $this->config[$function] ?? false;
     }
+    
+    public function patronLogin($username, $password)
+    {
+
+        $parent_info =  parent::patronLogin($username, $password);
+        if ($parent_info === null) {
+            return null;
+        }
+
+        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username);
+
+        if ($dbUser['email'] != $parent_info['email']) {
+            $dbUser->updateEmail($parent_info['email'],true);
+            $dbUser->save();
+        }
+
+        return $parent_info;
+    }
 }
