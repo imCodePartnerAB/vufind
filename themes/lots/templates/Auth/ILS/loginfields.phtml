@@ -26,10 +26,14 @@
 
 <!-- Added for LOTS LOBININTEG-12 -->
 <?php if ($allowRecreatePassword == 1) {?>
+<div class="forgot_pin_code" >
     <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_forgot"><a href="<?=$this->url('home') ?>ForgotPassword/" ><?=$this->transEsc('Forgot login')?></a></label>
+</div>
 <?php } ?>
 
 <?php if (isset($newPatronUrl)) {?>
+<div class="new_patron_url" >
     <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_newpatron_url"><a href="<?=$newPatronUrl?>" ><?=$this->transEsc('Create new patron')?></a></label>
+</div>
 <?php } ?>
 <?php endif; ?>
