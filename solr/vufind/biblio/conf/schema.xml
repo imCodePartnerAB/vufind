@@ -161,6 +161,9 @@
    <!-- Generic Fields -->
    <field name="language" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="format" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="arb" type="string" indexed="true" stored="true" multiValued="true"/><!-- To test for 952c = ARB for hiding LotsLerum-43-->
+   <field name="arb_test" type="string" indexed="true" stored="true" multiValued="true"/><!-- To test for 952c = ARB for hiding LotsLerum-43-->
+   <field name="format_test" type="string" indexed="true" stored="true" multiValued="true"/><!-- To test for 952y = FJARR och KAPPRUM for hiding LotsLerum-43-->
    <field name="author" type="textProper" indexed="true" stored="true" multiValued="true" termVectors="true"/>
    <field name="author_variant" type="text" indexed="true" stored="true" multiValued="true" termVectors="true"/>
    <field name="author_role" type="string" indexed="true" stored="true" multiValued="true"/>
