@@ -86,6 +86,10 @@ class SuggestionsController extends \VuFind\Controller\AbstractBase implements
                 "note" => $note,
                 "suggested_by" => $userid
             );
+
+            $data = array_filter($data, function($value) {
+                return $value !== null;
+            });
             
             $jsonData = json_encode($data);
 
