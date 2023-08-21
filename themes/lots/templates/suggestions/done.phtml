@@ -31,6 +31,18 @@ function shouldHideField($fieldName, $fieldsToHideArray) {
                     <td><?= $http_data['author']; ?></td>
                 </tr>
             <?php endif; ?>
+            <?php if (!shouldHideField('copyrightdate', $fieldsToHideArray)) : ?>
+                <tr>
+                    <th><?= $this->transEsc('suggest_copyrightdate') ?></th>
+                    <td><?= $http_data['publication_year']; ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!shouldHideField('isbn', $fieldsToHideArray)) : ?>
+                <tr>
+                    <th><?= $this->transEsc('suggest_isbn') ?></th>
+                    <td><?= $http_data['isbn']; ?></td>
+                </tr>
+            <?php endif; ?>
             <?php if (!shouldHideField('publishercode', $fieldsToHideArray)) : ?>
                 <tr>
                     <th><?= $this->transEsc('suggest_publishercode') ?></th>

@@ -43,6 +43,30 @@ function shouldHideField($fieldName, $fieldsToHideArray) {
         </div>
         <?php endif; ?>
 
+        <?php if (!shouldHideField('copyrightdate', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="copyrightdate" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_copyrightdate') ?>
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="copyrightdate" name="copyrightdate" class="form-control form-control-sm" maxlength="80"
+                       value="">
+            </div>
+        </div>
+        <?php endif; ?>
+        
+        <?php if (!shouldHideField('isbn', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="isbn" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_isbn') ?>
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="isbn" name="isbn" class="form-control form-control-sm" maxlength="80"
+                       value="">
+            </div>
+        </div>
+        <?php endif; ?>
+
         <?php if (!shouldHideField('publishercode', $fieldsToHideArray)) : ?>
         <div class="form-group row">
             <label for="publishercode" class="col-sm-4 col-form-label">
