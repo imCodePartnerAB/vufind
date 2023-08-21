@@ -1,5 +1,40 @@
 <!-- START ./RecordDriver/DefaultRecord/core.phtml -->
-<?php $this->metadata()->generateMetatags($this->driver);?>
+<?php 
+  $config = $this->config()->get('LOTS');
+  $showSummaryLength = $config->Record->showSummaryLength;
+  if (!is_numeric($showSummaryLength) && $showSummaryLength<100) {
+    $showSummaryLength = 300;
+  }
+  $showSummary = $config->Record->showSummary;
+  if (!isset($showSummary)) {
+    $showSummary = true;
+  }
+  $showSummaryLink = $config->Record->showSummaryLink;
+  if (!isset($showSummaryLink)) {
+    $showSummaryLink = false;
+  }
+
+//   showCorefields[0] = "Main Author" 
+// showCorefields[1] = "Format" 
+// showCorefields[2] = "Language" 
+// showCorefields[3] = "Published" 
+// showCorefields[3] = "Subjects" 
+
+  $showCorefields = $config->Record->showCorefields;
+  $showCorefields = $showCorefields->toArray();
+  if (!isset($showCorefields)) {
+     $showCorefields = ['nope'];
+  }
+
+ $showCorefieldPrefixes = $config->Record->showCorefieldPrefixes;
+ $showCorefieldPrefixes = $showCorefieldPrefixes->toArray();
+ if (!isset($showCorefieldPrefixes)) {
+    $showCorefieldPrefixes = ['nope'];
+ }
+
+$this->metadata()->generateMetatags($this->driver);
+
+?>
 <div class="media" vocab="http://schema.org/" resource="#record" typeof="<?=$this->driver->getSchemaOrgFormats()?> Product">
   <?php
     $QRCode = $this->record($this->driver)->getQRCode("core");
@@ -84,12 +119,12 @@
     <?php endif; ?>
 
     <?php $summary = $this->driver->getSummary(); $summary = isset($summary[0]) ? $this->escapeHtml($summary[0]) : false; ?>
-    <?php if ($summary): ?>
-      <p><?=$this->truncate($summary, 300)?></p>
+    <?php if ($summary && $showSummary): ?>
+      <p><?=$this->truncate($summary, $showSummaryLength)?></p>
 
-      <!-- ?php if(strlen($summary) > 300): ?>
-        <p><a href='< ?=$this->recordLink()->getTabUrl($this->driver, 'Description')?>#tabnav'>< ?=$this->transEsc('Full description')?></a></p>
-      < ?php endif; ? -->
+      <?php if(strlen($summary) > $showSummaryLength && $showSummaryLink): ?>
+        <p><a href='<?=$this->recordLink()->getTabUrl($this->driver, 'Description')?>#tabnav'><?=$this->transEsc('Full description')?></a></p>
+      <?php endif; ?>
     <?php endif; ?>
 
     <?php if ($this->userlist()->getMode() !== 'disabled'): ?>
@@ -109,34 +144,27 @@
 
     <table class="table table-noborder table-details">
         <caption class="sr-only"><?=$this->transEsc('Bibliographic Details')?></caption>
-        <?php foreach ($coreFields as $current): ?>
-          <?php if ("" != $current['value']): ?>
-              <tr><td><?=$current['value']?></td></tr>
+        <?php foreach ($coreFields as $current):?>
+          <?php if ("" != $current['label']): ?>
+            <?php $showCorefield = in_array($current['label'], $showCorefields); ?>
+            
+
+            <?php if ("" != $current['value'] && $showCorefield): ?>
+                <tr><td><?=$this->transEsc($showCorefieldPrefixes[$current['label']])?> <?=$current['value']?></td></tr>
+            <?php endif; ?> 
           <?php endif; ?> 
         <?php endforeach; ?>
-      </table>
-      <div id="collapseDetailsLink">
- <a data-toggle="collapse" href="#collapseDetails" role="button" aria-expanded="false" aria-controls="collapseDetails" class="btn btn-link collapsed">
-    Visa/dölj mer information
-  </a>
+    </table>
+<?php endif; ?>
+
+<div id="collapseDetailsLink">
+    <a data-toggle="collapse" href="#collapseDetails" role="button" aria-expanded="false" aria-controls="collapseDetails" class="btn btn-link collapsed">
+      <?=$this->transEsc('Show more information')?>
+    </a>
 </div>
 <div class="collapse" id="collapseDetails" style="">
-<?=$this->render('RecordTab/description.phtml');?> <!-- Testar att lägga in beskrivning -->
-   <!-- table class="table table-noborder table-details table-isbn">
-  <tbody>
-    <tr>
-      <th><?= !$this->driver->getCleanISBN() ? "" : "ISBN: "?></th>
-      <td><?=$this->driver->getCleanISBN()?></td> 
-    </tr>
-    <tr>
-      <th><?= !$this->transEsc(recursive_array_search('callnumber', $holdings)) ? "" : "Ämnesord "?>:</th>
-      <td><?=$this->transEsc(recursive_array_search('callnumber', $holdings))?></td>
-    </tr>
-  </tbody>
-</table-->
-
-    </div>
-    <?php endif; ?>
+  <?=$this->render('RecordTab/description.phtml');?> <!-- Testar att lägga in beskrivning -->
+</div>
 
 
 <!-- Reservera på Titelnivå 1-->

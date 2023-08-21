@@ -33,7 +33,7 @@
           return "item-avail";
         default:
         return "item-reserved"; // Röd som default
-        return "item-default";
+        //return "item-default";
       }
     }
 
@@ -55,27 +55,11 @@
 <th><?=$this->transEsc("holds_library")?></th>
 <th><?=$this->transEsc("holds_status")?></th>
 <th><?=$this->transEsc("holds_placing")?></th>
+<th><?=$this->transEsc("holds_department")?></th>
 </tr>
-<tr>
-<?php 
-//< ?php if (!empty($urls) || $openUrlActive || $doiActive): ? >
-//  <!--h3>< ?=$this->transEsc("Internet")? ></h3-->
-//
-//  
-//  <td>  
-//  < ?=$this->transEsc("Internet")? >:
-//  < ?php if (!empty($urls)): ? >
-//    < ?php foreach ($urls as $current): ? >
-//      <a href="< ?=$this->escapeHtmlAttr($this->proxyUrl($current['url']))? >">< ?=$this->escapeHtml($current['desc'])? ></a><br/>
-//    < ?php endforeach; ? >
-//  < ?php endif; ? >
-//  < ?php if ($openUrlActive): ? >< ?=$openUrl->renderTemplate()? >< ?php endif; ? >
-//  < ?php if ($doiActive): ? >< ?=$doi->renderTemplate()? >< ?php endif; ? >
-//    </td>
-//
-//< ?php endif; ? >
-?>
 
+
+<tr>
 <?php if (!empty($holdings['electronic_holdings'])): ?>
   <?=
     $this->context($this)->renderInContext(
@@ -106,20 +90,22 @@ foreach ($holdings['holdings'] ?? [] as $holding){
     <a href="<?=$this->escapeHtmlAttr($holding['locationhref'])?>" target="_blank"><?=$locationTextEsc?></a>
   <?php else: ?>
 
-    <td width="40%"><?=$locationTextEsc?></td>
+    <td width="30%"><?=$locationTextEsc?></td>
       <td class="<?= holdsColor($holdStatus) ?>">
         <?=$this->transEsc($holdStatus)?>
     </td>
-      <td >
-  <?=(isset($holding["items"][0]["item"]["collection_code_description"])) ? $this->transEsc($holding["items"][0]["item"]["collection_code_description"]) : ''; ?>
-  <?=(isset($holding["items"][0]["item"]["location_description"])) ? ', '.$this->transEsc($holding["items"][0]["item"]["location_description"]) : '' ?>
-  <?=(isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"])) ? ', '.$this->transEsc($holding["items"][0]["item"]["callnumber"]) : ''; ?>    
-    
+    <td >
+      <?=(isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"])) ? ''.$this->transEsc($holding["items"][0]["item"]["callnumber"]) : ''; ?>    
+      <?=(isset($holding["items"][0]["item"]["location_description"])) ? ', '.$this->transEsc($holding["items"][0]["item"]["location_description"]) : '' ?>
     </td>
-    
+<!-- This change is only for LotsKatr-35 and might not be a base version change so I have not added to LOTS.ini -->
+    <td >
+    <?=(isset($holding["items"][0]["item"]["collection_code_description"])) ? $this->transEsc($holding["items"][0]["item"]["collection_code_description"]) : ''; ?>
+    </td>
 
-  </tr>
+  
   <?php endif; ?>
+</tr>
 <?php endforeach; ?>
 <?php if (!empty($holdings['total']) && $paginator = $this->tab->getPaginator($holdings['total'], $holdings['page'], $holdings['itemLimit'])): ?>
   <?=$this->paginationControl($paginator, 'Sliding', 'Helpers/pagination.phtml', ['page' => $holdings['page']])?>
