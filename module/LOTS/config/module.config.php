@@ -80,7 +80,13 @@ $nonTabRecordActions = [
     'AjaxTab', 'ILLRequest', 'PDF', 'Epub', 'LinkedText', 'Permalink', 'AddRating'
 ];
 
+// Routes used in phtml like this $this->url('suggestions-home')
+$staticRoutes = [
+  'suggestions/Home'
+];
+
 $routeGenerator = new \VuFind\Route\RouteGenerator();
 $routeGenerator->addNonTabRecordActions($config, $nonTabRecordActions);
+$routeGenerator->addStaticRoutes($config, $staticRoutes);
 
 return $config;
