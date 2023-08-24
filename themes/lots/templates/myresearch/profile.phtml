@@ -15,6 +15,7 @@
     $capabilityParams = $patron ? ['patron' => $patron] : [];
     $updatePhone = $this->ils()->checkFunction('updatePhone', $capabilityParams);
     $updateSmsNumber = $this->ils()->checkFunction('updateSmsNumber', $capabilityParams);
+    $updateMobileNumber = $this->ils()->checkFunction('updateMobileNumber', $capabilityParams);
     if ($AllowHistoryConfiguration) {
         $updateLoanHistory = $this->ils()->checkFunction('updateTransactionHistoryState', $capabilityParams);
         if (isset($updateLoanHistory['options'])) {
@@ -81,35 +82,48 @@
         </td>
       </tr>
     <?php } ?>
-            <?php if (!empty($this->profile['phone']) || $updatePhone): ?>
-              <?php if ($updatePhone): ?>
-      <tr>
-        <th><?=$this->transEsc('Phone')?>:</th>
-        <td>
+    <?php if (!empty($this->profile['phone']) || $updatePhone): ?>
+      <?php if ($updatePhone): ?>
+        <tr>
+          <th><?=$this->transEsc('Phone')?>:</th>
+          <td>
               <input type="tel" name="profile_tel" class="form-control flex-grow-1"
               value="<?=empty($this->profile['phone']) ? '' : $this->escapeHtmlAttr($this->profile['phone']) ?>" 
               title="<?=$this->transEscAttr('Phone') ?>" />
               <?php else: ?>
                 <div class="my-profile-col profile-title"><?=$this->transEsc('Phone') ?>:</div>
                 <div class="profile-text-value"><?=$this->escapeHtml($this->profile['phone']) ?></div>
-              <?php endif; ?>
-</td>
-</tr>
-            <?php endif; ?>
-            <?php if (!empty($this->profile['mobile_phone']) || $updateSmsNumber): ?>
-              <?php if ($updateSmsNumber): ?>
-<tr>
-        <th><?=$this->transEsc('SMS Number')?>:</th>
-        <td>
-                  <input class="form-control flex-grow-1" type="tel" name="profile_sms_number" value="<?=empty($this->profile['mobile_phone']) ? '' : $this->escapeHtmlAttr($this->profile['mobile_phone']) ?>" title="<?=$this->transEscAttr('SMS Number') ?>" />
-              <?php else: ?>
-                <div class="my-profile-col profile-title"><?=$this->transEsc('SMS Number') ?>:</div>
-                <div class="profile-text-value"><?=$this->escapeHtml($this->profile['mobile_phone']) ?></div>
-              <?php endif; ?>
-        </td>
-      </tr>
-            <?php endif; ?>
-<tr>
+      <?php endif; ?>
+      </td>
+        </tr>
+    <?php endif; ?>
+    <?php if (!empty($this->profile['mobile_phone']) || $updateMobileNumber): ?>
+      <?php if ($updateMobileNumber): ?>
+        <tr>
+          <th><?=$this->transEsc('Mobile Number')?>:</th>
+          <td>
+                    <input class="form-control flex-grow-1" type="tel" name="profile_mobile_number" value="<?=empty($this->profile['mobile_phone']) ? '' : $this->escapeHtmlAttr($this->profile['mobile_phone']) ?>" title="<?=$this->transEscAttr('Mobile Number') ?>" />
+                <?php else: ?>
+                  <div class="my-profile-col profile-title"><?=$this->transEsc('Mobile Number') ?>:</div>
+                  <div class="profile-text-value"><?=$this->escapeHtml($this->profile['mobile_phone']) ?></div>
+      <?php endif; ?>
+      </td>
+        </tr>
+    <?php endif; ?>
+    <?php if (!empty($this->profile['sms_number']) || $updateSMSNumber): ?>
+      <?php if ($updateSmsNumber): ?>
+        <tr>
+          <th><?=$this->transEsc('SMS Number')?>:</th>
+          <td>
+                    <input class="form-control flex-grow-1" type="tel" name="profile_sms_number" value="<?=empty($this->profile['sms_number']) ? '' : $this->escapeHtmlAttr($this->profile['sms_number']) ?>" title="<?=$this->transEscAttr('SMS Number') ?>" />
+                <?php else: ?>
+                  <div class="my-profile-col profile-title"><?=$this->transEsc('SMS Number') ?>:</div>
+                  <div class="profile-text-value"><?=$this->escapeHtml($this->profile['sms_number']) ?></div>
+      <?php endif; ?>
+      </td>
+        </tr>
+    <?php endif; ?>
+      <tr>
         <td>
         </td>
         <td>

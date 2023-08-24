@@ -21,7 +21,7 @@ class MyResearchController extends \VuFind\Controller\MyResearchController
         $history = $this->params()->fromPost('loan_history', false);
 
         if (is_array($patron) && $history >= 0) {
-            if ($this->processLibraryDataUpdate($patron, $values, $user)) {
+            if ($this->processLibraryDataUpdate($patron, $values)) {
                 $this->flashMessenger()->setNamespace('info')
                     ->addMessage('profile_update');
             }
@@ -68,6 +68,19 @@ class MyResearchController extends \VuFind\Controller\MyResearchController
                 $success = false;
             }
         }
+        // Update Mobile Number
+        if (isset($values->profile_mobile_number)
+            && $catalog->checkFunction('updateMobileNumber', compact('patron'))
+        ) {
+            $result = $catalog->updateMobileNumber(
+                $patron,
+                $values->profile_mobile_number
+            );
+            if (!$result['success']) {
+                $this->flashMessenger()->addErrorMessage($result['status']);
+                $success = false;
+            }
+        }        
         // Update SMS Number
         if (isset($values->profile_sms_number)
             && $catalog->checkFunction('updateSmsNumber', compact('patron'))

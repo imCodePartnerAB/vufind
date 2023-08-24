@@ -51,6 +51,31 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
         return $this->updatePatron($patron, ['phone' => $phone]);
     }
 
+
+    /**
+     * Update patron's Mobile alert number
+     *
+     * @param array  $patron Patron array
+     * @param string $number Mobile alert number
+     *
+     * @throws ILSException
+     *
+     * @return array Associative array of the results
+     */
+    public function updateMobileNumber($patron, $number)
+    {
+        $fields = !empty($this->config['updateMobileNumber']['fields'])
+            ? explode(',', $this->config['updateMobileNumber']['fields'])
+            : ['mobile_number'];
+
+        $update = [];
+        foreach ($fields as $field) {
+            $update[$field] = $number;
+        }
+
+        return $this->updatePatron($patron, $update);
+    }
+
     /**
      * Update patron's SMS alert number
      *
@@ -74,6 +99,7 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
 
         return $this->updatePatron($patron, $update);
     }
+
 
     /**
      * Get Patron Profile
@@ -99,6 +125,7 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
             'lastname' => $result['surname'],
             'phone' => $result['phone'],
             'mobile_phone' => $result['mobile'],
+            'sms_number' => $result['sms_number'],
             'email' => $result['email'],
             'address1' => $result['address'],
             'address2' => $result['address2'],
