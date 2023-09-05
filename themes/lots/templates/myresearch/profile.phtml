@@ -1,6 +1,7 @@
 <?php
   $config = $this->config()->get('LOTS');
   $AllowHistoryConfiguration = $config->History->allowConfiguration;
+  $AllowSave = $config->UserMenu->allowSave;
 
     // Set up page title:
     $this->headTitle($this->translate('My Profile'));
@@ -109,19 +110,21 @@
         </td>
       </tr>
             <?php endif; ?>
+            <?php if ($AllowSave): ?>
 <tr>
         <td>
         </td>
         <td>
             <div class="my-profile-row" align="right">
-              <?php if ($updatePhone): ?>
+              <!-- ?php if ($updatePhone): ? TODO: I do not know why you would only want to save on updatePhone=true changed to allowsave-->
+
                 <input id="save-library-profile" name="saveLibraryProfile" type="submit" value="<?=$this->transEscAttr("save_my_profile") ?>" 
                   class="btn btn-primary my-profile-btn" />
-              <?php endif; ?>
               <div class="clearfix"></div>
             </div>
 </td>
 </tr>
+<?php endif; ?>
 
           </form>
   </table>
