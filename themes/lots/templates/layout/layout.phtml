@@ -7,22 +7,11 @@
     if ($this->auth()->isLoggedIn()) {
         $user = $this->auth()->isLoggedIn();
         $matomoparrams['username']=$user["username"];
-        setrawcookie("currentVufindUserHoldLibrary", $user["home_library"], 0, "/");
-        setrawcookie("currentVufindUser", $user["username"], 0, "/");
-        setcookie("currentVufindUserFirstName", $user["firstname"], 0, "/");
-        setcookie("currentVufindUserLastName", $user["lastname"], 0, "/");
-
         $logedin_json='{"logedin":"true", "firstname": "'.$user["firstname"].'" , "lastname": "'.$user["lastname"].'", "username": "'.$user["username"].'", "library": "'.$user["home_library"].'"}';
-
-    // setcookie("currentVufindUser");
-    // setcookie("currentVufindUserFirstName");
-    // setcookie("currentVufindUserLastName");
     } else {
         $matomoparrams['username']="Unknown";
         $logedin_json='{"logedin":"false"}';
-        setrawcookie("currentVufindUser", "", 0, "/");
-        setrawcookie("currentVufindUserFirstName", "", 0, "/");
-        setrawcookie("currentVufindUserLastName", "", 0, "/");
+
     }
     if (isset($_GET["logedin"]) or isset($_POST["logedin"])) {
         header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");

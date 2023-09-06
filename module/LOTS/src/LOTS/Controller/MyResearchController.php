@@ -2,6 +2,7 @@
 
 namespace LOTS\Controller;
 
+use VuFind\Exception\Auth as AuthException;
 use VuFind\Exception\ILS as ILSException;
 use VuFind\Exception\AuthToken as AuthTokenException;
 
@@ -211,5 +212,120 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
         }
         return $token->getHeaderValue();
     } 
+    public function logoutAction()
+    {
+        $config = $this->getConfig();
+        if (!empty($config->Site->logOutRoute)) {
+            $logoutTarget = $this->getServerUrl($config->Site->logOutRoute);
+        } else {
+
+            setrawcookie("currentVufindUser", "", 0, "/");
+            setrawcookie("currentVufindUserFirstName", "", 0, "/");
+            setrawcookie("currentVufindUserLastName", "", 0, "/");
+            setrawcookie("currentVufindUserHoldLibrary", "", 0, "/");
+            setcookie("currentVufindUserFirstName", "", 0, "/");
+            setcookie("currentVufindUserLastName", "", 0, "/");
+            setcookie("currentVufindUserHoldLibrary", "", 0, "/");
+            
+
+            $logoutTarget = $this->getRequest()->getServer()->get('HTTP_REFERER');
+            if (empty($logoutTarget)) {
+                $logoutTarget = $this->getServerUrl('home');
+            }
+
+
+            // If there is an auth_method parameter in the query, we should strip
+            // it out. Otherwise, the user may get stuck in an infinite loop of
+            // logging out and getting logged back in when using environment-based
+            // authentication methods like Shibboleth.
+            $logoutTarget = preg_replace(
+                '/([?&])auth_method=[^&]*&?/',
+                '$1',
+                $logoutTarget
+            );
+            $logoutTarget = rtrim($logoutTarget, '?');
+
+            // Another special case: if logging out will send the user back to
+            // the MyResearch home action, instead send them all the way to
+            // VuFind home. Otherwise, they might get logged back in again,
+            // which is confusing. Even in the best scenario, they'll just end
+            // up on a login screen, which is not helpful.
+            if ($logoutTarget == $this->getServerUrl('myresearch-home')) {
+                $logoutTarget = $this->getServerUrl('home');
+            }
+        }
+
+        return $this->redirect()
+            ->toUrl($this->getAuthManager()->logout($logoutTarget));
+    }
+
+    /**
+     * Prepare and direct the home page where it needs to go
+     *
+     * @return mixed
+     */
+    public function homeAction()
+    {
+        // Process login request, if necessary (either because a form has been
+        // submitted or because we're using an external login provider):
+        if ($this->params()->fromPost('processLogin')
+            || $this->getSessionInitiator()
+            || $this->params()->fromPost('auth_method')
+            || $this->params()->fromQuery('auth_method')
+        ) {
+            try {
+                if (!$this->getAuthManager()->isLoggedIn()) {
+                    $this->getAuthManager()->login($this->getRequest());
+                    // Return early to avoid unnecessary processing if we are being
+                    // called from login lightbox and don't have a followup action.
+                    if ($this->getAuthManager()->isLoggedIn()) {
+                        $user = $this->getAuthManager()->isLoggedIn();
+                        setrawcookie("currentVufindUserHoldLibrary", $user["home_library"], 0, "/");
+                        setrawcookie("currentVufindUser", $user["username"], 0, "/");
+                        setcookie("currentVufindUserFirstName", $user["firstname"], 0, "/");
+                        setcookie("currentVufindUserLastName", $user["lastname"], 0, "/");                        
+                    }
+
+                    if ($this->params()->fromPost('processLogin')
+                        && $this->inLightbox()
+                        && empty($this->getFollowupUrl())
+                    ) {
+                        return $this->getRefreshResponse();
+                    }
+                }
+            } catch (AuthException $e) {
+                $this->processAuthenticationException($e);
+            }
+        }
+
+        // Not logged in?  Force user to log in:
+        if (!$this->getAuthManager()->isLoggedIn()) {
+            // Allow bypassing of post-login redirect
+            if ($this->params()->fromQuery('redirect', true)) {
+                $this->setFollowupUrlToReferer();
+            }
+            return $this->forwardTo('MyResearch', 'Login');
+        }
+        // Logged in?  Forward user to followup action
+        // or default action (if no followup provided):
+        if ($url = $this->getFollowupUrl()) {
+            $this->clearFollowupUrl();
+            // If a user clicks on the "Your Account" link, we want to be sure
+            // they get to their account rather than being redirected to an old
+            // followup URL. We'll use a redirect=0 GET flag to indicate this:
+            if ($this->params()->fromQuery('redirect', true)) {
+                return $this->redirect()->toUrl($url);
+            }
+        }
+
+        $config = $this->getConfig();
+        $page = $config->Site->defaultAccountPage ?? 'Favorites';
+
+        // Default to search history if favorites are disabled:
+        if ($page == 'Favorites' && !$this->listsEnabled()) {
+            return $this->forwardTo('Search', 'History');
+        }
+        return $this->forwardTo('MyResearch', $page);
+    }
 }
 
