@@ -3,10 +3,12 @@
 // See more in LOTS.ini
 $config = $this->config()->get('LOTS');
 $fieldsToHide = $config->Suggestions->fieldsToHide ?? '';
-
+$branchcodeAllowChange = $config->Suggestions->branchcodeAllowChange ?? true;
 // Convert the string of fields to an array
 $fieldsToHideArray = explode(",", $fieldsToHide);
 $fieldsToHideArray = array_map('trim', $fieldsToHideArray);
+
+$user = $this->auth()->isLoggedIn();
 
 // Function to check if a field should be hidden
 function shouldHideField($fieldName, $fieldsToHideArray) {
@@ -132,14 +134,22 @@ function shouldHideField($fieldName, $fieldsToHideArray) {
                 <?= $this->transEsc('suggest_branchcode') ?>
             </label>
             <div class="col-sm-8">
-                <select id="branch" name="branchcode" class="form-control form-control-sm">
-                    <?php foreach ($libraries as $library) : ?>
-                        <option value="<?php echo $library->library_id; ?>"><?php echo $library->name; ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <?php if ($branchcodeAllowChange) : ?>
+                    <select id="branch" name="branchcode" class="form-control form-control-sm">
+                <?php else: ?>
+                    <select class="form-control form-control-sm" disabled>
+                <?php endif; ?>
+                
+                        <?php foreach ($libraries as $library) : ?>
+                            
+                            <option value="<?php echo $library->library_id; ?>" <?php if ($library->library_id === $user['home_library']) echo "selected"; ?>><?php echo $library->name; ?></option>
+                        <?php endforeach; ?>
+                    </select>
             </div>
         </div>
         <?php endif; ?>
+
+
 
         <?php if (!shouldHideField('note', $fieldsToHideArray)) : ?>
         <div class="form-group row">
