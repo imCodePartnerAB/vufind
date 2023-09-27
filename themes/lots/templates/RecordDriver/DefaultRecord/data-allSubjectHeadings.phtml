@@ -15,34 +15,38 @@ $mainFields = $formatter->getData($driver, $formatter->getDefaults('description'
 
 <table class="table table-striped">
     <?php
-    $marcField_655 = $marc->getField('655');
-    $marcField_041 = $marc->getField('041');
-    $marcField_500 = $marc->getField('500');
-    $marcField_800 = $marc->getField('800');
-    $marcField_264 = $marc->getField('264');
-    $marcField_084 = $marc->getField('084');
-    $marcField_245 = $marc->getField('245');
-    $marcField_388 = $marc->getField('388');
-    $marcField_546 = $marc->getField('546');
-    $marcField_024 = $marc->getField('024');
-    $marcField_028 = $marc->getField('028');
-
-    echoTableData($this->transEsc('Time period'), _view_data($marcField_388, "a"));
-    echoTableData($this->transEsc('Genre'), printWithDuplicateDataValues($marc->getFields('655'), $url));
-    echoTableData($this->transEsc('Language'), _view_data($marcField_041, "h"));
-    echoTableData($this->transEsc('Item description'), _view_data($marcField_500, "a"));
-
-    if (strlen(_view_data($marcField_084)) > 0) {
-        echoTableData($this->transEsc('Classification'), printWithDuplicateDataValues($marc->getFields('084'), $url) . printDataValues($marc->getField('082'), $url) . printDataValues($marc->getField('083'), $url));
-    }
-
-    if (strlen(_view_data($marc->getField('650'))) > 0) {
-        echoTableData($this->transEsc('Subjects'), printWithDuplicateDataValues($marc->getFields('650'), $url));
-    }
-
-    echoTableData($this->transEsc('Additional information'), _view_data($marcField_245, "c"));
-    echoTableData($this->transEsc('Standard Codes'), printWithDuplicateDataValues($marc->getFields('024'), ""));
-    echoTableData($this->transEsc('Publisher or Distributor Number'), printWithDuplicateDataValues($marc->getFields('028'), ""));
+    if ($marc !== null) {
+        $marcField_655 = $marc->getField('655');
+        $marcField_041 = $marc->getField('041');
+        $marcField_500 = $marc->getField('500');
+        $marcField_800 = $marc->getField('800');
+        $marcField_264 = $marc->getField('264');
+        $marcField_084 = $marc->getField('084');
+        $marcField_245 = $marc->getField('245');
+        $marcField_388 = $marc->getField('388');
+        $marcField_546 = $marc->getField('546');
+        $marcField_024 = $marc->getField('024');
+        $marcField_028 = $marc->getField('028');
+    
+        echoTableData($this->transEsc('Time period'), _view_data($marcField_388, "a"));
+        echoTableData($this->transEsc('Genre'), printWithDuplicateDataValues($marc->getFields('655'), $url));
+        echoTableData($this->transEsc('Language'), _view_data($marcField_041, "h"));
+        echoTableData($this->transEsc('Item description'), _view_data($marcField_500, "a"));
+    
+        if (strlen(_view_data($marcField_084)) > 0) {
+            echoTableData($this->transEsc('Classification'), printWithDuplicateDataValues($marc->getFields('084'), $url) . printDataValues($marc->getField('082'), $url) . printDataValues($marc->getField('083'), $url));
+        }
+    
+        if (strlen(_view_data($marc->getField('650'))) > 0) {
+            echoTableData($this->transEsc('Subjects'), printWithDuplicateDataValues($marc->getFields('650'), $url));
+        }
+    
+        echoTableData($this->transEsc('Additional information'), _view_data($marcField_245, "c"));
+        echoTableData($this->transEsc('Standard Codes'), printWithDuplicateDataValues($marc->getFields('024'), ""));
+        echoTableData($this->transEsc('Publisher or Distributor Number'), printWithDuplicateDataValues($marc->getFields('028'), ""));
+    } else {
+        echo "<tr><td></td></tr>";
+    }    
     ?>
 </table>
 
