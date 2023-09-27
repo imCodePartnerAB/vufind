@@ -11,11 +11,11 @@ $this->headTitle($this->translate('Description') . ': ' . $this->driver->getBrea
 
 $formatter = $this->recordDataFormatter();
 $mainFields = $formatter->getData($driver, $formatter->getDefaults('description'));
-?>
 
+if ($marc !== null) {
+?>
 <table class="table table-striped">
     <?php
-    if ($marc !== null) {
         $marcField_655 = $marc->getField('655');
         $marcField_041 = $marc->getField('041');
         $marcField_500 = $marc->getField('500');
@@ -44,11 +44,11 @@ $mainFields = $formatter->getData($driver, $formatter->getDefaults('description'
         echoTableData($this->transEsc('Additional information'), _view_data($marcField_245, "c"));
         echoTableData($this->transEsc('Standard Codes'), printWithDuplicateDataValues($marc->getFields('024'), ""));
         echoTableData($this->transEsc('Publisher or Distributor Number'), printWithDuplicateDataValues($marc->getFields('028'), ""));
-    } else {
-        echo "<tr><td></td></tr>";
-    }    
     ?>
 </table>
+<?php 
+    }
+?>
 
 <table class="table table-striped">
     <caption class="sr-only"><?=$this->transEsc('Description')?></caption>
