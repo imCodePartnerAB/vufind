@@ -65,11 +65,17 @@ class SocialstatsControllerTest extends \PHPUnit\Framework\TestCase
         $resourcetags->expects($this->once())->method('getStatistics')->will($this->returnValue('resourcetags-data'));
         $tables->set('resourcetags', $resourcetags);
 
+        $ratings = $this->getMockBuilder(\VuFind\Db\Table\Ratings::class)
+            ->disableOriginalConstructor()->onlyMethods(['getStatistics'])->getMock();
+        $ratings->expects($this->once())->method('getStatistics')->will($this->returnValue(['ratings-data']));
+        $tables->set('ratings', $ratings);
+
         // Confirm properly-constructed view object:
         $view = $c->homeAction();
         $this->assertEquals('admin/socialstats/home', $view->getTemplate());
         $this->assertEquals('comments-data', $view->comments);
         $this->assertEquals('userresource-data', $view->favorites);
         $this->assertEquals('resourcetags-data', $view->tags);
+        $this->assertEquals(['ratings-data'], $view->ratings);
     }
 }

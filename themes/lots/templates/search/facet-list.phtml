@@ -51,7 +51,6 @@
     </div>
   <?php endforeach; ?>
 </div>
-<!--button class="btn btn-default lightbox-only" data-dismiss="modal">< ?=$this->translate('close') ?></button-->
 
 <?php 
 parse_str($_SERVER['QUERY_STRING'],$my_arr);
@@ -64,6 +63,7 @@ foreach($my_arr as $key=>$value){
 } 
 $newQuery = substr($newQuery, 0, -1);
 ?>
-<a href="/vufind/search/results?<?=$newquery?>"><button class="btn btn-default" data-dismiss="modal"><?=$this->translate('close') ?></button></a>
+<button class="btn btn-default lightbox-only" data-dismiss="modal"><?=$this->translate('close') ?></button>
+<!-- a href="/vufind/search/results?< ?=$newquery?>"><button class="btn btn-default" data-dismiss="modal">< ?=$this->translate('close') ?></button></a>
 <?=$this->inlineScript(\Laminas\View\Helper\HeadScript::SCRIPT, '(typeof VuFind.lightbox_facets !== "undefined") && VuFind.lightbox_facets.setup();', 'SET'); ?>
 <!-- STOP ./search/facet-list.phtml -->

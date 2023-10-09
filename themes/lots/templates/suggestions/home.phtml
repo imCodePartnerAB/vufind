@@ -1,0 +1,28 @@
+<?php
+use Laminas\Log\Writer\Noop;
+
+// echo 'Title: '.$title.'<br>';
+// echo 'Author: '.$author.'<br>';
+// echo 'copyrightdate: '.$copyrightdate.'<br>';
+// echo 'isbn: '.$isbn.'<br>';
+// echo 'publishercode: '.$publishercode.'<br>';
+// echo 'collectiontitle: '.$collectiontitle.'<br>';
+// echo 'place: '.$place.'<br>';
+// echo 'quantity: '.$quantity.'<br>';
+// echo 'itemtype: '.$itemtype.'<br>';
+// echo 'branchcode: '.$branchcode.'<br>';
+// echo 'note: '.$note.'<br>';
+
+// echo 'ret_http: '.$ret_http.'<br>';
+
+//echo 'http_data: '.$http_data.'<br>';
+ if (!empty($title)) {
+    echo $this->render('suggestions/done.phtml');
+    //exit;
+ } else {
+    echo $this->render('suggestions/suggest.phtml');
+    //exit;
+ }
+?>
+
+    
