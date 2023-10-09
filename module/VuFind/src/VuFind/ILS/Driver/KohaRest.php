@@ -2521,7 +2521,8 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
             }
 
             $renewable = $entry['renewable'];
-            $renewals = $entry['renewals'];
+            #$renewals = $entry['renewals'];
+            $renewals = isset($entry['renewals']) ? $entry['renewals'] : null;
             $renewLimit = $entry['max_renewals'];
             $message = '';
             if (!$renewable && !$checkedIn) {
@@ -2549,7 +2550,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                     ?? $entry['publication_year'] ?? '',
                 'borrowingLocation' => $this->getLibraryName($entry['library_id']),
                 'checkoutDate' => $this->convertDate($entry['checkout_date']),
-                'duedate' => $this->convertDate($entry['due_date'], true),
+                'duedate' => $this->convertDate($entry['due_date']),#, true),
                 'returnDate' => $this->convertDate($entry['checkin_date']),
                 'dueStatus' => $dueStatus,
                 'renew' => $renewals,
