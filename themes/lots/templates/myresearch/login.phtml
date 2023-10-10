@@ -1,0 +1,90 @@
+<?php
+// Set up page title:
+$this->headTitle($this->translate('Login'));
+
+// Set up breadcrumbs:
+$this->layout()->breadcrumbs = '<li><a href="' . $this->url('myresearch-home') . '">' . $this->transEsc('Your Account') . '</a></li> <li class="active">' . $this->transEsc('Login') . '</li>';
+
+// Convenience variables:
+$account = $this->auth()->getManager();
+$hideLogin = !(is_object($account) && $account->loginEnabled());
+$offlineMode = $this->ils()->getOfflineMode();
+$getLoginHtml = $this->auth()->getLogin();
+$getLoginBankID = "NONE BAnkID";
+
+?>
+
+<?php if ($offlineMode == "ils-offline"): ?>
+  <?= $this->render('Helpers/ils-offline.phtml', ['offlineModeMsg' => 'ils_offline_login_message']) ?>
+<?php endif; ?>
+
+<h2 class="lightbox-header">
+  <?= $this->transEsc('Login') ?>
+</h2>
+<?= $this->flashmessages() ?>
+
+<?php if ($hideLogin): ?>
+  <div class="alert alert-danger">
+    <?= $this->transEsc('login_disabled') ?>
+  </div>
+<?php else: ?>
+
+  <div class="pl30 max-w460">
+    <label class="radio-inline">
+      <input type="radio" name="inlineRadioOptions" id="inlineRadio1" value="#standard" checked> Lösenord / PIN
+    </label>
+    <label class="radio-inline">
+      <input type="radio" name="inlineRadioOptions" id="inlineRadio2" value="#bankid"> Mobilt BankID
+    </label>
+    <div class="mt20">
+      <div id="standard" class="login-forms pt2">
+        <?= $this->auth()->getLogin() ?>
+        
+      </div>
+
+
+      <div id="bankid" class="login-forms" style="display:none;">
+        <form action="#bankid">
+          <div class="form-group">
+            <table id="table_0" class="w-100">
+            <tbody>
+              <tr>
+                <td>
+                  <label for="socialSecurityNo">Personnummer (ÅÅÅÅMMDDXXXX)</label>
+                  <input id="socialSecurityNo" class="form-control max-w450">
+          
+          </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="form-group"><br>
+                <button type="submit" style="float: right;" class="btn btn-default">
+                  Logga in
+                </button>
+              </div>
+
+      </td>
+      </tr>
+    </tbody>
+      </table>
+      </div>
+      </form>
+    </div>
+  </div>
+  </div>
+
+
+<?php endif; ?>
+
+
+<script>
+  jQuery(document).ready(function ($) {
+    $('input[name="inlineRadioOptions"]').change(function () {
+      const selectedValue = $(this).val();
+      $('.login-forms').hide(0, function () {
+        $(selectedValue).show(0);
+      });
+    });
+  });
+</script>
+<!-- ?php phpinfo() ? -->
