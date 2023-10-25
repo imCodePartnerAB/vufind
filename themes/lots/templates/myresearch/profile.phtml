@@ -82,8 +82,8 @@
         </td>
       </tr>
     <?php } ?>
-            <?php if (!empty($this->profile['phone']) || $updatePhone): ?>
-              <?php if ($updatePhone): ?>
+    <?php if (!empty($this->profile['phone']) || $updatePhone): ?>
+        <?php if ($updatePhone): ?>
       <tr>
         <th><?=$this->transEsc('Phone')?>:</th>
         <td>
@@ -94,10 +94,11 @@
                 <div class="my-profile-col profile-title"><?=$this->transEsc('Phone') ?>:</div>
                 <div class="profile-text-value"><?=$this->escapeHtml($this->profile['phone']) ?></div>
               <?php endif; ?>
-</td>
-</tr>
+        </td>
+      </tr>
+    <?php endif; ?>
 
-        <?php if (!empty($this->profile['mobile_phone']) || $updateMobileNumber): ?>
+    <?php if (!empty($this->profile['mobile_phone']) || $updateMobileNumber): ?>
              <?php if ($updateMobileNumber): ?>
                 <tr>
                 <th><?=$this->transEsc('Mobile Number')?>:</th>
@@ -109,9 +110,9 @@
              <?php endif; ?>
              </td>
              </tr>
-        <?php endif; ?>
+     <?php endif; ?>
 
-        <?php if (!empty($this->profile['sms_number']) || $updateSmsNumber): ?>
+     <?php if (!empty($this->profile['sms_number']) || $updateSmsNumber): ?>
             <?php if ($updateSmsNumber): ?>
                 <tr>
                 <th><?=$this->transEsc('SMS Number')?>:</th>
@@ -123,9 +124,9 @@
             <?php endif; ?>
             </td>
             </tr>
-        <?php endif; ?>
+     <?php endif; ?>
 
-<tr>
+    <tr>
         <td>
         </td>
         <td>
@@ -136,10 +137,9 @@
               <?php endif; ?>
               <div class="clearfix"></div>
             </div>
-</td>
-</tr>
-
-          </form>
+    </td>
+    </tr>
+    </form>
   </table>
   <div id="account-actions">
     <?php if ($this->auth()->getManager()->supportsEmailChange()): ?>
