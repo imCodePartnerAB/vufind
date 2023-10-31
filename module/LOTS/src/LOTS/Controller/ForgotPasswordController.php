@@ -8,9 +8,6 @@
 
 namespace LOTS\Controller;
 
-#Needed??
-#use Laminas\View\Renderer\RendererInterface;
-
 class ForgotPasswordController extends \VuFind\Controller\AbstractBase implements
 \VuFindHttp\HttpServiceAwareInterface
 {
@@ -46,7 +43,7 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
             $message = "Email: ".$email." username: ".$username;
             $fields = [
                'username'     => $username,
-               'email'        =>$email,
+               'email'        => $email,
                'resendEmail'  => 'true',
                'language'     => 'sv-SE',
             ];
