@@ -62,7 +62,7 @@ echo $bodytag;
 ?>
 
 
-
+<title></title>
 
 
 
@@ -77,7 +77,7 @@ echo $bodytag;
         $this->layout()->searchbox = $this->render('search/searchbox.phtml');
       }
     ? -->
-<!-- ?=$this->context($this)->renderInContext("search/searchbox_lots.phtml", ['ignoreHiddenFilterMemory' => true])? -->
+<!-- ?=$this->context($this)->renderInContext("search/searchbox_lots.phtml", ['ignoreHiddenFilterMemory' => true])?-->
 
 <nav class="breadcrumbs" aria-label="<?=$this->transEsc('Breadcrumbs') ?>">
   <div class="container">
@@ -122,7 +122,7 @@ $footer = str_replace('</html>', '', $footer);
 echo $footer;
 ?>
 <!-- MODAL IN CASE WE NEED ONE -->
-<div id="modal" class="modal fade hidden-print" tabindex="-1" role="dialog" aria-labelledby="modal-title"
+<div id="modal" class="modal fade hidden-print" tabindex="-1" role="dialog"
   aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">

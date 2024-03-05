@@ -7,6 +7,7 @@
 .phpstan_cache
 .vagrant
 .vscode/*
+/local
 /downloads
 /Gruntfile.local.js
 /solr/vendor
