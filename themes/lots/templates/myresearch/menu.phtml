@@ -6,6 +6,8 @@
 
   $lotscfg = $this->config()->get('LOTS');
   $lots_show_fines = $lotscfg->UserMenu->showFinesMenu ?? false;
+  $lots_show_suggest = $lotscfg->UserMenu->showSuggestion ?? false;
+
 ?>
 <button class="close-offcanvas btn btn-link" data-toggle="offcanvas"><?=$this->transEsc('navigate_back') ?></button>
 <h3><?=$this->transEsc('Your Account')?></h3>
@@ -41,6 +43,14 @@
       <span class="fines-status status hidden"><i class="fa fa-spin fa-spinner" aria-hidden="true"></i></span>
     </a>
   <?php endif; ?>
+<!-- LOTS show suggestions -->
+  <?php if ($lots_show_suggest && $ilsOnline): ?>
+    <a href="<?=$this->url('home')?>suggestions" class="flex checkedout btn btn-primary btn-block btn-sm text-left<?=$this->active == 'fines' ? ' active' : ''?>">
+      <span class="flex-col"><i class="fa fa-fw fa-envelope-open" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('Give suggestions')?></span>
+      <span class="fines-status status hidden"><i class="fa fa-spin fa-spinner" aria-hidden="true"></i></span>
+    </a>
+  <?php endif; ?>
+
   <a href="<?=$this->url('myresearch-profile')?>" class="flex checkedout btn btn-primary btn-block btn-sm text-left<?=$this->active == 'profile' ? ' active' : ''?>">
     <i class="fa fa-fw fa-user" aria-hidden="true"></i> <?=$this->transEsc('Profile')?>
   </a>
