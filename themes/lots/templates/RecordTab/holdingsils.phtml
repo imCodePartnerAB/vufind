@@ -1,4 +1,5 @@
 <?php
+
     // Set up convenience variables:
     $account = $this->auth()->getManager();
     $user = $account->isLoggedIn();
@@ -23,6 +24,70 @@
     }
     // Set page title.
     $this->headTitle($this->translate('Holdings') . ': ' . $this->driver->getBreadcrumb());
+
+
+    // LOTS-51 start
+    $config = $this->config()->get('LOTS');
+    $lots_showItemsInVufind = $config->Record->showItemsInVufind ?? false;
+
+    if ($lots_showItemsInVufind) {
+      $configKohaRest = $this->config()->get('KohaRest');
+      $kohaHost = $configKohaRest->Catalog->host;
+      $kohaClientId = $configKohaRest->Catalog->clientId;
+      $kohaClientSecret = $configKohaRest->Catalog->clientSecret;
+
+      $this_id = $this->driver->getUniqueID();
+      $kohaApiThisUser = $kohaHost."/v1/holds/?biblio_id=$this_id&_match=exact";
+
+       $ch = curl_init();
+       curl_setopt($ch, CURLOPT_URL, $kohaHost."/v1/oauth/token");
+       curl_setopt($ch, CURLOPT_POST, true);
+       curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'client_id' => $kohaClientId,
+        'client_secret' => $kohaClientSecret,
+        'grant_type' => 'client_credentials'
+      ]));
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      $authResponse = curl_exec($ch);
+      curl_close($ch);
+
+      $authData = json_decode($authResponse, true);
+      $accessToken = $authData['access_token'];
+
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, $kohaApiThisUser);
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . $accessToken
+      ]);
+      $response = curl_exec($ch);
+      curl_close($ch);
+
+      $biblio_array_holds = array();
+      $reservations_total = 0;
+      $available = 0;
+      $available_items = $holdings["total"];
+
+      if ($response) {
+        $data = json_decode($response, true);
+        if (!empty($data)) {
+            foreach ($data as $item) {
+                $pickup_library_id = $item['pickup_library_id'];
+                $biblio_array_holds[$pickup_library_id]['reservations']++;
+            }
+        }
+      }
+
+      for ($i = 0; $i <= $available_items; $i++) {
+       foreach ($holdings['holdings'] ?? [] as $holding) {
+           $biblio_array_items[$holding["items"][$i]["item"]["home_library_id"]]['count']++;
+       }
+      }
+
+    // LOTS-51 end
+    }
+    // LOTS-51 end
+
 
     function holdsColor($status)
     {
@@ -99,7 +164,6 @@ foreach ($holdings['holdings'] ?? [] as $holding){
   printf($this->translate("ils_availability"), $nravailable, $nrtotal);
 
 ?>
-
 <?php foreach ($holdings['holdings'] ?? [] as $holding): ?>
   <?php $holdStatus = $holding["items"]["0"]['status'] ?>
   <?php $locationTextEsc = $this->transEscWithPrefix('location_', $holding['location']); ?>
@@ -110,17 +174,40 @@ foreach ($holdings['holdings'] ?? [] as $holding){
     <td width="30%"><?=$locationTextEsc?></td>
       <td class="<?= holdsColor($holdStatus) ?>">
         <?=$this->transEsc($holdStatus)?>
-    </td>
+
+        <?php if ($lots_showItemsInVufind) {
+               $reservations = 0;
+               if ($biblio_array_holds[$holding["items"][0]["item"]["home_library_id"]]['reservations'] >0 ) {
+                   $reservations = $biblio_array_holds[$holding["items"][0]["item"]["home_library_id"]]['reservations'];
+                   $reservations_total++;
+               }
+               $available = $biblio_array_items[$holding["items"][0]["item"]["home_library_id"]]['count'];
+               echo "<br/><font color='#000'>Tillgängliga exemplar: $reservations/$available</font>";
+              }
+        ?>
+
+     </td>
       <td >
   <?=(isset($holding["items"][0]["item"]["collection_code_description"])) ? $this->transEsc($holding["items"][0]["item"]["collection_code_description"]) : ''; ?>
   <?=(isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"])) ? ''.$this->transEsc($holding["items"][0]["item"]["callnumber"]) : ''; ?>
   <?=(isset($holding["items"][0]["item"]["location_description"])) ? ', '.$this->transEsc($holding["items"][0]["item"]["location_description"]) : '' ?>
     </td>
-    
 
   </tr>
   <?php endif; ?>
 <?php endforeach; ?>
+
+
+<?php if ($lots_showItemsInVufind) { ?>
+<script type="text/javascript">
+  $(document).ready(function() {
+      var newLi = '<li style="margin-left: auto; color: #666; font-size: 15px;padding: 8px 10px; border: 1px solid rgba(0, 0, 0, .06); border-bottom-color: rgb(137, 166, 61);">Tillgängliga: <?=$reservations_total;?>/<?=$available_items?> Reservationer: <?=$reservations_total;?></li>';
+      $('.nav.nav-tabs').css('display', 'flex').append(newLi);
+  });
+</script>
+<?php } ?>
+
+
 <?php if (!empty($holdings['total']) && $paginator = $this->tab->getPaginator($holdings['total'], $holdings['page'], $holdings['itemLimit'])): ?>
   <?=$this->paginationControl($paginator, 'Sliding', 'Helpers/pagination.phtml', ['page' => $holdings['page']])?>
 <?php endif; ?>
