@@ -80,8 +80,12 @@
         </tr>
       <?php endfor; ?>
       <tr style="font-weight:bold">
-        <td colspan="<?=count($columns) - 1?>"><?=$this->transEsc('Total Balance Due')?></td>
-        <td><?=$this->safeMoneyFormat($totalDue / 100.00) ?></td>
+        <td colspan="<?=count($columns) - 1?>"><?=$this->transEsc('Total Balance Due')?><br /><br /></td>
+        <td><?=$this->safeMoneyFormat($totalDue / 100.00) ?><br /><br /></td>
+      </tr>
+      <tr style="font-weight:bold">
+        <td colspan="<?=count($columns) - 1?>"><?=$this->transEsc('Betala med kreditkort eller Swish')?></td>
+        <td><input id="do-payment-profile" name="doPaymentProfile" type="submit" value="<?=$this->transEsc('Betala')?>" class="btn btn-primary my-profile-btn"></td>
       </tr>
     </table>
   <?php endif; ?>
