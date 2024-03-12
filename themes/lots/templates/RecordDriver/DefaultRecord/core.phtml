@@ -19,7 +19,7 @@ if (!isset($showSummaryLink)) {
 // showCorefields[2] = "Language"
 // showCorefields[3] = "Published"
 // showCorefields[3] = "Subjects"
-
+$showAllCorefields = $config->Record->showAllCorefields;
 $showCorefields = $config->Record->showCorefields;
 $showCorefields = $showCorefields->toArray();
 if (!isset($showCorefields)) {
@@ -146,9 +146,15 @@ $this->metadata()->generateMetatags($this->driver);
         <caption class="sr-only"><?=$this->transEsc('Bibliographic Details')?></caption>
         <?php foreach ($coreFields as $current): ?>
           <?php if ("" != $current['value']): ?>
-                <?php $showCorefield = in_array($current['label'], $showCorefields); ?>
-                <?php if ("" != $current['value'] && $showCorefield): ?>
+                
+                <?php if ("" != $current['value'] && $showAllCorefields): ?>
                     <tr><td><?=$this->transEsc($showCorefieldPrefixes[$current['label']])?> <?=$current['value']?></td></tr>
+              
+                <?php else: ?>
+                  <?php $showCorefield = in_array($current['label'], $showCorefields); ?>
+                  <?php if ("" != $current['value'] && $showCorefield): ?>
+                      <tr><td><?=$this->transEsc($showCorefieldPrefixes[$current['label']])?> <?=$current['value']?></td></tr>
+                  <?php endif; ?>
                 <?php endif; ?>
             <?php endif; ?>
         <?php endforeach; ?>
