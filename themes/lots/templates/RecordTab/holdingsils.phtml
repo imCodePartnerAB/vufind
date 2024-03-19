@@ -118,8 +118,10 @@
           $library_total_items = 0;
           $library_avail_items = 0;
           $library_reserve_items = 0;
+          $library_holds_queued = 0;
 
           foreach ($holding["items"] ?? [] as $local_item) {
+            $library_holds_queued += $local_item["requests_placed"];
             if ($local_item["availability"]) {
               $library_avail_items++;
             } else {
@@ -128,7 +130,8 @@
             $library_total_items++;
           }
           
-          printf($this->translate('ils_availability_detail'),$library_avail_items, $library_total_items);
+          printf($this->translate('ils_availability_detail'),$library_avail_items, $library_total_items,  $library_holds_queued);
+          
         }
         ?>
 
