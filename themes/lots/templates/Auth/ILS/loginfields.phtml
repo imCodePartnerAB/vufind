@@ -2,6 +2,7 @@
 $config = $this->config()->get('LOTS');
 $allowRecreatePassword = $config->PasswordRecovery->enable;
 $newPatronUrl = $config->NewPatron->url;
+$enableNewPatron = $config->NewPatron->enable;
 ?>
 
 
@@ -31,7 +32,7 @@ $newPatronUrl = $config->NewPatron->url;
 </div>
 <?php } ?>
 
-<?php if (isset($newPatronUrl)) {?>
+<?php if (isset($newPatronUrl) && $enableNewPatron) {?>
 <div class="new_patron_url" >
     <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_newpatron_url"><a href="<?=$newPatronUrl?>" ><?=$this->transEsc('Create new patron')?></a></label>
 </div>
