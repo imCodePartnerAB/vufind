@@ -188,9 +188,15 @@ $this->metadata()->generateMetatags($this->driver);
     <a class="placehold" data-light-box title="<?=$this->transEscAttr('request_place_text')?>" href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holdingTitleHold))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('title_hold_place')?></a>
 <?php else: ?>
   <?php if ($this->auth()->isLoggedIn()): ?>
-    <div class="alert alert-info">
-            <?=$this->translate('no_rights_to_hold')?>
-    </div>
+    <?php 
+    $result = $this->translate('no_rights_to_hold');
+    $result = trim($result);
+    if ($result !== "__HIDE__"): 
+      ?>
+      <div class="alert alert-info">
+          <?=$result?>
+      </div>
+    <?php endif; ?>
   <?php else: ?>
     <div class="alert alert-info">
             <?=$this->translate("hold_profile_html", ['%%url%%' => $this->escapeHtmlAttr($this->recordLinker()->getTabUrl($this->driver, 'Holdings', ['catalogLogin' => 'true']))])?>
