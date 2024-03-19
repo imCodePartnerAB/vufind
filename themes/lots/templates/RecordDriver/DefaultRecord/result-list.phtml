@@ -3,6 +3,22 @@
 // See more in LOTS.ini
   $config = $this->config()->get('LOTS');
   $lots_show_media_file_buttons = $config->Search->showMediaFileButtons ?? true;
+  $lots_show_field490 = $config->Search->showField490InSearch ?? true;
+  $lots_show_reservation_button = $config->Search->showReservationButton ?? true;
+
+  $marc = $this->driver->tryMethod('getMarcReader');
+  $field490 = "";
+  if (is_object($marc)) {
+    $marcField = $marc->getField('490');
+    if (isset($marcField['subfields'])) {
+      $field490  = "[";
+      foreach ($marcField['subfields'] as $field) {
+            $field['data'] = str_replace(' ;', '; ', $field['data']);
+            $field490 .= $field['data'];
+      }
+      $field490 .= "]";
+    }
+  }
 
   $coverDetails = $this->record($this->driver)->getCoverDetails('result-list', 'medium', $this->recordLink()->getUrl($this->driver));
   $cover = $coverDetails['html'];
@@ -11,7 +27,7 @@
   if ($cover):
     ob_start(); ?>
     <div class="media-<?=$thumbnailAlignment ?> <?=$this->escapeHtmlAttr($coverDetails['size'])?>">
-      <?=$cover ?>
+     <?=$cover ?>
     </div>
     <?php $thumbnail = ob_get_contents(); ?>
   <?php ob_end_clean(); ?>
@@ -53,6 +69,11 @@
             <?=!empty($summAuthor) ? '<br />' : ''?>
             <strong> <?=$this->transEsc('Published')?>:</strong> <?=$this->escapeHtml($summDate[0])?>
           <?php endif; ?>
+
+      <?php if ($lots_show_field490 and $field490): ?>
+      <div><?=$field490 ?></div>
+      <?php endif ?>
+
 
 <?php $edition = $this->driver->getEdition(); ?>
 <?php if(!empty($edition)): ?>
@@ -161,14 +182,10 @@
         <?=$this->render('record/cart-buttons.phtml', ['id' => $this->driver->getUniqueId(), 'source' => $this->driver->getSourceIdentifier()]); ?><br/>
       <?php endif; ?>
 
-<!-- Reservera på Titelnivå 2 -->
-
-<!-- ?php $holdingTitleHold = $this->driver->tryMethod('getRealTimeTitleHold'); if (!empty($holdingTitleHold)): ?>
-  <a class="placehold" data-lightbox title="< ?=$this->transEscAttr('request_place_text')?>" href="< ?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holdingTitleHold))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;< ?=$this->transEsc('title_hold_place')?></a>
-< ?php else: ?>
-         < ?=$this->translate("hold_profile_html2", ['%%url%%' => $this->escapeHtmlAttr($this->recordLinker()->getTabUrl($this->driver, 'Holdings', ['catalogLogin' => 'true']))])?>
-
-< ?php endif; ? -->
+<!-- Reservera på Titelnivå 1-->
+<?php $holdingTitleHold = $this->driver->tryMethod('getRealTimeTitleHold'); if ($lots_show_reservation_button and $holdingTitleHold): ?>
+    <a class="placehold" data-light-box title="<?=$this->transEscAttr('request_place_text')?>" href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holdingTitleHold))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('title_hold_place')?></a>
+<?php endif; ?>
 
       <?php if ($this->userlist()->getMode() !== 'disabled'): ?>
         <?php if ($this->permission()->allowDisplay('feature.Favorites')): ?>
