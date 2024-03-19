@@ -440,4 +440,106 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
 
         return $parent_info;
     }
+
+    protected function getTransactions($patron, $params, $checkedIn)
+    {
+        $pageSize = $params['limit'] ?? 50;
+        $sort = $params['sort'] ?? '+due_date';
+        if ('+title' === $sort) {
+            $sort = '+title|+subtitle';
+        } elseif ('-title' === $sort) {
+            $sort = '-title|-subtitle';
+        }
+        $queryParams = [
+            '_order_by' => $sort,
+            '_page' => $params['page'] ?? 1,
+            '_per_page' => $pageSize
+        ];
+        if ($checkedIn) {
+            $queryParams['checked_in'] = '1';
+            $arrayKey = 'transactions';
+        } else {
+            $arrayKey = 'records';
+        }
+        $result = $this->makeRequest(
+            [
+                'path' => [
+                    'v1', 'contrib', 'kohasuomi', 'patrons', $patron['id'],
+                    'checkouts'
+                ],
+                'query' => $queryParams
+            ]
+        );
+
+        if (200 !== $result['code']) {
+            throw new ILSException('Problem with Koha REST API.');
+        }
+
+        if (empty($result['data'])) {
+            return [
+                'count' => 0,
+                $arrayKey => []
+            ];
+        }
+        $transactions = [];
+        foreach ($result['data'] as $entry) {
+            $dueStatus = false;
+            $now = time();
+            $dueTimeStamp = strtotime($entry['due_date']);
+            if (is_numeric($dueTimeStamp)) {
+                if ($now > $dueTimeStamp) {
+                    $dueStatus = 'overdue';
+                } elseif ($now > $dueTimeStamp - (1 * 24 * 60 * 60)) {
+                    $dueStatus = 'due';
+                }
+            }
+
+            $renewable = $entry['renewable'];
+            #$renewals = $entry['renewals'];
+            $renewals = isset($entry['renewals']) ? $entry['renewals'] : null;
+            $renewLimit = $entry['max_renewals'];
+            $message = '';
+            if (!$renewable && !$checkedIn) {
+                $message = $this->mapRenewalBlockReason(
+                    $entry['renewability_blocks']
+                );
+                $permanent = in_array(
+                    $entry['renewability_blocks'],
+                    $this->permanentRenewalBlocks
+                );
+                if ($permanent) {
+                    $renewals = null;
+                    $renewLimit = null;
+                }
+            }
+
+            $transaction = [
+                'id' => $entry['biblio_id'],
+                'checkout_id' => $entry['checkout_id'],
+                'item_id' => $entry['item_id'],
+                'barcode' => $entry['external_id'] ?? null,
+                'title' => $this->getBiblioTitle($entry),
+                'volume' => $entry['serial_issue_number'] ?? '',
+                'publication_year' => $entry['copyright_date']
+                    ?? $entry['publication_year'] ?? '',
+                'borrowingLocation' => $this->getLibraryName($entry['library_id']),
+                'checkoutDate' => $this->convertDate($entry['checkout_date']),
+                'duedate' => $this->convertDate($entry['due_date']),#, true),
+                'returnDate' => $this->convertDate($entry['checkin_date']),
+                'dueStatus' => $dueStatus,
+                'renew' => $renewals,
+                'renewLimit' => $renewLimit,
+                'renewable' => $renewable,
+                'renewals_count' => $entry['renewals_count'],
+                'message' => $message
+            ];
+
+            $transactions[] = $transaction;
+        }
+
+        return [
+            'count' => $result['headers']['X-Total-Count'] ?? count($transactions),
+            $arrayKey => $transactions
+        ];
+    }    
 }
