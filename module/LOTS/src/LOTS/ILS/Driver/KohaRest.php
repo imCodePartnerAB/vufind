@@ -211,7 +211,8 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
                 if ($fields['frozen']) {
                     if (isset($fields['frozenThrough'])) {
                         $updateFields['suspended_until']
-                        = date('c', $fields['frozenThroughTS'] . ' 23:59:59'); //(rfc3339) else KOHA give internal error
+                        
+                        = date('c', $fields['frozenThroughTS'] + 86399); //(rfc3339) else KOHA give internal error
                         #= date('Y-m-d', $fields['frozenThroughTS']) . ' 23:59:59';
                         $result = false;
                     } else {
