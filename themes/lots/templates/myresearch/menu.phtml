@@ -39,7 +39,7 @@
 <!-- LOTS show media-->
   <?php if ($lots_show_fines && $ilsOnline && $this->ils()->checkCapability('getMyFines', $capabilityParams)): ?>
     <a href="<?=$this->url('myresearch-fines')?>" class="flex checkedout btn btn-primary btn-block btn-sm text-left<?=$this->active == 'fines' ? ' active' : ''?>">
-      <span class="flex-col"><i class="fa fa-fw fa-usd" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('Fines')?></span>
+      <span class="flex-col"><i class="fa fa-fw fa-wallet" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('Fines')?></span>
       <span class="fines-status status hidden"><i class="fa fa-spin fa-spinner" aria-hidden="true"></i></span>
     </a>
   <?php endif; ?>
