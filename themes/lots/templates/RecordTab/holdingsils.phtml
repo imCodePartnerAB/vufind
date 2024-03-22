@@ -29,9 +29,13 @@
  // LOTS-51 start
     $config = $this->config()->get('LOTS');
     $defaultColumns = "holds_library, holds_status, holds_department";
+    $addTypeColumn = $config->Record->addTypeColumn;
+    if ($addTypeColumn) {
+      $defaultColumns = "holds_library, holds_status, holds_type, holds_department";
+    }
     $addPlacementColumn = $config->Record->addPlacementColumn;
     if ($addPlacementColumn) {
-       $defaultColumns = "holds_library, holds_status, holds_department, holds_placing";
+       $defaultColumns = $defaultColumns.", holds_placing";
     }
     $columns = array_map('trim', explode(',',  $defaultColumns));
     $lots_showItemsInVufind = $config->Record->showItemsInVufind ?? false;
@@ -142,7 +146,11 @@
         ?>
 
      </td>
-      <td >
+     <?php
+    if ($addTypeColumn) {
+      echo "<td>".$this->transEsc($holding["items"]["0"]['item']['item_type_id'])."</td>";
+    }
+  ?>  <td>
   <?=(isset($holding["items"][0]["item"]["collection_code_description"])) ? $this->transEsc($holding["items"][0]["item"]["collection_code_description"]) : ''; ?>
   <?php
     if (!$addPlacementColumn) {
