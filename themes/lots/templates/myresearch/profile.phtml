@@ -98,7 +98,7 @@
       </tr>
     <?php endif; ?>
 
-    <?php if (!empty($this->profile['mobile_phone']) || $updateMobileNumber): ?>
+    <?php if (!empty($this->profile['mobile_phone']) && $updateMobileNumber): ?>
              <?php if ($updateMobileNumber): ?>
                 <tr>
                 <th><?=$this->transEsc('Mobile Number')?>:</th>
@@ -112,7 +112,7 @@
              </tr>
      <?php endif; ?>
 
-     <?php if (!empty($this->profile['sms_number']) || $updateSmsNumber): ?>
+     <?php if (!empty($this->profile['sms_number']) && $updateSmsNumber): ?>
             <?php if ($updateSmsNumber): ?>
                 <tr>
                 <th><?=$this->transEsc('SMS Number')?>:</th>
@@ -172,6 +172,7 @@
             $arrTemplate,
             $this->profile,
             [
+              $this->transEsc('Card Number') => 'cardnumber',
               $this->transEsc('First Name') => 'firstname',
               $this->transEsc('Last Name') => 'lastname',
               $this->transEsc('Address') . ' 1' => 'address1',
