@@ -5,6 +5,10 @@ function confirmCancelRequest(link, action) {
 }
 
 $(document).ready(function setupRequests() {
+  $('#cancelSelectedNoMenu').click(function cancelSelectedRequests(e) {
+    e.preventDefault();
+    confirmCancelRequest(this, 'cancelSelected');
+  });
   $('#confirm_cancel_selected_yes').click(function cancelSelectedRequests(e) {
     e.preventDefault();
     confirmCancelRequest(this, 'cancelSelected');
@@ -26,9 +30,11 @@ $(document).ready(function setupRequests() {
     if (checked.length > 0) {
       $('#update_selected').removeAttr('disabled');
       $('#cancelSelected').removeAttr('disabled');
+      $('#cancelSelectedNoMenu').removeAttr('disabled');
     } else {
       $('#update_selected').attr('disabled', 'disabled');
       $('#cancelSelected').attr('disabled', 'disabled');
+      $('#cancelSelectedNoMenu').attr('disabled', 'disabled');
     }
   };
   $('form[name="updateForm"] .result .checkbox input[type=checkbox]').on('change', checkCheckboxes);

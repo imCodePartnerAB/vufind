@@ -82,7 +82,7 @@
         </td>
       </tr>
     <?php } ?>
-    <?php if (!empty($this->profile['phone']) || $updatePhone): ?>
+    <?php if (!empty($this->profile['phone']) && $updatePhone): ?>
         <?php if ($updatePhone): ?>
       <tr>
         <th><?=$this->transEsc('Phone')?>:</th>
@@ -179,10 +179,10 @@
               $this->transEsc('Address') . ' 2' => 'address2',
               $this->transEsc('Zip') => 'zip',
               $this->transEsc('City') => 'city',
-              $this->transEsc('Country') => 'country',
-              $this->transEsc('Phone Number') => 'phone',
-              $this->transEsc('Mobile Number') => 'mobile_phone',
-              $this->transEsc('Group') => 'group',
+              // $this->transEsc('Country') => 'country',
+              // $this->transEsc('Phone Number') => 'phone',
+              // $this->transEsc('Mobile Number') => 'mobile_phone',
+              // $this->transEsc('Group') => 'group',
               $this->transEsc('patron_account_expires') => 'expiration_date'
             ]
         );
