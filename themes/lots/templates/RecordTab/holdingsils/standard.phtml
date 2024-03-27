@@ -47,9 +47,9 @@
             <span><?=$this->transEsc("Requests")?>: <?=$this->escapeHtml($holding['requests_placed'])?></span>
           <?php endif; ?>
 
-
-          <a class="<?=$check ? 'checkRequest' : ''?> placehold" <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['link']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Recall" : "Recall This")?></a>
-
+          <?php if ($holding['link'] ?? false): ?>
+            <a class="<?=$check ? 'checkRequest' : ''?> placehold" <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['link']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Recall" : "Recall This")?></a>
+          <?php endif; ?>
 
             <?=$this->relais()->renderButtonIfActive($this->driver ?? null)?>
         <?php endif; ?>
