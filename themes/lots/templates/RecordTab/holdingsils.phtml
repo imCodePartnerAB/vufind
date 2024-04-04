@@ -1,6 +1,7 @@
 <?php
 
     // Set up convenience variables:
+    $holdDetailIterate = 0;
     $account = $this->auth()->getManager();
     $user = $account->isLoggedIn();
     $openUrl = $this->openUrl($this->driver, 'holdings');
@@ -95,6 +96,11 @@
 
 <?=($offlineMode == "ils-offline") ? $this->render('Helpers/ils-offline.phtml', ['offlineModeMsg' => 'ils_offline_holdings_message']) : ''?>
 <table class="table table-striped">
+<colgroup><!-- Ny <colgroup> - om du vill styra bredder. Tog bort width="30%" på första kolumnen -->
+      <col span="1" class="min-w150">
+      <col span="4">
+    </colgroup>
+    <tbody>
 <tr>
   <?php foreach ($columns as $column): ?>
           <th><?=$this->transEsc($column)?></th>
@@ -112,6 +118,7 @@
 <?php endif; ?>
 
 <?php foreach ($holdings['holdings'] ?? [] as $holding): ?>
+  <?php $holdDetailIterate += 1 ?>
 
   <?php $holdStatus = $holding["items"]["0"]['status'] ?>
   <?php $locationTextEsc = $this->transEscWithPrefix('location_', $holding['location']); ?>
@@ -122,7 +129,8 @@
     <td width="30%"><?=$locationTextEsc?></td>
     <td class="<?= holdsColor($holdStatus) ?>">
         <?=$this->transEsc($holdStatus)?>
-
+        <div><!-- Ny <div> och <a> -->
+          <a data-toggle="collapse" role="button" aria-expanded="false" data-target="#exTr_<?=$holdDetailIterate?>" aria-expanded="false" aria-controls="exTr_<?=$holdDetailIterate?>"><!-- href="#exTr_1" + aria-controls="exTr_[ID/INDEX] exTr_2 exTr_3" -->
         <?php 
         if ($lots_showItemsInVufind) {
           $library_total_items = 0;
@@ -144,6 +152,8 @@
           
         }
         ?>
+          </a>
+        </div>
 
      </td>
      <?php
@@ -183,12 +193,12 @@
         try {
             echo $this->context($this)->renderInContext(
                 'RecordTab/holdingsils/' . $this->tab->getTemplate() . '.phtml',
-                ['holding' => $row]
+                ['holding' => $row, 'iteration'=>$holdDetailIterate]
             );
         } catch (Exception $e) {
             echo $this->context($this)->renderInContext(
                 'RecordTab/holdingsils/standard.phtml',
-                ['holding' => $row]
+                ['holding' => $row, 'iteration'=>$holdDetailIterate]
             );
         }
     ?>
@@ -204,6 +214,7 @@
     </tr>
   <?php endif; ?>
 <?php endforeach; ?>
+<tbody>
 </table>
 <?php if (!empty($holdings['total']) && $paginator = $this->tab->getPaginator($holdings['total'], $holdings['page'], $holdings['itemLimit'])): ?>
   <?=$this->paginationControl($paginator, 'Sliding', 'Helpers/pagination.phtml', ['page' => $holdings['page']])?>

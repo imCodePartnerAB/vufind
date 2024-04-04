@@ -3,27 +3,28 @@
     $check = $holding['check'] ?? false;
     $checkStorageRetrievalRequest = $holding['checkStorageRetrievalRequest'] ?? false;
     $checkILLRequest = $holding['checkILLRequest'] ?? false;
+    
   ?>
-  <tr vocab="http://schema.org/" typeof="Offer">
+  <tr id="exTr_<?=$iteration?>" class="collapse" typeof="Offer" vocab="http://schema.org/"><!-- Ny id="exTr_[ID/INDEX]" + class="collapse multi-collapse" -->  
     <td style='border:thin;background-color:#fff;'>
     </td>
-    <td class="copy-number"><?=$this->transEsc("Copy")?> <?=$this->escapeHtml($holding['number'])?>
-      <?php if ($holding['enumchron'] ?? false): ?>
-        <span class="enumchron">(<?=$this->escapeHtml($holding['enumchron'])?>)</span>
-      <?php endif; ?>         
-    </td>
-    <td>
+    <td><!-- Om du vill ha boder mellan cellerna, ta bort class="br-transp" -->
       <?php if ($holding['reserve'] == "Y"): ?>
         <link property="availability" href="http://schema.org/InStoreOnly" />
         <?=$this->transEsc("On Reserve - Ask at Circulation Desk")?><br />
       <?php endif; ?>
       <?php if ($holding['use_unknown_message'] ?? false): ?>
         <span class="text-muted"><?=$this->transEsc("status_unknown_message")?></span>
+        </td><!-- Ny end TD -->
+        <td><!-- Ny start TD -->$nbsp;
       <?php else: ?>
         <?php if ($holding['availability'] ?? false): ?>
+
           <?php /* Begin Available Items (Holds) */ ?>
            <span class="text-success"><?=$this->transEsc("Available")?><link property="availability" href="http://schema.org/InStock" /></span>
-          <?php if ($holding['link'] ?? false): ?>
+           </td><!-- Ny end TD -->
+          <td><!-- Ny start TD -->
+            <?php if ($holding['link'] ?? false): ?>
             
             <a class="<?=$check ? 'checkRequest ' : ''?>placehold" 
             <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>
@@ -46,6 +47,8 @@
           <?php if (($holding['requests_placed'] ?? 0) > 0): ?>
             <span><?=$this->transEsc("Requests")?>: <?=$this->escapeHtml($holding['requests_placed'])?></span>
           <?php endif; ?>
+          &nbsp;</td><!-- Ny end TD -->
+          <td><!-- Ny start TD -->
 
           <?php if ($holding['link'] ?? false): ?>
             <a class="<?=$check ? 'checkRequest' : ''?> placehold" <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['link']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Recall" : "Recall This")?></a>
@@ -77,6 +80,11 @@
       <?php /* Declare that the item is to be borrowed, not for sale */ ?>
       <link property="businessFunction" href="http://purl.org/goodrelations/v1#LeaseOut" />
       <link property="itemOffered" href="#record" />
-    </td>
+      </td>
+      <td><span class="text-muted"><?=$holding["item"]["collection_code_description"]?></span>
+      </td>
+      <td><span class="text-muted"><?=$holding["callnumber"]?>, <?=$holding["item_location_description"]?></span>
+      </td>
   </tr>
-<?php endif; ?>
+<?php endif; 
+$iteration+=1;?>
