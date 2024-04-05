@@ -229,6 +229,23 @@
 
 <?php endif; ?>
 <!-- /table -->
+<!--
+Lägg in detta script för att få rätt utseende. Lättare än att ändra CSS på alla siter, om du ska ha in samma lösning på fler ställen.
+Bootstrap har en bug som gör att Collapsible på TR blir display:block istället för display:table-row, som det ska vara -->
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const style = document.createElement('style');
+    const css = '.tab-pane table tr.multi-collapse td { vertical-align: middle !important; } .tab-pane table td.br-transp { border-right-color: transparent !important; } .tab-pane table tr.show { display: table-row !important; }';
+    if (style.styleSheet) {
+      style.styleSheet.cssText = css;
+    } else {
+      style.appendChild(document.createTextNode(css));
+    }
+    document.head.appendChild(style);
+  });
+</script>
+
 <style>
 .template-dir-record.template-name-view .media.row .media-body {
 	padding-bottom: 30px !important;
