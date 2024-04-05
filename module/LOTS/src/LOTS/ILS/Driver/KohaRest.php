@@ -119,6 +119,7 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
 
         $result = $result['data'];
         return [
+            'patron_id' => $result["patron_id"],
             'cardnumber' => $result['cardnumber'],
             'firstname' => $result['firstname'],
             'lastname' => $result['surname'],
