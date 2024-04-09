@@ -26,11 +26,11 @@
           <td><!-- Ny start TD -->
             <?php if ($holding['link'] ?? false): ?>
             
-            <a class="<?=$check ? 'checkRequest ' : ''?>placehold" 
-            <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>
-              href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['link']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Hold" : "Place a Hold")?></a>
-              
-          <?php endif; ?>
+                <a class="<?=$check ? 'checkRequest ' : ''?>placehold" 
+                <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>
+                  href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['link']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Hold" : "Place a Hold")?></a>
+
+            <?php endif; ?>
           <?php if ($holding['storageRetrievalRequestLink'] ?? false): ?>
             <a class="<?=$checkStorageRetrievalRequest ? 'checkStorageRetrievalRequest ' : ''?> placeStorageRetrievalRequest" data-lightbox href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['storageRetrievalRequestLink']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($checkStorageRetrievalRequest ? "storage_retrieval_request_check_text" : "storage_retrieval_request_place_text")?></a>
           <?php endif; ?>
@@ -86,5 +86,11 @@
       <td><span class="text-muted"><?=$holding["callnumber"]?>, <?=$holding["item_location_description"]?></span>
       </td>
   </tr>
+<?php else: ?> 
+  <!-- <tr>
+  <td>
+  (A)
+      </td>
+  </tr> -->
 <?php endif; 
 $iteration+=1;?>

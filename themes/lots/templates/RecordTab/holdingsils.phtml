@@ -11,7 +11,6 @@
     // Account for replace_other_urls setting
     $urls = $this->record($this->driver)->getLinkDetails($openUrlActive);
     $offlineMode = $this->ils()->getOfflineMode();
-    $columns = array_map('trim', explode(',', $holds_array_rows));
     try {
         $holdings = $this->driver->getRealTimeHoldings();
     } catch (\VuFind\Exception\ILS $e) {
@@ -30,11 +29,11 @@
  // LOTS-51 start
     $config = $this->config()->get('LOTS');
     $defaultColumns = "holds_library, holds_status, holds_department";
-    $addTypeColumn = $config->Record->addTypeColumn;
+    $addTypeColumn = $config->Record->addTypeColumn ?? false;
     if ($addTypeColumn) {
       $defaultColumns = "holds_library, holds_status, holds_type, holds_department";
     }
-    $addPlacementColumn = $config->Record->addPlacementColumn;
+    $addPlacementColumn = $config->Record->addPlacementColumn ?? false;
     if ($addPlacementColumn) {
        $defaultColumns = $defaultColumns.", holds_placing";
     }
@@ -46,12 +45,14 @@
           $global_reserve_items = 0;
           foreach ($holdings["holdings"] ?? [] as $local_holding) {
             foreach ($local_holding["items"] ?? [] as $local_item) {
-              if ($local_item["availability"]) {
-                $global_avail_items++;
-              } else {
-                $global_reserve_items++;
+              if (strlen($local_item['barcode'] ?? '') > 0){
+                  if ($local_item["availability"]) {
+                  $global_avail_items++;
+                } else {
+                  $global_reserve_items++;
+                }
+                $global_total_items++;
               }
-              $global_total_items++;
             }
           }
         ?>
@@ -139,13 +140,15 @@
           $library_holds_queued = 0;
 
           foreach ($holding["items"] ?? [] as $local_item) {
-            $library_holds_queued += $local_item["requests_placed"];
-            if ($local_item["availability"]) {
-              $library_avail_items++;
-            } else {
-              $library_reserve_items++;
+            if (strlen($local_item['barcode'] ?? '') > 0){
+              $library_holds_queued += $local_item["requests_placed"];
+              if ($local_item["availability"]) {
+                $library_avail_items++;
+              } else {
+                $library_reserve_items++;
+              }
+              $library_total_items++;
             }
-            $library_total_items++;
           }
           
           printf($this->translate('ils_availability_detail'),$library_avail_items, $library_total_items,  $library_holds_queued);
