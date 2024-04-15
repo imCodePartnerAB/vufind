@@ -1,6 +1,30 @@
 <?php
   $config = $this->config()->get('LOTS');
   $AllowHistoryConfiguration = $config->History->allowConfiguration;
+  $allowSaveButton= $config->UserMenu->allowSaveButton;
+  $allowPhoneNumber= $config->UserMenu->allowPhoneNumber;
+  $allowMobileNumber= $config->UserMenu->allowMobileNumber;
+  $allowSMSNumber= $config->UserMenu->allowSMSNumber;
+
+  $phonePlaceHolder=$config->UserMenu->phonePlaceHolder ?? '';
+  $phonePattern=$config->UserMenu->phonePattern ?? '';
+  $phoneInputAdd='';
+  if ($phonePlaceHolder != '' && $phonePattern != '') {
+    $phoneInputAdd='placeholder="'.$phonePlaceHolder.'" pattern="'.$phonePattern.'"';
+  }
+  $mobilePlaceHolder=$config->UserMenu->mobilePlaceHolder ?? '';
+  $mobilePattern=$config->UserMenu->mobilePattern ?? '';
+  $mobileInputAdd='';
+  if ($mobilePlaceHolder != '' && $mobilePattern != '') {
+    $mobileInputAdd='placeholder="'.$mobilePlaceHolder.'" pattern="'.$mobilePattern.'"';
+  }
+  $smsPlaceHolder=$config->UserMenu->smsPlaceHolder ?? '';
+  $smsPattern=$config->UserMenu->smsPattern ?? '';
+  $smsInputAdd='';
+  if ($smsPlaceHolder != '' && $smsPattern != '') {
+    $smsInputAdd='placeholder="'.$smsPlaceHolder.'" pattern="'.$smsPattern.'"';
+  }
+  
 
     // Set up page title:
     $this->headTitle($this->translate('My Profile'));
@@ -82,13 +106,14 @@
         </td>
       </tr>
     <?php } ?>
-    <?php if (!empty($this->profile['phone']) && $updatePhone): ?>
+    <?php if ($updatePhone && $allowPhoneNumber): ?>
         <?php if ($updatePhone): ?>
       <tr>
         <th><?=$this->transEsc('Phone')?>:</th>
         <td>
               <input type="tel" name="profile_tel" class="form-control flex-grow-1"
               value="<?=empty($this->profile['phone']) ? '' : $this->escapeHtmlAttr($this->profile['phone']) ?>" 
+              <?=$phoneInputAdd?>
               title="<?=$this->transEscAttr('Phone') ?>" />
               <?php else: ?>
                 <div class="my-profile-col profile-title"><?=$this->transEsc('Phone') ?>:</div>
@@ -98,12 +123,14 @@
       </tr>
     <?php endif; ?>
 
-    <?php if (!empty($this->profile['mobile_phone']) && $updateMobileNumber): ?>
+    <?php if ($updateMobileNumber && $allowMobileNumber): ?>
              <?php if ($updateMobileNumber): ?>
                 <tr>
                 <th><?=$this->transEsc('Mobile Number')?>:</th>
                 <td>
-                <input class="form-control flex-grow-1" type="tel" name="profile_mobile_number" value="<?=empty($this->profile['mobile_phone']) ? '' : $this->escapeHtmlAttr($this->profile['mobile_phone']) ?>" title="<?=$this->transEscAttr('Mobile Number') ?>" />
+                <input class="form-control flex-grow-1" type="tel" name="profile_mobile_number" 
+                <?=$mobileInputAdd?>
+                value="<?=empty($this->profile['mobile_phone']) ? '' : $this->escapeHtmlAttr($this->profile['mobile_phone']) ?>" title="<?=$this->transEscAttr('Mobile Number') ?>" />
              <?php else: ?>
                 <div class="my-profile-col profile-title"><?=$this->transEsc('Mobile Number') ?>:</div>
                 <div class="profile-text-value"><?=$this->escapeHtml($this->profile['mobile_phone']) ?></div>
@@ -112,12 +139,18 @@
              </tr>
      <?php endif; ?>
 
-     <?php if (!empty($this->profile['sms_number']) && $updateSmsNumber): ?>
+     <?php if ($updateSmsNumber && $allowSMSNumber): ?>
             <?php if ($updateSmsNumber): ?>
                 <tr>
                 <th><?=$this->transEsc('SMS Number')?>:</th>
                 <td>
-                <input class="form-control flex-grow-1" type="tel" name="profile_sms_number" value="<?=empty($this->profile['sms_number']) ? '' : $this->escapeHtmlAttr($this->profile['sms_number']) ?>" title="<?=$this->transEscAttr('SMS Number') ?>" />
+                <input class="form-control flex-grow-1" 
+                  type="tel" 
+                  name="profile_sms_number" 
+                  <?=$smsInputAdd?>
+
+                         value="<?=empty($this->profile['sms_number']) ? '' : $this->escapeHtmlAttr($this->profile['sms_number']) ?>" 
+                  title="<?=$this->transEscAttr('SMS Number') ?>" />
             <?php else: ?>
                 <div class="my-profile-col profile-title"><?=$this->transEsc('SMS Number') ?>:</div>
                 <div class="profile-text-value"><?=$this->escapeHtml($this->profile['sms_number']) ?></div>
@@ -131,7 +164,7 @@
         </td>
         <td>
             <div class="my-profile-row" align="right">
-              <?php if ($updatePhone): ?>
+              <?php if ($allowSaveButton): ?>
                 <input id="save-library-profile" name="saveLibraryProfile" type="submit" value="<?=$this->transEscAttr("save_my_profile") ?>" 
                   class="btn btn-primary my-profile-btn" />
               <?php endif; ?>
