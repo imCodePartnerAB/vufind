@@ -7,7 +7,7 @@
  */
 namespace LOTS\Controller;
 
-
+use VuFind\Exception\Auth as AuthException;
 use VuFind\Exception\ILS as ILSException;
 use VuFind\Exception\AuthToken as AuthTokenException;
 
@@ -92,7 +92,7 @@ class SuggestionsController extends \VuFind\Controller\AbstractBase implements
             $ret_http = $this->json_http("POST","/suggestions", $token, $jsonData);
         }
 
-        return $this->createViewModel(
+        $view = $this->createViewModel(
             [
             'libraries' => $libraries,
             'title' => $this->params()->fromPost('title'),
@@ -110,6 +110,10 @@ class SuggestionsController extends \VuFind\Controller\AbstractBase implements
             'http_data' =>  json_encode($data),
             ]
         );
+
+        $view->user = $this->getAuthManager()->isLoggedIn();;
+
+        return $view;
 
     }
 

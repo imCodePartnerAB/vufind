@@ -12,6 +12,8 @@ $offlineMode = $this->ils()->getOfflineMode();
 $getLoginHtml = $this->auth()->getLogin();
 $getLoginBankID = "NONE BAnkID";
 
+$config = $this->config()->get('LOTS');
+$showBankIDOption = $config->NotFinished->showBankIDOption;
 ?>
 
 <?php if ($offlineMode == "ils-offline"): ?>
@@ -30,12 +32,14 @@ $getLoginBankID = "NONE BAnkID";
 <?php else: ?>
 
   <div class="pl30 max-w460">
-    <label class="radio-inline">
-      <input type="radio" name="inlineRadioOptions" id="inlineRadio1" value="#standard" checked> Lösenord / PIN
-    </label>
-    <label class="radio-inline">
-      <input type="radio" name="inlineRadioOptions" id="inlineRadio2" value="#bankid"> Mobilt BankID
-    </label>
+    <?php if ($showBankIDOption): ?>
+        <label class="radio-inline">
+          <input type="radio" name="inlineRadioOptions" id="inlineRadio1" value="#standard" checked> Lösenord / PIN
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="inlineRadioOptions" id="inlineRadio2" value="#bankid"> Mobilt BankID
+        </label>
+    <?php endif; ?>
     <div class="mt20">
       <div id="standard" class="login-forms pt2">
         <?= $this->auth()->getLogin() ?>

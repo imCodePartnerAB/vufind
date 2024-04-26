@@ -135,10 +135,16 @@ suggest_note="Kommentar:"
 			<label for="branch" class="col-sm-4 col-form-label">
             <?=$this->transEsc('suggest_branchcode')?>
 			</label>
+            <?php
+              $selected = (strlen($user->home_library ?? '') > 0)
+                ? $user->home_library : $this->defaultPickupLocation
+?>
+
 			<div class="col-sm-8">
 				<select id="branch" name="branchcode" class="form-control form-control-sm">
 					<?php foreach ($libraries as $library): ?>
-					<option value="<?php echo $library->library_id; ?>"><?php echo $library->name; ?></option>
+					<option <?=($selected == $library->library_id) ? ' selected="selected"' : ''?> 
+						value="<?php echo $library->library_id; ?>"><?php echo $library->name; ?></option>
 					<?php endforeach; ?>
 				</select>
 			</div>

@@ -25,67 +25,57 @@
     // Set page title.
     $this->headTitle($this->translate('Holdings') . ': ' . $this->driver->getBreadcrumb());
 
-
-    // LOTS-51 start
+ // LOTS-51 start
     $config = $this->config()->get('LOTS');
     $lots_showItemsInVufind = $config->Record->showItemsInVufind ?? false;
-
     if ($lots_showItemsInVufind) {
-      $configKohaRest = $this->config()->get('KohaRest');
-      $kohaHost = $configKohaRest->Catalog->host;
-      $kohaClientId = $configKohaRest->Catalog->clientId;
-      $kohaClientSecret = $configKohaRest->Catalog->clientSecret;
 
-      $this_id = $this->driver->getUniqueID();
-      $kohaApiThisUser = $kohaHost."/v1/holds/?biblio_id=$this_id&_match=exact";
+          $global_total_items = 0;
+          $global_avail_items = 0;
+          $global_reserve_items = 0;
 
-       $ch = curl_init();
-       curl_setopt($ch, CURLOPT_URL, $kohaHost."/v1/oauth/token");
-       curl_setopt($ch, CURLOPT_POST, true);
-       curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-        'client_id' => $kohaClientId,
-        'client_secret' => $kohaClientSecret,
-        'grant_type' => 'client_credentials'
-      ]));
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-      $authResponse = curl_exec($ch);
-      curl_close($ch);
-
-      $authData = json_decode($authResponse, true);
-      $accessToken = $authData['access_token'];
-
-      $ch = curl_init();
-      curl_setopt($ch, CURLOPT_URL, $kohaApiThisUser);
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-      curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Authorization: Bearer ' . $accessToken
-      ]);
-      $response = curl_exec($ch);
-      curl_close($ch);
-
-      $biblio_array_holds = array();
-      $reservations_total = 0;
-      $available = 0;
-      $available_items = $holdings["total"];
-
-      if ($response) {
-        $data = json_decode($response, true);
-        if (!empty($data)) {
-            foreach ($data as $item) {
-                $pickup_library_id = $item['pickup_library_id'];
-                $biblio_array_holds[$pickup_library_id]['reservations']++;
+          /* KOHA-225 */
+          $totals = array_reduce($holdings["holdings"] ?? [], function($carry, $local_holding) {
+          foreach ($local_holding["items"] ?? [] as $local_item) {
+            if ($local_item["availability"]) {
+                $carry['avail']++;
+            } else {
+               $carry['reserve']++;
             }
-        }
-      }
+              $carry['total']++;
+          }
+          return $carry;
+          }, ['avail' => 0, 'reserve' => 0, 'total' => 0]);
 
-      for ($i = 0; $i <= $available_items; $i++) {
-       foreach ($holdings['holdings'] ?? [] as $holding) {
-           $biblio_array_items[$holding["items"][$i]["item"]["home_library_id"]]['count']++;
-       }
-      }
+          $global_total_items = $totals['total'];
+          $global_avail_items = $totals['avail'];
+          $global_reserve_items = $totals['reserve'];
+          /* /KOHA-225 */
 
-    // LOTS-51 end
+/*
+	  foreach ($holdings["holdings"] ?? [] as $local_holding) {
+            foreach ($local_holding["items"] ?? [] as $local_item) {
+              if ($local_item["availability"]) {
+                $global_avail_items++;
+              } else {
+                $global_reserve_items++;
+              }
+              $global_total_items++;
+            }
+	  }
+*/
+        ?>
+          <div class="reservations-wrapper">
+            <div class="reservations-data">
+              <?php  
+                printf($this->translate('ils_availability'),$global_avail_items, $global_total_items, $global_reserve_items);
+              ?>
+            </div>
+          </div>
+
+     <?php  
     }
+  //printf($this->translate('ils_availability2'),$global_avail_items, $global_total_items, $global_reserve_items);
     // LOTS-51 end
 
 
@@ -120,28 +110,9 @@
 <th><?=$this->transEsc("holds_library")?></th>
 <th><?=$this->transEsc("holds_status")?></th>
 <th><?=$this->transEsc("holds_placing")?></th>
-<th><?=$this->transEsc("holds_department")?></th>
+<!-- th><?=$this->transEsc("holds_department")?></th -->
 </tr>
 <tr>
-<?php 
-//< ?php if (!empty($urls) || $openUrlActive || $doiActive): ? >
-//  <!--h3>< ?=$this->transEsc("Internet")? ></h3-->
-//
-//  
-//  <td>  
-//  < ?=$this->transEsc("Internet")? >:
-//  < ?php if (!empty($urls)): ? >
-//    < ?php foreach ($urls as $current): ? >
-//      <a href="< ?=$this->escapeHtmlAttr($this->proxyUrl($current['url']))? >">< ?=$this->escapeHtml($current['desc'])? ></a><br/>
-//    < ?php endforeach; ? >
-//  < ?php endif; ? >
-//  < ?php if ($openUrlActive): ? >< ?=$openUrl->renderTemplate()? >< ?php endif; ? >
-//  < ?php if ($doiActive): ? >< ?=$doi->renderTemplate()? >< ?php endif; ? >
-//    </td>
-//
-//< ?php endif; ? >
-?>
-
 <?php if (!empty($holdings['electronic_holdings'])): ?>
   <?=
     $this->context($this)->renderInContext(
@@ -149,22 +120,11 @@
         ['holdings' => $holdings['electronic_holdings']]
     );
   ?>
+</table>
 <?php endif; ?>
-<?php 
-$nravailable = 0;
-$nrtotal = 0;
-foreach ($holdings['holdings'] ?? [] as $holding){
-        $nrtotal = $nrtotal + count($holding["items"]);
-    foreach ($holding["items"] ?? [] as $item) {
-        if ($item['status'] == "On Shelf"){
-          $nravailable++;
-        }
-    }
-  }
-  printf($this->translate("ils_availability"), $nravailable, $nrtotal);
 
-?>
 <?php foreach ($holdings['holdings'] ?? [] as $holding): ?>
+  <table class="table table-striped">
   <?php $holdStatus = $holding["items"]["0"]['status'] ?>
   <?php $locationTextEsc = $this->transEscWithPrefix('location_', $holding['location']); ?>
   <?php if ($holding['locationhref'] ?? false): ?>
@@ -175,15 +135,26 @@ foreach ($holdings['holdings'] ?? [] as $holding){
       <td class="<?= holdsColor($holdStatus) ?>">
         <?=$this->transEsc($holdStatus)?>
 
-        <?php if ($lots_showItemsInVufind) {
-               $reservations = 0;
-               if ($biblio_array_holds[$holding["items"][0]["item"]["home_library_id"]]['reservations'] >0 ) {
-                   $reservations = $biblio_array_holds[$holding["items"][0]["item"]["home_library_id"]]['reservations'];
-                   $reservations_total++;
-               }
-               $available = $biblio_array_items[$holding["items"][0]["item"]["home_library_id"]]['count'];
-               echo "<br/><font color='#000'>Tillgängliga exemplar: $reservations/$available</font>";
-              }
+        <?php 
+        if ($lots_showItemsInVufind) {
+          $library_total_items = 0;
+          $library_avail_items = 0;
+          $library_reserve_items = 0;
+          $library_holds_queued = 0;
+
+          foreach ($holding["items"] ?? [] as $local_item) {
+            $library_holds_queued += $local_item["requests_placed"];
+            if ($local_item["availability"]) {
+              $library_avail_items++;
+            } else {
+              $library_reserve_items++;
+            }
+            $library_total_items++;
+          }
+          
+          printf($this->translate('ils_availability_detail'),$library_avail_items, $library_total_items,  $library_holds_queued);
+          
+        }
         ?>
 
      </td>
@@ -195,19 +166,44 @@ foreach ($holdings['holdings'] ?? [] as $holding){
 
   </tr>
   <?php endif; ?>
+  <?php foreach ($holding['textfields'] ?? [] as $textFieldName => $textFields): ?>
+    <tr>
+      <?php // Translation for summary is a special case for backwards-compatibility ?>
+      <th><?=$textFieldName == 'summary' ? $this->transEsc("Volume Holdings") : $this->transEsc(ucfirst($textFieldName))?>:</th>
+      <td>
+        <?php foreach ($textFields as $current): ?>
+          <?=$this->linkify($this->escapeHtml($current))?><br/>
+        <?php endforeach; ?>
+      </td>
+    </tr>
+  <?php endforeach; ?>
+  <?php foreach ($holding['items'] as $row): ?>
+    <?php
+        try {
+            echo $this->context($this)->renderInContext(
+                'RecordTab/holdingsils/' . $this->tab->getTemplate() . '.phtml',
+                ['holding' => $row]
+            );
+        } catch (Exception $e) {
+            echo $this->context($this)->renderInContext(
+                'RecordTab/holdingsils/standard.phtml',
+                ['holding' => $row]
+            );
+        }
+    ?>
+  <?php endforeach; ?>
+  <?php if (!empty($holding['purchase_history'])): ?>
+    <tr>
+      <th><?=$this->transEsc("Most Recent Received Issues")?>:</th>
+      <td>
+        <?php foreach ($holding['purchase_history'] as $current): ?>
+          <?=$this->escapeHtml($current['issue'])?><br/>
+        <?php endforeach; ?>
+      </td>
+    </tr>
+  <?php endif; ?>
+</table>
 <?php endforeach; ?>
-
-
-<?php if ($lots_showItemsInVufind) { ?>
-<script type="text/javascript">
-  $(document).ready(function() {
-      var newLi = '<li style="margin-left: auto; color: #666; font-size: 15px;padding: 8px 10px; border: 1px solid rgba(0, 0, 0, .06); border-bottom-color: rgb(137, 166, 61);">Tillgängliga: <?=$reservations_total;?>/<?=$available_items?> Reservationer: <?=$reservations_total;?></li>';
-      $('.nav.nav-tabs').css('display', 'flex').append(newLi);
-  });
-</script>
-<?php } ?>
-
-
 <?php if (!empty($holdings['total']) && $paginator = $this->tab->getPaginator($holdings['total'], $holdings['page'], $holdings['itemLimit'])): ?>
   <?=$this->paginationControl($paginator, 'Sliding', 'Helpers/pagination.phtml', ['page' => $holdings['page']])?>
 <?php endif; ?>
@@ -220,4 +216,24 @@ foreach ($holdings['holdings'] ?? [] as $holding){
     <?php endforeach; ?>
 
 <?php endif; ?>
-</table>
+<!-- /table -->
+<style>
+.template-dir-record.template-name-view .media.row .media-body {
+	padding-bottom: 30px !important;
+}
+.reservations-wrapper {
+	position: relative;
+}
+.reservations-data {
+	position: absolute;
+	top: -52px;
+	right: 0;
+	font-size: 0.9rem;
+	color: #777;
+}
+@media screen and (max-width: 900px) {
+	.reservations-data {
+		top: -90px;
+	}
+}
+</style>

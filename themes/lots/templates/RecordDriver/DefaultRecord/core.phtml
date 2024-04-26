@@ -19,7 +19,7 @@ if (!isset($showSummaryLink)) {
 // showCorefields[2] = "Language"
 // showCorefields[3] = "Published"
 // showCorefields[3] = "Subjects"
-
+$showAllCorefields = $config->Record->showAllCorefields;
 $showCorefields = $config->Record->showCorefields;
 $showCorefields = $showCorefields->toArray();
 if (!isset($showCorefields)) {
@@ -141,14 +141,19 @@ $this->metadata()->generateMetatags($this->driver);
     ?>
 
 <?php if (!empty($coreFields)): ?>
-
     <table class="table table-noborder table-details">
         <caption class="sr-only"><?=$this->transEsc('Bibliographic Details')?></caption>
         <?php foreach ($coreFields as $current): ?>
           <?php if ("" != $current['value']): ?>
-                <?php $showCorefield = in_array($current['label'], $showCorefields); ?>
-                <?php if ("" != $current['value'] && $showCorefield): ?>
+                
+                <?php if ("" != $current['value'] && $showAllCorefields): ?>
                     <tr><td><?=$this->transEsc($showCorefieldPrefixes[$current['label']])?> <?=$current['value']?></td></tr>
+              
+                <?php else: ?>
+                  <?php $showCorefield = in_array($current['label'], $showCorefields); ?>
+                  <?php if ("" != $current['value'] && $showCorefield): ?>
+                      <tr><td><?=$this->transEsc($showCorefieldPrefixes[$current['label']])?> <?=$current['value']?></td></tr>
+                  <?php endif; ?>
                 <?php endif; ?>
             <?php endif; ?>
         <?php endforeach; ?>
@@ -174,6 +179,7 @@ $this->metadata()->generateMetatags($this->driver);
 </table-->
 
     </div>
+    <?php endif; ?>
 
 
 <!-- Reservera på Titelnivå 1-->
@@ -181,9 +187,15 @@ $this->metadata()->generateMetatags($this->driver);
     <a class="placehold" data-light-box title="<?=$this->transEscAttr('request_place_text')?>" href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holdingTitleHold))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('title_hold_place')?></a>
 <?php else: ?>
   <?php if ($this->auth()->isLoggedIn()): ?>
-    <div class="alert alert-info">
-            <?=$this->translate('no_rights_to_hold')?>
-    </div>
+    <?php 
+    $result = $this->translate('no_rights_to_hold');
+    $result = trim($result);
+    if ($result !== "__HIDE__"): 
+      ?>
+      <div class="alert alert-info">
+          <?=$result?>
+      </div>
+    <?php endif; ?>
   <?php else: ?>
     <div class="alert alert-info">
             <?=$this->translate("hold_profile_html", ['%%url%%' => $this->escapeHtmlAttr($this->recordLinker()->getTabUrl($this->driver, 'Holdings', ['catalogLogin' => 'true']))])?>
