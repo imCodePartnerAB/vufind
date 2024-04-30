@@ -1,61 +1,94 @@
-<?php 
-#echo 'http_data: '.$http_data.'<br>';
-$http_data = json_decode($http_data, true);
+<?php
+// LOTS We use this to allow or not the medialinks in the search results
+// See more in LOTS.ini
+$config = $this->config()->get('LOTS');
+$fieldsToHide = $config->Suggestions->fieldsToHide ?? '';
+
+// Convert the string of fields to an array
+$fieldsToHideArray = explode(",", $fieldsToHide);
+$fieldsToHideArray = array_map('trim', $fieldsToHideArray);
+
+// Function to check if a field should be hidden
+function shouldHideField($fieldName, $fieldsToHideArray) {
+    return in_array($fieldName, $fieldsToHideArray);
+}
+	$http_data = json_decode($http_data, true);
 ?>
 
 <div id="usersuggestions">
-	<h1><?=$this->transEsc('suggestion_done_header1') ?></h1>
-	<h2><?=$this->transEsc('suggestion_done_message')?></h2>
+    <h1><?= $this->transEsc('suggestion_done_header1') ?></h1>
+    <h2><?=$this->transEsc('suggestion_done_message')?></h2>
 
-	<table class="table table-sm table-borderless table-striped">
-		<tbody>
-		<tr>
-			<th><?=$this->transEsc('suggest_title')?></th>
-			<td><?= $http_data['title']; ?></td>
-		</tr>
-		<tr>
-			<th><?=$this->transEsc('suggest_author')?></th>
-			<td><?= $http_data['author']; ?></td>
-		</tr>
-		<tr>
-			<th><?=$this->transEsc('suggest_copyrightdate')?></th>
-			<td><?= $http_data['publication_year']; ?></td>
-		</tr>
-		<tr>
-			<th><?=$this->transEsc('suggest_isbn')?></th>
-			<td><?= $http_data['isbn']; ?></td>
-		</tr>
-		<tr>
-			<th><?=$this->transEsc('suggest_publishercode')?></th>
-			<td><?= $http_data['publisher_code']; ?></td>
-		</tr>
-		<tr>
-			<th><?=$this->transEsc('suggest_collectiontitle')?></th>
-			<td><?= $http_data['collection_title']; ?></td>
-		</tr>
-		<tr>
-			<th><?=$this->transEsc('suggest_place')?></th>
-			<td><?= $http_data['publication_place']; ?></td>
-		</tr>
-		<tr>
-			<th><?=$this->transEsc('suggest_quantity')?></th>
-			<td><?= $http_data['quantity']; ?></td>
-		</tr>
-		<tr>
-			<th><?=$this->transEsc('suggest_itemtype')?></th>
-			<td><?= $http_data['item_type']; ?></td>
-		</tr>
-		<?php foreach ($libraries as $library): if ($http_data['library_id'] == $library->library_id): ?>
-		<tr>
-			<th><?=$this->transEsc('suggest_branchcode')?></th>
-			<td><?= $library->name; ?> (<?= $http_data['library_id']; ?>)</td>
-		</tr>
-		<?php endif; endforeach; ?>
-
-		<tr>
-			<th><?=$this->transEsc('suggest_note')?></th>
-			<td><?= $http_data['note']; ?></td>
-		</tr>
-		</tbody>
-	</table>
+    <table class="table table-sm table-borderless table-striped">
+        <tbody>
+            <tr>
+                <th><?= $this->transEsc('suggest_title') ?></th>
+                <td><?= $http_data['title']; ?></td>
+            </tr>
+            <?php if (!shouldHideField('author', $fieldsToHideArray) && !empty($http_data['author'])) : ?>
+                <tr>
+                    <th><?= $this->transEsc('suggest_author') ?></th>
+                    <td><?= $http_data['author']; ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!shouldHideField('copyrightdate', $fieldsToHideArray)) : ?>
+                <tr>
+                    <th><?= $this->transEsc('suggest_copyrightdate') ?></th>
+                    <td><?= $http_data['publication_year']; ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!shouldHideField('isbn', $fieldsToHideArray)) : ?>
+                <tr>
+                    <th><?= $this->transEsc('suggest_isbn') ?></th>
+                    <td><?= $http_data['isbn']; ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!shouldHideField('publishercode', $fieldsToHideArray)) : ?>
+                <tr>
+                    <th><?= $this->transEsc('suggest_publishercode') ?></th>
+                    <td><?= $http_data['publisher_code']; ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!shouldHideField('collectiontitle', $fieldsToHideArray)) : ?>
+                <tr>
+                    <th><?= $this->transEsc('suggest_collectiontitle') ?></th>
+                    <td><?= $http_data['collection_title']; ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!shouldHideField('place', $fieldsToHideArray)) : ?>
+                <tr>
+                    <th><?= $this->transEsc('suggest_place') ?></th>
+                    <td><?= $http_data['publication_place']; ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!shouldHideField('quantity', $fieldsToHideArray)) : ?>
+                <tr>
+                    <th><?= $this->transEsc('suggest_quantity') ?></th>
+                    <td><?= $http_data['quantity']; ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!shouldHideField('itemtype', $fieldsToHideArray)) : ?>
+                <tr>
+                    <th><?= $this->transEsc('suggest_itemtype') ?></th>
+                    <td><?= $http_data['item_type']; ?></td>
+                </tr>
+            <?php endif; ?>
+			<?php if (!shouldHideField('branchcode', $fieldsToHideArray)) : ?>
+            <?php foreach ($libraries as $library) :
+                if ($http_data['library_id'] == $library->library_id && !shouldHideField('branchcode', $fieldsToHideArray)) : ?>
+                    <tr>
+                        <th><?= $this->transEsc('suggest_branchcode') ?></th>
+                        <td><?= $library->name; ?> (<?= $http_data['library_id']; ?>)</td>
+                    </tr>
+                <?php endif;
+            endforeach; ?>
+			<?php endif; ?>
+            <?php if (!shouldHideField('note', $fieldsToHideArray)) : ?>
+                <tr>
+                    <th><?= $this->transEsc('suggest_note') ?></th>
+                    <td><?= $http_data['note']; ?></td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </div>

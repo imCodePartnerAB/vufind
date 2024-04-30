@@ -1,6 +1,9 @@
 <!-- START ./layout/layout.phtml -->
 
 <?php
+$http_host = $_SERVER['HTTP_X_FORWARDED_HOST'];
+#$http_host = 'lots-lerum.prod.imcode.com';
+#echo $http_host;
    // use VuFind\Cookie\CookieManager;
   // Set default value if necessary:
     #$account = $this->auth()->getManager();
@@ -62,7 +65,7 @@ if ($this->layout()->rtl) {
     $rtl = ' rtl';
 }
 $bodytxt = '<body class="template-dir-'.$this->templateDir.' template-name-'.$this->templateName.' '.$this->layoutClass('offcanvas-row').$rtl.'">';
-$header = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageStart', false, stream_context_create($arrContextOptions));
+$header = file_get_contents('https://'.$http_host.'?cont=pageStart', false, stream_context_create($arrContextOptions));
 $bodytag = str_replace('<body id="startPage">', $bodytxt, $header);
 echo $bodytag;
 
@@ -84,7 +87,7 @@ echo $bodytag;
         $this->layout()->searchbox = $this->render('search/searchbox.phtml');
       }
     ? -->
-<?=$this->context($this)->renderInContext("search/searchbox_lots.phtml", ['ignoreHiddenFilterMemory' => true])?>
+<!-- ?=$this->context($this)->renderInContext("search/searchbox_lots.phtml", ['ignoreHiddenFilterMemory' => true])?-->
 
 <nav class="breadcrumbs" aria-label="<?=$this->transEsc('Breadcrumbs') ?>">
   <div class="container">
@@ -120,7 +123,7 @@ echo $bodytag;
 </div>
 
 <?php
-$footer = file_get_contents('https://'.$_SERVER['HTTP_X_FORWARDED_HOST'].'?cont=pageEnd', false, stream_context_create($arrContextOptions));
+$footer = file_get_contents('https://'.$http_host.'?cont=pageEnd', false, stream_context_create($arrContextOptions));
 
 
 $footer = str_replace('</body>', '', $footer);

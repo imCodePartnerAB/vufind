@@ -1,173 +1,176 @@
-<!--
+<?php
+// LOTS We use this to allow or not the medialinks in the search results
+// See more in LOTS.ini
+$config = $this->config()->get('LOTS');
+$fieldsToHide = $config->Suggestions->fieldsToHide ?? '';
+$branchcodeAllowChange = $config->Suggestions->branchcodeAllowChange ?? true;
+// Convert the string of fields to an array
+$fieldsToHideArray = explode(",", $fieldsToHide);
+$fieldsToHideArray = array_map('trim', $fieldsToHideArray);
 
-<?=$this->transEsc('suggest_title')?>
-<?=$this->transEsc('suggest_obligiatory')?>
-<?=$this->transEsc('suggest_author')?>
-<?=$this->transEsc('suggest_copyrightdate')?>
-<?=$this->transEsc('suggest_copyrightdescription')?>
-<?=$this->transEsc('suggest_isbn')?>
-<?=$this->transEsc('suggest_publishercode')?>
-<?=$this->transEsc('suggest_collectiontitle')?>
-<?=$this->transEsc('suggest_place')?>
-<?=$this->transEsc('suggest_quantity')?>
-<?=$this->transEsc('suggest_itemtype')?>
-<?=$this->transEsc('suggest_branchcode')?>
-<?=$this->transEsc('suggest_note')?>
-<?=$this->transEsc('suggestion_header1')?>
-<?=$this->transEsc('suggestion_header2')?>
-<?=$this->transEsc('suggestion_top_paragraph')?>
+$user = $this->auth()->isLoggedIn();
 
-suggest_title="Titel:"
-sugest_obligiatory="Obligatorisk:"
-suggest_author="Författare:"
-suggest_copyrightdate="Copyright:"
-suggest_copyrightdescription="Copyright eller publikationsår, exempelvis: 2016"
-suggest_isbn="ISBN:"
-suggest_publishercode="Förläggare:"
-suggest_collectiontitle="Samlingstitel:"
-suggest_place="Förlagsort:"
-suggest_quantity="Antal:"
-suggest_itemtype="Exemplartyp:"
-suggest_branchcode="Bibliotek:"
-suggest_note="Kommentar:"
-
-
--->
-
-
-    <div id="usersuggestions">
-	<h1><?=$this->transEsc('suggestion_header1')?></h1>
-	<h2><?=$this->transEsc('suggestion_header2')?></h2>
-    <?=$this->translate('suggestion_top_paragraph')?>
-
-	<form action="#" method="post" id="add_suggestion_form">
-
-		<div class="form-group row mt30">
-			<label for="title" class="col-sm-4 col-form-label">
-            <?=$this->transEsc('suggest_title')?><b class="red">*</b>
-			</label>
-			<div class="col-sm-8">
-				<input type="text" id="title" name="title" class="form-control form-control-sm" maxlength="255" value=""
-				       required>
-			</div>
-		</div>
-
-		<div class="form-group row">
-			<label for="author" class="col-sm-4 col-form-label">
-            <?=$this->transEsc('suggest_author')?>
-			</label>
-			<div class="col-sm-8">
-				<input type="text" id="author" name="author" class="form-control form-control-sm" maxlength="80" value="">
-			</div>
-		</div>
-
-		<div class="form-group row">
-			<label for="copyrightdate" class="col-sm-4 col-form-label"
-			       title="<?=$this->transEsc('suggest_copyrightdescription')?>">
-                <?=$this->transEsc('suggest_copyrightdate')?>
-			</label>
-			<div class="col-sm-8">
-				<input type="number" id="copyrightdate" name="copyrightdate" min="1900" max="2099" step="1"
-				       class="form-control form-control-sm w100" size="4" maxlength="4" value=""> 
-                <?=$this->transEsc('suggest_copyrightdescription')?>
-			</div>
-            
-		</div>
-        
-		<div class="form-group row">
-			<label for="isbn" class="col-sm-4 col-form-label">
-            <?=$this->transEsc('suggest_isbn')?>
-			</label>
-			<div class="col-sm-8">
-				<input type="text" id="isbn" name="isbn" maxlength="80" class="form-control form-control-sm" value="">
-			</div>
-		</div>
-
-		<div class="form-group row">
-			<label for="publishercode" class="col-sm-4 col-form-label">
-            <?=$this->transEsc('suggest_publishercode')?>
-			</label>
-			<div class="col-sm-8">
-				<input type="text" id="publishercode" name="publishercode" class="form-control form-control-sm" maxlength="80"
-				       value="">
-			</div>
-		</div>
-
-		<div class="form-group row">
-			<label for="collectiontitle" class="col-sm-4 col-form-label">
-            <?=$this->transEsc('suggest_collectiontitle')?>
-			</label>
-			<div class="col-sm-8">
-				<input type="text" id="collectiontitle" name="collectiontitle" class="form-control form-control-sm"
-				       maxlength="80" value="">
-			</div>
-		</div>
-
-		<div class="form-group row">
-			<label for="place" class="col-sm-4 col-form-label">
-            <?=$this->transEsc('suggest_place')?>
-			</label>
-			<div class="col-sm-8">
-				<input type="text" id="place" name="place" class="form-control form-control-sm" maxlength="80" value="">
-			</div>
-		</div>
-
-		<div class="form-group row">
-			<label for="quantity" class="col-sm-4 col-form-label">
-            <?=$this->transEsc('suggest_quantity')?>
-			</label>
-			<div class="col-sm-8">
-				<input type="text" id="quantity" name="quantity" class="form-control form-control-sm w100" maxlength="4"
-				       size="4">
-			</div>
-		</div>
-
-		<div class="form-group row">
-			<label for="itemtype" class="col-sm-4 col-form-label">
-            <?=$this->transEsc('suggest_itemtype')?>
-			</label>
-			<div class="col-sm-8">
-				<input type="text" id="itemtype" name="itemtype" size="20" value="" class="form-control form-control-sm">
-			</div>
-		</div>
-
-		<div class="form-group row">
-			<label for="branch" class="col-sm-4 col-form-label">
-            <?=$this->transEsc('suggest_branchcode')?>
-			</label>
-            <?php
-              $selected = (strlen($user->home_library ?? '') > 0)
-                ? $user->home_library : $this->defaultPickupLocation
+// Function to check if a field should be hidden
+function shouldHideField($fieldName, $fieldsToHideArray) {
+    return in_array($fieldName, $fieldsToHideArray);
+}
 ?>
 
-			<div class="col-sm-8">
-				<select id="branch" name="branchcode" class="form-control form-control-sm">
-					<?php foreach ($libraries as $library): ?>
-					<option <?=($selected == $library->library_id) ? ' selected="selected"' : ''?> 
-						value="<?php echo $library->library_id; ?>"><?php echo $library->name; ?></option>
-					<?php endforeach; ?>
-				</select>
-			</div>
-		</div>
+<div id="usersuggestions">
+    <h1><?= $this->transEsc('suggestion_header1') ?></h1>
+    <h2><?= $this->transEsc('suggestion_header2') ?></h2>
+    <?= $this->translate('suggestion_top_paragraph') ?>
 
-		<div class="form-group row">
-			<label for="note" class="col-sm-4 col-form-label">
-            <?=$this->transEsc('suggest_note')?>
-			</label>
-			<div class="col-sm-8">
-				<textarea id="note" name="note" rows="5" cols="40" class="form-control form-control-sm"></textarea>
-			</div>
-		</div>
+    <form action="#" method="post" id="add_suggestion_form">
+        <?php if (!shouldHideField('title', $fieldsToHideArray)) : ?>
+        <div class="form-group row mt30">
+            <label for="title" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_title') ?><b class="red">*</b>
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="title" name="title" class="form-control form-control-sm" maxlength="255" value=""
+                       required>
+            </div>
+        </div>
+        <?php endif; ?>
 
-		<hr>
+        <?php if (!shouldHideField('author', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="author" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_author') ?>
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="author" name="author" class="form-control form-control-sm" maxlength="80" value="">
+            </div>
+        </div>
+        <?php endif; ?>
 
-		<div class="form-group">
-			<div class="float-left text-muted">
-				<b class="red w25">*</b><?=$this->transEsc('sugest_obligiatory')?>
-			</div>
-			<button type="submit" name="sendSuggestion" class="btn btn-primary btn-sm float-right ml10">
-				<?=$this->transEsc('Submit')?>
-			</button>
-		</div>
-	</form>
+        <?php if (!shouldHideField('copyrightdate', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="copyrightdate" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_copyrightdate') ?>
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="copyrightdate" name="copyrightdate" class="form-control form-control-sm" maxlength="80"
+                       value="">
+            </div>
+        </div>
+        <?php endif; ?>
+        
+        <?php if (!shouldHideField('isbn', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="isbn" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_isbn') ?>
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="isbn" name="isbn" class="form-control form-control-sm" maxlength="80"
+                       value="">
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!shouldHideField('publishercode', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="publishercode" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_publishercode') ?>
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="publishercode" name="publishercode" class="form-control form-control-sm" maxlength="80"
+                       value="">
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!shouldHideField('collectiontitle', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="collectiontitle" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_collectiontitle') ?>
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="collectiontitle" name="collectiontitle" class="form-control form-control-sm"
+                       maxlength="80" value="">
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!shouldHideField('place', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="place" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_place') ?>
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="place" name="place" class="form-control form-control-sm" maxlength="80" value="">
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!shouldHideField('quantity', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="quantity" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_quantity') ?>
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="quantity" name="quantity" class="form-control form-control-sm w100" maxlength="4"
+                       size="4">
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!shouldHideField('itemtype', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="itemtype" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_itemtype') ?>
+            </label>
+            <div class="col-sm-8">
+                <input type="text" id="itemtype" name="itemtype" size="20" value=""
+                       class="form-control form-control-sm">
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!shouldHideField('branchcode', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="branch" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_branchcode') ?>
+            </label>
+            <div class="col-sm-8">
+                <?php if ($branchcodeAllowChange) : ?>
+                    <select id="branch" name="branchcode" class="form-control form-control-sm">
+                <?php else: ?>
+                    <select class="form-control form-control-sm" disabled>
+                <?php endif; ?>
+                
+                        <?php foreach ($libraries as $library) : ?>
+                            
+                            <option value="<?php echo $library->library_id; ?>" <?php if ($library->library_id === $user['home_library']) echo "selected"; ?>><?php echo $library->name; ?></option>
+                        <?php endforeach; ?>
+                    </select>
+            </div>
+        </div>
+        <?php endif; ?>
+
+
+
+        <?php if (!shouldHideField('note', $fieldsToHideArray)) : ?>
+        <div class="form-group row">
+            <label for="note" class="col-sm-4 col-form-label">
+                <?= $this->transEsc('suggest_note') ?>
+            </label>
+            <div class="col-sm-8">
+                <textarea id="note" name="note" rows="5" cols="40" class="form-control form-control-sm"></textarea>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <hr>
+
+        <div class="form-group">
+            <div class="float-left text-muted">
+                <b class="red w25">*</b><?= $this->transEsc('sugest_obligiatory') ?>
+            </div>
+            <button type="submit" name="sendSuggestion" class="btn btn-primary btn-sm float-right ml10">
+                <?= $this->transEsc('Submit') ?>
+            </button>
+        </div>
+    </form>
 </div>
