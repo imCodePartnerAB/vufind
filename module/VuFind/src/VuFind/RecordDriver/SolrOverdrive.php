@@ -1,5 +1,11 @@
 <?php
 /**
+ * LOTS Changes
+ * 2021-12
+ * Changed to give the right ID and url for Overdrive if it is using 
+ * posts imported to KOHA
+ */
+/**
  * VuFind Record Driver for SolrOverdrive Records
  *
  * PHP version 7
@@ -33,6 +39,7 @@ namespace VuFind\RecordDriver;
 use Laminas\Config\Config;
 use Laminas\Log\LoggerAwareInterface;
 use VuFind\DigitalContent\OverdriveConnector;
+use VuFind\ILS\Driver\Alma;
 
 /**
  * VuFind Record Driver for SolrOverdrive Records
@@ -176,14 +183,14 @@ class SolrOverdrive extends SolrMarc implements LoggerAwareInterface
         foreach ($this->getDigitalFormats() as $key=>$format) {
             $tmpresults = [];
             if ($format->fileSize > 0) {
-                if ($format->fileSize > 1000000) {
-                    $size = round($format->fileSize / 1000000);
+                if ($format->fileSize > 1024 * 1024 * 1024) {
+                    $size = round($format->fileSize / 1024 / 1024 / 1024);
                     $size .= " GB";
-                } elseif ($format->fileSize > 1000) {
-                    $size = round($format->fileSize / 1000);
+                } elseif ($format->fileSize > 1024 * 1024) {
+                    $size = round($format->fileSize / 1024 / 1024);
                     $size .= " MB";
                 } else {
-                    $size = $format->fileSize;
+                    $size = round($format->fileSize / 1024);
                     $size .= " KB";
                 }
                 $tmpresults["File Size"] = $size;
@@ -291,9 +298,7 @@ class SolrOverdrive extends SolrMarc implements LoggerAwareInterface
             if ($this->getIsMarc()) {
                 $field = $this->config->idField;
                 $subfield = $this->config->idSubfield;
-                $result = strtolower(
-                    $this->getFieldArray($field, $subfield)[0] ?? ''
-                );
+                $result =$this->getFieldArray('001')[0] ?? '';
             } else {
                 $result = strtolower($this->getUniqueID());
             }
@@ -483,15 +488,8 @@ class SolrOverdrive extends SolrMarc implements LoggerAwareInterface
         $cover = $coverMap[$size] ?? 'cover';
 
         // If the record is marc then the cover links probably aren't there.
-        if ($this->getIsMarc()) {
-            $od_id = $this->getOverdriveID();
-            $fulldata = $this->connector->getMetadata([$od_id]);
-            $data = $fulldata[strtolower($od_id)];
-        } else {
-            $jsonData = $this->fields['fullrecord'];
-            $data = json_decode($jsonData, false);
-        }
-        return $data->images->{$cover}->href ?? false;
+        $urls[] = $this->fields['url'];
+        return end($urls[0]);
     }
 
     /**

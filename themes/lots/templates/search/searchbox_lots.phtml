@@ -1,0 +1,73 @@
+<!-- START ./search/searchbox_lots.phtml -->
+<?php
+    // Set default value if necessary:
+    if (!isset($this->searchClassId)) {
+        $config = $this->config()->get('config');
+        $this->searchClassId = $config->Site->defaultSearchBackend ?? 'Solr';
+    }
+
+    // Load search actions and settings (if any):
+    $options = $this->searchOptions($this->searchClassId);
+    $handlers = $this->searchbox()->getHandlers(
+        $this->searchClassId, $this->searchIndex ?? null
+    );
+    $handlerCount = count($handlers);
+    $basicSearch = $this->searchbox()->combinedHandlersActive() ? 'combined-searchbox' : $options->getSearchAction();
+    $searchHome = $options->getSearchHomeAction();
+    $advSearch = $options->getAdvancedSearchAction();
+    $lastSort = $this->searchMemory()->getLastSort($this->searchClassId);
+    $lastLimit = $this->searchMemory()->getLastLimit($this->searchClassId);
+    $ignoreHiddenFilterMemory = $this->ignoreHiddenFilterMemory ?? false;
+    $ignoreHiddenFiltersInRequest = $this->ignoreHiddenFiltersInRequest ?? false;
+    $hiddenFilters = $this->searchTabs()->getHiddenFilters($this->searchClassId, $ignoreHiddenFilterMemory, $ignoreHiddenFiltersInRequest);
+    if (empty($hiddenFilters) && !$ignoreHiddenFilterMemory) {
+        $hiddenFilters = $this->searchMemory()->getLastHiddenFilters($this->searchClassId);
+        if (empty($hiddenFilters)) {
+            $hiddenFilters = $this->searchTabs()->getHiddenFilters($this->searchClassId);
+        }
+    }
+    $hiddenFilterParams = $this->searchTabs()->getCurrentHiddenFilterParams($this->searchClassId, $ignoreHiddenFilterMemory, '?');
+
+    if (!isset($this->filterList) || !isset($this->checkboxFilters)) {
+        $params = $this->searchMemory()->getLastSearchParams($this->searchClassId);
+        $filterList = $params->getFilterList(true);
+        $checkboxFilters = $params->getCheckboxFacets();
+    } else {
+        $filterList = is_array($this->filterList) ? $this->filterList : [];
+        $checkboxFilters = is_array($this->checkboxFilters) ? $this->checkboxFilters : [];
+    }
+    $filterDetails = $this->searchbox()->getFilterDetails($filterList, $checkboxFilters);
+    $showFilters = $filterDetails && (isset($results) || $options->getRetainFilterSetting());
+?>
+<?php $tabConfig = $this->searchTabs()->getTabConfig($this->searchClassId, $this->lookfor, $this->searchIndex, $this->searchType, $hiddenFilters); ?>
+<?php if ($this->searchType == 'advanced'): ?>
+  <div class="navbar-form navbar-left flip">
+      <?=$this->context($this)->renderInContext(
+        'search/filters.phtml',
+        [
+          'params' => $params ?? null,
+          'urlQuery' => isset($results) ? $results->getUrlQuery() : null,
+          'filterList' => $showFilters ? $filterList : [],
+          'checkboxFilters' => $showFilters ? $checkboxFilters : [],
+          'searchClassId' => $this->searchClassId,
+          'searchType' => $this->searchType,
+        ]
+      );?>
+  </div>
+<?php else: ?>
+  <form id="searchForm" class="searchForm navbar-form navbar-left flip" method="get" action="<?=$this->url($basicSearch)?>" name="searchForm" autocomplete="off">
+    <?=$this->context($this)->renderInContext(
+      'search/filters.phtml',
+      [
+        'params' => $params ?? null,
+        'urlQuery' => isset($results) ? $results->getUrlQuery() : null,
+        'filterList' => $showFilters ? $filterList : [],
+        'checkboxFilters' => $showFilters ? $checkboxFilters : [],
+        'searchClassId' => $this->searchClassId,
+        'searchType' => $this->searchType,
+      ]
+    );?>
+  </form>
+<?php endif; ?>
+
+<!-- STOP ./search/searchbox_lots.phtml -->

@@ -1,5 +1,12 @@
 <?php
 /**
+ * LOTS Changes
+ *
+ * 2021-12
+ * Mostly changes to get more data for templates to access.
+ */
+
+/*
  * VuFind Driver for Koha, using REST API
  *
  * PHP version 7
@@ -28,6 +35,7 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org/wiki/development:plugins:ils_drivers Wiki
  */
+
 namespace VuFind\ILS\Driver;
 
 use VuFind\Date\DateException;
@@ -50,6 +58,7 @@ use VuFind\View\Helper\Root\SafeMoneyFormat;
  * @link     https://vufind.org/wiki/development:plugins:ils_drivers Wiki
  */
 class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
+    \VuFind\Db\Table\DbTableAwareInterface,
     \VuFindHttp\HttpServiceAwareInterface,
     \VuFind\I18n\Translator\TranslatorAwareInterface,
     \Laminas\Log\LoggerAwareInterface
@@ -58,6 +67,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     use \VuFind\I18n\Translator\TranslatorAwareTrait;
     use \VuFind\ILS\Driver\CacheTrait;
     use \VuFind\ILS\Driver\OAuth2TokenTrait;
+    use \VuFind\Db\Table\DbTableAwareTrait;
 
     /**
      * Library prefix
@@ -550,6 +560,10 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
         }
 
         $result = $result['data'];
+        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username);
+        if (isset($dbUser) && empty($dbUser->home_library)) {
+            $dbUser->changeHomeLibrary($result['library_id']);
+        }
         return [
             'id' => $result['patron_id'],
             'firstname' => $result['firstname'],
@@ -712,6 +726,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     {
         return $this->getTransactions($patron, $params, true);
     }
+
 
     /**
      * Get Patron Holds
@@ -1071,7 +1086,9 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
             'patron_id' => (int)$patron['id'],
             'pickup_library_id' => $pickUpLocation,
             'notes' => $comment,
-            'expiration_date' => date('Y-m-d', $holdDetails['requiredByTS']),
+            'expiration_date' => $holdDetails['requiredByTS']
+                ? date('Y-m-d', $holdDetails['requiredByTS'])
+                : null,
         ];
         if ($level == 'copy') {
             $request['item_id'] = (int)$itemId;
@@ -1830,6 +1847,9 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 'errors' => true
             ]
         );
+        if (400 == $result['code']) {
+            return [];
+        }
         if (404 == $result['code']) {
             return [];
         }
@@ -1858,6 +1878,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
 
             $entry = [
                 'id' => $id,
+                'item' => $item,
                 'item_id' => $item['item_id'],
                 'location' => $this->getItemLocationName($item),
                 'availability' => $available,
@@ -1869,6 +1890,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 'number' => $item['serial_issue_number'],
                 'barcode' => $item['external_id'],
                 'sort' => $i,
+                'item_location_description' => $item["location_description"],
                 'requests_placed' => max(
                     [$item['hold_queue_length'],
                     $result['data']['hold_queue_length']]
@@ -2499,7 +2521,8 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
             }
 
             $renewable = $entry['renewable'];
-            $renewals = $entry['renewals'];
+            #$renewals = $entry['renewals'];
+            $renewals = isset($entry['renewals']) ? $entry['renewals'] : null;
             $renewLimit = $entry['max_renewals'];
             $message = '';
             if (!$renewable && !$checkedIn) {
@@ -2527,7 +2550,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                     ?? $entry['publication_year'] ?? '',
                 'borrowingLocation' => $this->getLibraryName($entry['library_id']),
                 'checkoutDate' => $this->convertDate($entry['checkout_date']),
-                'duedate' => $this->convertDate($entry['due_date'], true),
+                'duedate' => $this->convertDate($entry['due_date']),#, true),
                 'returnDate' => $this->convertDate($entry['checkin_date']),
                 'dueStatus' => $dueStatus,
                 'renew' => $renewals,
@@ -2587,7 +2610,10 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
      */
     protected function formatMoney($amount)
     {
-        if (null === $this->safeMoneyFormat) {
+        # LOTS  SafeMoney does not work
+        if (isset($this->config['LOTS']['bypasSafeMoneyFormat']) && $this->config['LOTS']['bypasSafeMoneyFormat']) {
+            return $amount;
+        } elseif (null === $this->safeMoneyFormat) {
             throw new \Exception('SafeMoneyFormat helper not available');
         }
         return ($this->safeMoneyFormat)($amount);

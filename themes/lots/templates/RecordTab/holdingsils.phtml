@@ -1,0 +1,239 @@
+<?php
+
+    // Set up convenience variables:
+    $account = $this->auth()->getManager();
+    $user = $account->isLoggedIn();
+    $openUrl = $this->openUrl($this->driver, 'holdings');
+    $openUrlActive = $openUrl->isActive();
+    $doi = $this->doi($this->driver, 'holdings');
+    $doiActive = $doi->isActive();
+    // Account for replace_other_urls setting
+    $urls = $this->record($this->driver)->getLinkDetails($openUrlActive);
+    $offlineMode = $this->ils()->getOfflineMode();
+    try {
+        $holdings = $this->driver->getRealTimeHoldings();
+    } catch (\VuFind\Exception\ILS $e) {
+        $holdings = [
+          'holdings' => [],
+          'electronic_holdings' => [],
+          'total' => 0,
+          'page' => 0,
+          'itemLimit' => 0
+        ];
+        $offlineMode = 'ils-offline';
+    }
+    // Set page title.
+    $this->headTitle($this->translate('Holdings') . ': ' . $this->driver->getBreadcrumb());
+
+ // LOTS-51 start
+    $config = $this->config()->get('LOTS');
+    $lots_showItemsInVufind = $config->Record->showItemsInVufind ?? false;
+    if ($lots_showItemsInVufind) {
+
+          $global_total_items = 0;
+          $global_avail_items = 0;
+          $global_reserve_items = 0;
+
+          /* KOHA-225 */
+          $totals = array_reduce($holdings["holdings"] ?? [], function($carry, $local_holding) {
+          foreach ($local_holding["items"] ?? [] as $local_item) {
+            if ($local_item["availability"]) {
+                $carry['avail']++;
+            } else {
+               $carry['reserve']++;
+            }
+              $carry['total']++;
+          }
+          return $carry;
+          }, ['avail' => 0, 'reserve' => 0, 'total' => 0]);
+
+          $global_total_items = $totals['total'];
+          $global_avail_items = $totals['avail'];
+          $global_reserve_items = $totals['reserve'];
+          /* /KOHA-225 */
+
+/*
+	  foreach ($holdings["holdings"] ?? [] as $local_holding) {
+            foreach ($local_holding["items"] ?? [] as $local_item) {
+              if ($local_item["availability"]) {
+                $global_avail_items++;
+              } else {
+                $global_reserve_items++;
+              }
+              $global_total_items++;
+            }
+	  }
+*/
+        ?>
+          <div class="reservations-wrapper">
+            <div class="reservations-data">
+              <?php  
+                printf($this->translate('ils_availability'),$global_avail_items, $global_total_items, $global_reserve_items);
+              ?>
+            </div>
+          </div>
+
+     <?php  
+    }
+  //printf($this->translate('ils_availability2'),$global_avail_items, $global_total_items, $global_reserve_items);
+    // LOTS-51 end
+
+
+    function holdsColor($status)
+    {
+      switch ($status) {
+        case "On Hold":
+          return "item-reserved";
+        case "On Shelf":
+          return "item-avail";
+        default:
+        return "item-reserved"; // Röd som default
+        //return "item-default";
+      }
+    }
+
+
+?>
+
+  <?php //endforeach; ?>
+<?=$this->context($this)->renderInContext('librarycards/selectcard.phtml', ['user' => $this->auth()->isLoggedIn()]); ?>
+
+<?php if (!empty($holdings['blocks'])):?>
+  <div id="account-block-msg" class="alert alert-danger">
+    <?=$this->transEsc('account_block_options_missing', ['%%details%%' => implode('; ', $holdings['blocks'])]) ?>
+  </div>
+<?php endif; ?>
+
+<?=($offlineMode == "ils-offline") ? $this->render('Helpers/ils-offline.phtml', ['offlineModeMsg' => 'ils_offline_holdings_message']) : ''?>
+<table class="table table-striped">
+<tr>
+<th><?=$this->transEsc("holds_library")?></th>
+<th><?=$this->transEsc("holds_status")?></th>
+<th><?=$this->transEsc("holds_placing")?></th>
+<!-- th><?=$this->transEsc("holds_department")?></th -->
+</tr>
+<tr>
+<?php if (!empty($holdings['electronic_holdings'])): ?>
+  <?=
+    $this->context($this)->renderInContext(
+        'RecordTab/holdingsils/electronic.phtml',
+        ['holdings' => $holdings['electronic_holdings']]
+    );
+  ?>
+</table>
+<?php endif; ?>
+
+<?php foreach ($holdings['holdings'] ?? [] as $holding): ?>
+  <table class="table table-striped">
+  <?php $holdStatus = $holding["items"]["0"]['status'] ?>
+  <?php $locationTextEsc = $this->transEscWithPrefix('location_', $holding['location']); ?>
+  <?php if ($holding['locationhref'] ?? false): ?>
+    <a href="<?=$this->escapeHtmlAttr($holding['locationhref'])?>" target="_blank"><?=$locationTextEsc?></a>
+  <?php else: ?>
+
+    <td width="30%"><?=$locationTextEsc?></td>
+      <td class="<?= holdsColor($holdStatus) ?>">
+        <?=$this->transEsc($holdStatus)?>
+
+        <?php 
+        if ($lots_showItemsInVufind) {
+          $library_total_items = 0;
+          $library_avail_items = 0;
+          $library_reserve_items = 0;
+          $library_holds_queued = 0;
+
+          foreach ($holding["items"] ?? [] as $local_item) {
+            $library_holds_queued += $local_item["requests_placed"];
+            if ($local_item["availability"]) {
+              $library_avail_items++;
+            } else {
+              $library_reserve_items++;
+            }
+            $library_total_items++;
+          }
+          
+          printf($this->translate('ils_availability_detail'),$library_avail_items, $library_total_items,  $library_holds_queued);
+          
+        }
+        ?>
+
+     </td>
+      <td >
+  <?=(isset($holding["items"][0]["item"]["collection_code_description"])) ? $this->transEsc($holding["items"][0]["item"]["collection_code_description"]) : ''; ?>
+  <?=(isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"])) ? ''.$this->transEsc($holding["items"][0]["item"]["callnumber"]) : ''; ?>
+  <?=(isset($holding["items"][0]["item"]["location_description"])) ? ', '.$this->transEsc($holding["items"][0]["item"]["location_description"]) : '' ?>
+    </td>
+
+  </tr>
+  <?php endif; ?>
+  <?php foreach ($holding['textfields'] ?? [] as $textFieldName => $textFields): ?>
+    <tr>
+      <?php // Translation for summary is a special case for backwards-compatibility ?>
+      <th><?=$textFieldName == 'summary' ? $this->transEsc("Volume Holdings") : $this->transEsc(ucfirst($textFieldName))?>:</th>
+      <td>
+        <?php foreach ($textFields as $current): ?>
+          <?=$this->linkify($this->escapeHtml($current))?><br/>
+        <?php endforeach; ?>
+      </td>
+    </tr>
+  <?php endforeach; ?>
+  <?php foreach ($holding['items'] as $row): ?>
+    <?php
+        try {
+            echo $this->context($this)->renderInContext(
+                'RecordTab/holdingsils/' . $this->tab->getTemplate() . '.phtml',
+                ['holding' => $row]
+            );
+        } catch (Exception $e) {
+            echo $this->context($this)->renderInContext(
+                'RecordTab/holdingsils/standard.phtml',
+                ['holding' => $row]
+            );
+        }
+    ?>
+  <?php endforeach; ?>
+  <?php if (!empty($holding['purchase_history'])): ?>
+    <tr>
+      <th><?=$this->transEsc("Most Recent Received Issues")?>:</th>
+      <td>
+        <?php foreach ($holding['purchase_history'] as $current): ?>
+          <?=$this->escapeHtml($current['issue'])?><br/>
+        <?php endforeach; ?>
+      </td>
+    </tr>
+  <?php endif; ?>
+</table>
+<?php endforeach; ?>
+<?php if (!empty($holdings['total']) && $paginator = $this->tab->getPaginator($holdings['total'], $holdings['page'], $holdings['itemLimit'])): ?>
+  <?=$this->paginationControl($paginator, 'Sliding', 'Helpers/pagination.phtml', ['page' => $holdings['page']])?>
+<?php endif; ?>
+<?php $history = $this->driver->getRealTimeHistory(); ?>
+<?php if (is_array($history) && !empty($history)): ?>
+  <h3><?=$this->transEsc("Most Recent Received Issues")?></h3>
+
+    <?php foreach ($history as $row): ?>
+      <tr><td><?=$this->escapeHtml($row['issue'])?></td></tr>
+    <?php endforeach; ?>
+
+<?php endif; ?>
+<!-- /table -->
+<style>
+.template-dir-record.template-name-view .media.row .media-body {
+	padding-bottom: 30px !important;
+}
+.reservations-wrapper {
+	position: relative;
+}
+.reservations-data {
+	position: absolute;
+	top: -52px;
+	right: 0;
+	font-size: 0.9rem;
+	color: #777;
+}
+@media screen and (max-width: 900px) {
+	.reservations-data {
+		top: -90px;
+	}
+}
+</style>

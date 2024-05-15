@@ -1,0 +1,18 @@
+<!--
+    Lots extention to recover password template for 
+    LOTS\Controller\ForgotPasswordController
+-->
+
+  <h2 class="lightbox-header"><?=$this->transEsc('Forgotten password recovery')?></h2>
+    <!-- form action="https://kovudev3-opac.dev.imcode.com/cgi-bin/koha/opac-password-recovery.pl" method="post" autocomplete="off" -->
+    <form action="#" method="post" autocomplete="off">
+    <input type="hidden" name="koha_login_context" value="opac">
+    <div class="form-group">
+      <label class="control-label" for="username"><?=$this->transEsc('Personal ID Number (YYYYMMDDXXXX):')?></label>
+      <input type="text" name="username" id="username" value="" class="form-control" style="background-repeat: no-repeat; background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%;" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <input class="btn btn-primary" type="submit" name="sendEmail" value="<?=$this->transEsc('Submit')?>">
+    </div>
+    </form>
+

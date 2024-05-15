@@ -1,0 +1,39 @@
+<?php
+$config = $this->config()->get('LOTS');
+$allowRecreatePassword = $config->PasswordRecovery->enable;
+$newPatronUrl = $config->NewPatron->url;
+?>
+
+
+
+<?php $loginMethod = $this->auth()->getManager()->getILSLoginMethod(); ?>
+<?php if ('email' === $loginMethod): ?>
+  <div class="form-group">
+    <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_username"><?=$this->transEsc('Email')?>:</label>
+    <input type="text" name="username" id="login_<?=$this->escapeHtmlAttr($topClass)?>_username" value="<?=$this->escapeHtmlAttr($this->request->get('username'))?>" class="form-control"/>
+  </div>
+<?php else: ?>
+  <div class="form-group">
+    <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_username"><?=$this->transEsc('Username')?>:</label>
+    <input type="text" name="username" id="login_<?=$this->escapeHtmlAttr($topClass)?>_username" value="<?=$this->escapeHtmlAttr($this->request->get('username'))?>" class="form-control"/>
+  </div>
+  <div class="form-group">
+    <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_password"><?=$this->transEsc('Password')?>:</label>
+    <input type="password" name="password" id="login_<?=$this->escapeHtmlAttr($topClass)?>_password" class="form-control"/>
+  </div>
+
+
+
+<!-- Added for LOTS LOBININTEG-12 -->
+<?php if ($allowRecreatePassword == 1) {?>
+<div class="forgot_pin_code" >
+    <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_forgot"><a href="<?=$this->url('home') ?>ForgotPassword/" ><?=$this->transEsc('Forgot login')?></a></label>
+</div>
+<?php } ?>
+
+<?php if (isset($newPatronUrl)) {?>
+<div class="new_patron_url" >
+    <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_newpatron_url"><a href="<?=$newPatronUrl?>" ><?=$this->transEsc('Create new patron')?></a></label>
+</div>
+<?php } ?>
+<?php endif; ?>
