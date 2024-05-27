@@ -3,6 +3,7 @@ return [
     'extends' => false,
     'helpers' => [
         'factories' => [
+            'VuFind\View\Helper\Root\RecordLink' => 'Laminas\ServiceManager\Factory\InvokableFactory',
             'Laminas\View\Helper\HeadTitle' => 'VuFind\View\Helper\Root\HeadTitleFactory',
             'VuFind\View\Helper\Root\AccountCapabilities' => 'VuFind\View\Helper\Root\AccountCapabilitiesFactory',
             'VuFind\View\Helper\Root\AddEllipsis' => 'Laminas\ServiceManager\Factory\InvokableFactory',
@@ -92,6 +93,7 @@ return [
             'Laminas\View\Helper\ServerUrl' => 'VuFind\View\Helper\Root\ServerUrlFactory',
         ],
         'aliases' => [
+            'recordLink' => 'VuFind\View\Helper\Root\RecordLink',
             'accountCapabilities' => 'VuFind\View\Helper\Root\AccountCapabilities',
             'addEllipsis' => 'VuFind\View\Helper\Root\AddEllipsis',
             'addThis' => 'VuFind\View\Helper\Root\AddThis',
