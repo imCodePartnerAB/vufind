@@ -33,7 +33,6 @@ if (!isset($showCorefieldPrefixes)) {
 }
 
 $this->metadata()->generateMetatags($this->driver);
-
 ?>
 <div class="media" vocab="http://schema.org/" resource="#record" typeof="<?=$this->driver->getSchemaOrgFormats()?> Product">
   <?php
@@ -93,9 +92,10 @@ $this->metadata()->generateMetatags($this->driver);
       <?php endif; ?>
 
       <?php /* Display rating if enabled: */ ?>
-      <?php if ($this->record($this->driver)->isRatingEnabled()): ?>
+      <?php /* if ($this->record($this->driver)->isRatingEnabled()): ?>
         <?=$this->record($driver)->renderTemplate('rating.phtml')?>
-      <?php endif; ?>
+      <?php endif; */ ?>
+      <?php /* LOTS_VuFind 9 fix */ ?>
 
 
       <?php // if you have a preview tab but want to move or remove the preview link
