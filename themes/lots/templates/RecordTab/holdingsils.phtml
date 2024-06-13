@@ -124,6 +124,7 @@
 <?php endif; ?>
 
 <?php foreach ($holdings['holdings'] ?? [] as $holding): ?>
+<?php // echo "debug: ".print_r($holding["items"],1); ?>
   <table class="table table-striped">
   <?php $holdStatus = $holding["items"]["0"]['status'] ?>
   <?php $locationTextEsc = $this->transEscWithPrefix('location_', $holding['location']); ?>
@@ -143,6 +144,9 @@
           $library_holds_queued = 0;
 
           foreach ($holding["items"] ?? [] as $local_item) {
+            if (!isset($local_item["requests_placed"])) {
+               $local_item["requests_placed"] = 0;
+            }
             $library_holds_queued += $local_item["requests_placed"];
             if ($local_item["availability"]) {
               $library_avail_items++;
