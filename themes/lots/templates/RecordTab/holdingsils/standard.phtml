@@ -9,6 +9,7 @@
     <td style='border:thin;background-color:#fff;'>
     </td>
     <td><!-- Om du vill ha boder mellan cellerna, ta bort class="br-transp" -->
+      <span class="text-muted"><?=$holding["item"]["serial_issue_number"]?></span> <!-- Item number -->
       <?php if ($holding['reserve'] == "Y"): ?>
         <link property="availability" href="http://schema.org/InStoreOnly" />
         <?=$this->transEsc("On Reserve - Ask at Circulation Desk")?><br />
