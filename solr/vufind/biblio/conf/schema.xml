@@ -1,5 +1,4 @@
 <?xml version="1.0" ?>
-
 <schema name="VuFind Bibliographic Index" version="1.2">
   <types>
     <!-- Define fieldType long as it is needed by the _version_ field required by Solr 4.x -->
@@ -11,46 +10,28 @@
         <!-- strip trailing punctuation from facets: -->
         <filter class="solr.PatternReplaceFilterFactory" pattern="(?&lt;!\b[A-Z])[.\s]*$" replacement="" replace="first"/>
       </analyzer>
-  </fieldType>
-
-    <fieldType name="text2" class="solr.TextField" positionIncrementGap="100">
-        <analyzer type="index">
-        <charFilter class="solr.MappingCharFilterFactory" mapping="remove_from_text.txt"/>
-        <filter class="solr.LowerCaseFilterFactory"/>
-        <tokenizer class="solr.ICUTokenizerFactory"/>
-        <filter class="solr.LowerCaseFilterFactory"/>
-      </analyzer>
-      <analyzer type="query">
-        <charFilter class="solr.MappingCharFilterFactory" mapping="remove_from_text.txt"/>
-        <filter class="solr.LowerCaseFilterFactory"/>
-        <tokenizer class="solr.ICUTokenizerFactory"/>
-        <filter class="solr.LowerCaseFilterFactory"/>
-      </analyzer>
     </fieldType>
-
     <fieldType name="text" class="solr.TextField" positionIncrementGap="100">
-        <analyzer type="index">
+      <analyzer type="index">
         <tokenizer class="solr.ICUTokenizerFactory"/>
         <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateNumbers="1" catenateAll="0" splitOnCaseChange="1"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.ICUFoldingFilterFactory"/>
         <filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
         <filter class="solr.SnowballPorterFilterFactory" language="English"/>
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
-        <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
       <analyzer type="query">
         <tokenizer class="solr.ICUTokenizerFactory"/>
         <filter class="solr.SynonymGraphFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
         <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0" splitOnCaseChange="1"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.ICUFoldingFilterFactory"/>
         <filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
         <filter class="solr.SnowballPorterFilterFactory" language="English"/>
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
-        <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
     </fieldType>
     <!-- Text Field without Stemming and Synonyms -->
@@ -59,16 +40,16 @@
         <tokenizer class="solr.ICUTokenizerFactory"/>
         <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateNumbers="1" catenateAll="0"/>
         <filter class="solr.ICUFoldingFilterFactory"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
       </analyzer>
       <analyzer type="query">
         <tokenizer class="solr.ICUTokenizerFactory"/>
         <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0"/>
         <filter class="solr.ICUFoldingFilterFactory"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
       </analyzer>
     </fieldType>
@@ -78,8 +59,8 @@
         <tokenizer class="solr.ICUTokenizerFactory"/>
         <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0"/>
         <filter class="solr.ICUFoldingFilterFactory"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
       </analyzer>
     </fieldType>
@@ -88,16 +69,16 @@
       <analyzer type="index">
         <tokenizer class="solr.ICUTokenizerFactory"/>
         <filter class="solr.ICUFoldingFilterFactory"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.ShingleFilterFactory" maxShingleSize="2" outputUnigrams="false"/>
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
       </analyzer>
       <analyzer type="query">
         <tokenizer class="solr.ICUTokenizerFactory"/>
         <filter class="solr.ICUFoldingFilterFactory"/>
-        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords-sv.txt"/>
         <filter class="solr.ShingleFilterFactory" maxShingleSize="2" outputUnigrams="false"/>
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
       </analyzer>
@@ -138,13 +119,28 @@
     <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true" omitNorms="true"/>
     <!-- add geo field to handle geographic search and display capabilities -->
     <fieldType name="geo" class="solr.SpatialRecursivePrefixTreeFieldType" distErrPct="0.025" maxDistErr="0.000009" distanceUnits="degrees" />
+
+     <!-- LOTS -->
+     <fieldType name="text2" class="solr.TextField" positionIncrementGap="100">
+         <analyzer type="index">
+         <charFilter class="solr.MappingCharFilterFactory" mapping="remove_from_text.txt"/>
+         <filter class="solr.LowerCaseFilterFactory"/>
+         <tokenizer class="solr.ICUTokenizerFactory"/>
+         <filter class="solr.LowerCaseFilterFactory"/>
+       </analyzer>
+       <analyzer type="query">
+         <charFilter class="solr.MappingCharFilterFactory" mapping="remove_from_text.txt"/>
+         <filter class="solr.LowerCaseFilterFactory"/>
+         <tokenizer class="solr.ICUTokenizerFactory"/>
+         <filter class="solr.LowerCaseFilterFactory"/>
+       </analyzer>
+    </fieldType>
+     <!-- /LOTS -->
+
   </types>
  <fields>
    <!-- Required by Solr 4.x -->
    <field name="_version_" type="long" indexed="true" stored="true"/>
-   <!-- Used to clean oute 942n when set to 1 -->
-   <field name="delete_942_n" type="long" indexed="true" stored="true"/>
-   <field name="exists" type="long" indexed="true" stored="true"/>
    <!-- Core Fields  -->
    <field name="id" type="string" indexed="true" stored="true"/>
    <field name="fullrecord" type="string" indexed="false" stored="true"/>
@@ -162,15 +158,14 @@
    <!-- Generic Fields -->
    <field name="language" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="format" type="string" indexed="true" stored="true" multiValued="true"/>
-   <field name="arb" type="string" indexed="true" stored="true" multiValued="true"/><!-- To test for 952c = ARB for hiding LotsLerum-43-->
-   <field name="arb_test" type="string" indexed="true" stored="true" multiValued="true"/><!-- To test for 952c = ARB for hiding LotsLerum-43-->
-   <field name="format_test" type="string" indexed="true" stored="true" multiValued="true"/><!-- To test for 952y = FJARR och KAPPRUM for hiding LotsLerum-43-->
-   <field name="author" type="textProper" indexed="true" stored="true" multiValued="true" termVectors="true"/>
-   <field name="author_variant" type="text" indexed="true" stored="true" multiValued="true" termVectors="true"/>
+<!--
+   <field name="author" type="textProper" indexed="true" stored="true" multiValued="true" termVectors="true" storeOffsetsWithPositions="true"/>
+   <field name="author_variant" type="text" indexed="true" stored="true" multiValued="true" termVectors="true" storeOffsetsWithPositions="true"/>
+-->
    <field name="author_role" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="author_facet" type="textFacet" indexed="true" stored="true" multiValued="true"/>
    <field name="author_sort" type="string" indexed="true" stored="true"/>
-   <field name="overdrive" type="string" indexed="true" stored="true"/>
+<!--   <field name="title" type="text" indexed="true" stored="true"/> -->
    <field name="title" type="text2" indexed="true" stored="true"/>
    <field name="title_sort" type="string" indexed="true" stored="true"/>
    <field name="title_sub" type="text" indexed="true" stored="true"/>
@@ -213,9 +208,6 @@
    <field name="author2_role" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="author_corporate" type="textProper" indexed="true" stored="true" multiValued="true"/>
    <field name="author_corporate_role" type="string" indexed="true" stored="true" multiValued="true"/>
-   <!-- the author_fuller and author2_fuller fields are deprecated and should no longer be used. -->
-   <field name="author_fuller" type="textProper" indexed="true" stored="true" multiValued="true" />
-   <field name="author2_fuller" type="textProper" indexed="true" stored="true" multiValued="true" />
    <field name="author_additional" type="textProper" indexed="true" stored="true" multiValued="true"/>
    <field name="title_alt" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="title_old" type="text" indexed="true" stored="true" multiValued="true"/>
@@ -227,7 +219,6 @@
    <field name="topic_unstemmed" type="textProper" indexed="true" stored="false" multiValued="true"/>
    <field name="topic_facet" type="textFacet" indexed="true" stored="true" multiValued="true"/>
    <field name="topic_browse" type="string" indexed="true" stored="false" multiValued="true"/>
-   <field name="category_facet" type="textFacet" indexed="true" stored="true" multiValued="true"/>
    <field name="author_browse" type="string" indexed="true" stored="false" multiValued="true"/>
    <field name="genre" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="genre_facet" type="textFacet" indexed="true" stored="true" multiValued="true"/>
@@ -280,6 +271,20 @@
    <dynamicField name="*_geo" type="geo" indexed="true" stored="true" multiValued="false" />
    <dynamicField name="*_geo_mv" type="geo" indexed="true" stored="true" multiValued="true" />
    <dynamicField name="*_autocomplete" type="text_autocomplete" indexed="true" stored="true" multiValued="false"/>
+
+    <!-- LOTS -->
+    <!-- the author_fuller and author2_fuller fields are deprecated and should no longer be used. -->
+    <field name="author_fuller" type="textProper" indexed="true" stored="true" multiValued="true" />
+    <field name="author2_fuller" type="textProper" indexed="true" stored="true" multiValued="true" />
+    <field name="category_facet" type="textFacet" indexed="true" stored="true" multiValued="true"/>
+    <field name="arb" type="string" indexed="true" stored="true" multiValued="true"/><!-- To test for 952c = ARB for hiding LotsLerum-43-->
+    <field name="arb_test" type="string" indexed="true" stored="true" multiValued="true"/><!-- To test for 952c = ARB for hiding LotsLerum-43-->
+    <field name="format_test" type="string" indexed="true" stored="true" multiValued="true"/><!-- To test for 952y = FJARR och KAPPRUM for hiding LotsLerum-43-->
+    <field name="author" type="textProper" indexed="true" stored="true" multiValued="true" termVectors="true"/>
+    <field name="author_variant" type="text" indexed="true" stored="true" multiValued="true" termVectors="true"/>
+    <field name="overdrive" type="string" indexed="true" stored="true"/>
+    <!-- /LOTS -->
+
  </fields>
  <uniqueKey>id</uniqueKey>
  <!-- CopyFields for Spelling -->
