@@ -126,7 +126,7 @@
 <?php foreach ($holdings['holdings'] ?? [] as $holding): ?>
 <?php // echo "debug: ".print_r($holding["items"],1); ?>
   <table class="table table-striped">
-  <?php $holdStatus = $holding["items"]["0"]['status'] ?>
+  <?php $holdStatus = $holding["items"]["0"]['status'] ?? null ?>
   <?php $locationTextEsc = $this->transEscWithPrefix('location_', $holding['location']); ?>
   <?php if ($holding['locationhref'] ?? false): ?>
     <a href="<?=$this->escapeHtmlAttr($holding['locationhref'])?>" target="_blank"><?=$locationTextEsc?></a>
