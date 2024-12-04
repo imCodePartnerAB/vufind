@@ -5,7 +5,9 @@ $config = array (
   array (
     'factories' => 
     array (
-      'LOTS\\Controller\\MyResearchController' => 'VuFind\\Controller\\AbstractBaseFactory',
+// fix for VuFind 10+
+      'LOTS\\Controller\\MyResearchController' => 'LOTS\\Controller\\MyResearchControllerFactory',
+//      'LOTS\\Controller\\MyResearchController' => 'VuFind\\Controller\\AbstractBaseFactory',
       'LOTS\\Controller\\ForgotPasswordController' => 'VuFind\\Controller\\AbstractBaseFactory',
       'LOTS\\Controller\\SuggestionsController' => 'VuFind\\Controller\\AbstractBaseFactory',
     ),
