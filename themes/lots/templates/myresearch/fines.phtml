@@ -1,4 +1,6 @@
 <?php
+  $lotscfg = $this->config()->get('LOTS');
+  $lots_allow_payments = $lotscfg->UserMenu->allowPayments ?? false;
     // Set up page title:
     $this->headTitle($this->translate('My Fines'));
 
@@ -83,10 +85,12 @@
         <td colspan="<?=count($columns) - 1?>"><?=$this->transEsc('Total Balance Due')?><br /><br /></td>
         <td><?=$this->safeMoneyFormat($totalDue / 100.00) ?><br /><br /></td>
       </tr>
-      <tr style="font-weight:bold">
-        <td colspan="<?=count($columns) - 1?>"><?=$this->transEsc('Betala med kreditkort eller Swish')?></td>
-        <td><input id="do-payment-profile" name="doPaymentProfile" type="submit" value="<?=$this->transEsc('Betala')?>" class="btn btn-primary my-profile-btn"></td>
-      </tr>
+      <?php if ($lots_allow_payments): ?>
+       <tr style="font-weight:bold">
+         <td colspan="<?=count($columns) - 1?>"><?=$this->transEsc('Betala med kreditkort eller Swish')?></td>
+         <td><input id="do-payment-profile" name="doPaymentProfile" type="submit" value="<?=$this->transEsc('Betala')?>" class="btn btn-primary my-profile-btn"></td>
+       </tr>
+      <?php endif; ?>
     </table>
   <?php endif; ?>
 </div>
