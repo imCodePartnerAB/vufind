@@ -30,6 +30,7 @@
     $config = $this->config()->get('LOTS');
     $defaultColumns = "holds_library, holds_status, holds_department";
     $addTypeColumn = $config->Record->addTypeColumn ?? false;
+    $hideDetailReserveEvenIfInKoha = $config->Record->hideDetailReserveEvenIfInKoha ?? false;
     if ($addTypeColumn) {
       $defaultColumns = "holds_library, holds_status, holds_type, holds_department";
     }
@@ -57,7 +58,7 @@
           }
         ?>
           <div class="reservations-wrapper">
-            <div class="reservations-data">
+            <div class="reservations-data ">
               <?php  
                 printf($this->translate('ils_availability'),$global_avail_items, $global_total_items, $global_reserve_items);
               ?>
@@ -130,6 +131,7 @@
     <td width="30%"><?=$locationTextEsc?></td>
     <td class="<?= holdsColor($holdStatus) ?>">
         <?=$this->transEsc($holdStatus)?>
+<?php if (!$hideDetailReserveEvenIfInKoha): ?>
         <div><!-- Ny <div> och <a> -->
           <a data-toggle="collapse" role="button" aria-expanded="false" data-target="#exTr_<?=$holdDetailIterate?>" aria-expanded="false" aria-controls="exTr_<?=$holdDetailIterate?>"><!-- href="#exTr_1" + aria-controls="exTr_[ID/INDEX] exTr_2 exTr_3" -->
         <?php 
@@ -157,6 +159,7 @@
         ?>
           </a>
         </div>
+        <?php endif; ?>
 
      </td>
      <?php
