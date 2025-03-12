@@ -20,6 +20,10 @@ import org.apache.log4j.Logger;
 import org.solrmarc.index.SolrIndexer;
 import org.solrmarc.tools.SolrMarcIndexerException;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Collections;
+
 /**
  * Full text retrieval indexing routines.
  */
@@ -37,6 +41,16 @@ public class FormatString
         //    return "i-"+Pattern;
 
       }
+    
+    public List<String> splitMarcFieldOnComma(Record record, String field)
+    {
+        String fieldValue = SolrIndexer.instance().getFirstFieldVal(record, field);
+        if (fieldValue != null) {
+            return Arrays.asList(fieldValue.split(","));
+        }
+        return Collections.emptyList();
+    }
+
     /**
      * Log an error message and throw a fatal exception.
      * @param msg message to log
