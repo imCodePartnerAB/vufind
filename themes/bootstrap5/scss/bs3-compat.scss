@@ -141,7 +141,7 @@ legend {
     outline: dotted 1px $text-color;
   }
 }
-.btn.btn-more {
+.btn.more-btn:not(.facet) {
   background-color: revert;
   &:hover {
     background-color: revert;
@@ -163,12 +163,12 @@ legend {
 }
 .btn-primary {
   @include button-variant(
-    $primary,
-    $text-color,
-    $color: $body-bg,
-    $hover-background: $body-bg,
-    $hover-border: $text-color,
-    $hover-color: $primary
+    $btn-primary-bg,
+    $btn-primary-border,
+    $color: $btn-primary-color,
+    $hover-background: $btn-primary-color,
+    $hover-border: $btn-primary-border,
+    $hover-color: $btn-primary-bg
   );
 }
 .btn-group {
@@ -223,7 +223,19 @@ button.list-group-item {
   background-color: $danger;
 }
 
-.dropdown-toggle::after {
+.dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+}
+.dropdown-toggle::after,
+/* Use double selector to force greater specificity in overriding unwanted ::after */
+.search-filter-dropdown.search-filter-dropdown .btn::after {
+  content: "";
+  width: 0.3em;
+  height: 0.3em;
+}
+.dropdown-toggle .icon:last-child {
   display: none;
 }
 
@@ -332,8 +344,19 @@ h6, .h6 {
   display: none !important;
 }
 
-#modal .modal-content > .close {
+#modal .modal-dialog .modal-content > .close {
   border: 0;
+
+  @media (max-width: 767px) {
+    font-size: 1.5rem;
+    background-color: var(--#{$prefix}modal-bg);
+    top: 0.5rem;
+    right: 0.5rem;
+
+    body.rtl & {
+      left: 0.5rem;
+    }
+  }
 }
 
 .fade.show {
@@ -367,6 +390,9 @@ h6, .h6 {
 }
 .navbar-right {
   justify-content: right;
+}
+.navbar-left {
+  justify-content: left;
 }
 
 .media-body, .media-left, .media-right {

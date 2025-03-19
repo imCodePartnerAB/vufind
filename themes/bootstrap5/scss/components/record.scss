@@ -220,7 +220,7 @@
   display: flex;
   flex-flow: row wrap;
 
-  .collection-control {
+  .collection-control {
     white-space: nowrap;
     margin: 0 0.5rem 0 0;
   }
@@ -314,8 +314,10 @@
     margin-right: -0.6em;
     z-index: 2;
 
+    /* Display only half of the star and ensure that the remainder cannot be hovered over */
     .rating__icon--star {
       width: 0.5rem;
+      overflow: hidden;
     }
   }
 

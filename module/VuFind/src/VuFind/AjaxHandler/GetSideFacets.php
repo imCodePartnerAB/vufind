@@ -39,6 +39,7 @@ use VuFind\Search\RecommendListener;
 use VuFind\Search\SearchRunner;
 use VuFind\Session\Settings as SessionSettings;
 
+use function in_array;
 use function is_callable;
 
 /**
@@ -197,11 +198,16 @@ class GetSideFacets extends \VuFind\AjaxHandler\AbstractBase implements \Laminas
         };
 
         $runner = $this->searchRunner;
-        return $runner->run(
+        $results = $runner->run(
             $request,
             $request['searchClassId'] ?? DEFAULT_SEARCH_BACKEND,
             $setupCallback
         );
+        // Restore limit overridden by the setup callback above:
+        if ($limit = $request['limit'] ?? null) {
+            $results->getParams()->setLimit($limit);
+        }
+        return $results;
     }
 
     /**
@@ -222,13 +228,14 @@ class GetSideFacets extends \VuFind\AjaxHandler\AbstractBase implements \Laminas
     ) {
         $response = [];
         $facetSet = $recommend->getFacetSet();
+        $checkboxFacets = array_column($recommend->getCheckboxFacetSet(), 'filter');
         foreach ($facets as $facet) {
-            if (strpos($facet, ':')) {
-                $response[$facet]['checkboxCount']
-                    = $this->getCheckboxFacetCount($facet, $results);
+            if (in_array($facet, $checkboxFacets)) {
+                $response[$facet]['checkboxCount'] = $this->getCheckboxFacetCount($facet, $results);
             } else {
                 $context['facet'] = $facet;
                 $context['cluster'] = $facetSet[$facet] ?? [
+                    'label' => $results->getParams()->getFacetLabel($facet),
                     'list' => [],
                 ];
                 $context['collapsedFacets'] = [];
