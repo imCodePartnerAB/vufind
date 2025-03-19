@@ -64,7 +64,11 @@ $http_host = $_SERVER['HTTP_X_FORWARDED_HOST'];
          ),
     ),
 
-);
+   );
+
+
+$title =$this->headTitle()->renderTitle();
+
 ?>
 
 <?php
@@ -75,6 +79,7 @@ if ($this->layout()->rtl) {
 $bodytxt = '<body class="template-dir-'.$this->templateDir.' template-name-'.$this->templateName.' '.$this->layoutClass('offcanvas-row').$rtl.'">';
 $header = file_get_contents('https://'.$http_host.'?cont=pageStart', false, stream_context_create($arrContextOptions));
 $bodytag = str_replace('<body id="startPage">', $bodytxt, $header);
+$bodytag = str_replace('<!-- TITLE-TAG -->', '<title>'.$title.'</title>', $bodytag);
 echo $bodytag;
 
 ?>
