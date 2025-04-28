@@ -294,9 +294,9 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
                     if ($this->getAuthManager()->isLoggedIn()) {
                         $user = $this->getAuthManager()->isLoggedIn();
                         setrawcookie("currentVufindUserHoldLibrary", $user["home_library"], 0, "/");
-                        setrawcookie("currentVufindUser", $user["username"], 0, "/");
-                        setcookie("currentVufindUserFirstName", $user["firstname"], 0, "/");
-                        setcookie("currentVufindUserLastName", $user["lastname"], 0, "/");                        
+                        setrawcookie("currentVufindUser", urlencode($user["username"]), 0, "/");
+                        setcookie("currentVufindUserFirstName", urlencode($user["firstname"]), 0, "/");
+                        setcookie("currentVufindUserLastName", urlencode($user["lastname"]), 0, "/");
                     }
 
                     if ($this->params()->fromPost('processLogin')
@@ -322,7 +322,10 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
         // Logged in?  Forward user to followup action
         // or default action (if no followup provided):
         if ($url = $this->getFollowupUrl()) {
-            $this->clearFollowupUrl();
+            //$this->clearFollowupUrl();
+            // LOTS-58
+            $this->redirect()->toUrl($this->getFollowupUrl());
+
             // If a user clicks on the "Your Account" link, we want to be sure
             // they get to their account rather than being redirected to an old
             // followup URL. We'll use a redirect=0 GET flag to indicate this:

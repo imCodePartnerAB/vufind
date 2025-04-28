@@ -9,9 +9,20 @@
         $user = $this->auth()->isLoggedIn();
         $matomoparrams['username']=$user["username"];
         setrawcookie("currentVufindUserHoldLibrary", $user["home_library"], 0, "/");
-        setrawcookie("currentVufindUser", $user["username"], 0, "/");
+
+        // LOTS-58
+        $forbiddenChars = ",; \t\r\n\013\014";
+        $expiry = time() + 86400;
+        if (strpbrk($user["username"], $forbiddenChars) !== false) {
+            setrawcookie("currentVufindUser", urlencode($user["username"]), $expiry, "/");
+        } else {
+            setrawcookie("currentVufindUser", $user["username"], $expiry, "/");
+        }
+
         setcookie("currentVufindUserFirstName", $user["firstname"], 0, "/");
         setcookie("currentVufindUserLastName", $user["lastname"], 0, "/");
+
+        $justLoggedIn = isset($user["username"]);
 
         $logedin_json='{"logedin":"true", "firstname": "'.$user["firstname"].'" , "lastname": "'.$user["lastname"].'", "username": "'.$user["username"].'", "library": "'.$user["home_library"].'"}';
     } else {
@@ -56,6 +67,7 @@
 );
 ?>
 
+
 <?php
 $rtl = '';
 if ($this->layout()->rtl) {
@@ -69,9 +81,28 @@ echo $bodytag;
 ?>
 
 
-
-
-
+<?php if ($justLoggedIn): ?>
+<script>
+console.log('justLoggedIn passed');
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        var loginElement = document.getElementById('loginLinkMobile');
+        if (loginElement) {
+            var link = loginElement.querySelector('a.my-lib-link-1');
+            if (link) {
+                console.log('chg to <?=$this->transEsc("Log Out")?>');
+                link.href = "/vufind/MyResearch/Logout";
+                link.textContent = "<?=$this->transEsc("Log Out")?>";
+            } else {
+                console.log('link not found');
+            }
+        } else {
+            console.log('element loginLinkMobile not found');
+        }
+    }, 1500); // timeout
+});
+</script>
+<?php endif; ?>
 
 <!--body class="template-dir-<?=$this->templateDir?> template-name-<?=$this->templateName?> <?=$this->layoutClass('offcanvas-row')?><?php if ($this->layout()->rtl): ?> rtl<?php endif; ?>">
     <!- -?php // Set up the search box -- there are three possible cases:
