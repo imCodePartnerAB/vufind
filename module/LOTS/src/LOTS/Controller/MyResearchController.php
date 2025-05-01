@@ -322,15 +322,15 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
         // Logged in?  Forward user to followup action
         // or default action (if no followup provided):
         if ($url = $this->getFollowupUrl()) {
-            //$this->clearFollowupUrl();
-            // LOTS-58
-            $this->redirect()->toUrl($this->getFollowupUrl());
-
             // If a user clicks on the "Your Account" link, we want to be sure
             // they get to their account rather than being redirected to an old
-            // followup URL. We'll use a redirect=0 GET flag to indicate this:
-            if ($this->params()->fromQuery('redirect', true)) {
-                return $this->redirect()->toUrl($url);
+            // followup URL.
+            // If redirect=0 is set, clear the followup URL and don't redirect
+            if (!$this->params()->fromQuery('redirect', true)) {
+                $this->clearFollowupUrl();
+            } else {
+                // LOTS-58
+                return $this->redirect()->toUrl($this->getFollowupUrl());
             }
         }
 
