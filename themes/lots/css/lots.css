@@ -1,0 +1,26 @@
+/* Session timeout modal styles, start */
+.session-expired-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    display: none;
+}
+.session-expired-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+.session-expired-button {
+    margin-top: 15px;
+}
+/* Session timeout modal styles, end */
