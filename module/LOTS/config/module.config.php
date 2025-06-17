@@ -31,6 +31,17 @@ $config = array (
       'VuFind\\ILS\\Connection' => 'LOTS\\ILS\\Connection',
     ),
   ),
+  'view_helpers' =>
+  array (
+    'factories' =>
+    array (
+      'LOTS\\View\\Helper\\SessionTimeout' => 'LOTS\\View\\Helper\\SessionTimeoutFactory',
+    ),
+    'aliases' =>
+    array (
+      'sessionTimeout' => 'LOTS\\View\\Helper\\SessionTimeout',
+    ),
+  ),
   'vufind' => 
   array (
     'allow_override' => true,
