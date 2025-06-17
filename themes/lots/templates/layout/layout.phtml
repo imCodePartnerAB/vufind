@@ -178,7 +178,37 @@ echo $footer;
 <?php foreach ($this->captcha()->js() as $jsInclude):?>
 <?=$this->inlineScript(\Laminas\View\Helper\HeadScript::FILE, $jsInclude, 'SET')?>
 <?php endforeach; ?>
-</body>
 
+<?php
+$sessionData = $this->sessionTimeout();
+if ($sessionData['enabled']):
+?>
+<link rel="stylesheet" href="<?=$this->url('home')?>themes/lots/css/lots.css" type="text/css" />
+<div id="sessionExpiredModal" class="session-expired-modal">
+    <div class="session-expired-content">
+        <p><?= $sessionData['message'] ?></p>
+        <button class="btn btn-primary session-expired-button" onclick="window.location.href='<?= $sessionData['logoutUrl'] ?>'">OK</button>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sessionTimeout = <?= $sessionData['timeoutMilliseconds'] ?>;
+    if (sessionTimeout > 0) {
+        setTimeout(function() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', VuFind.path + '/MyResearch/Logout?layout=lightbox', true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    document.getElementById('sessionExpiredModal').style.display = 'flex';
+                }
+            };
+            xhr.send();
+        }, sessionTimeout);
+    }
+});
+</script>
+<?php endif; ?>
+
+</body>
 </html>
 <!-- STOP ./layout/layout.phtml -->
