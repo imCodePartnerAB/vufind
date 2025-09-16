@@ -1,0 +1,12 @@
+; LOTS begin
+; Add the contents of this file to your language file in the folder /usr/local/vufind/local/languages or /usr/local/vufind/languages
+; English (en.ini)
+session_expired = "Your session has expired. Please login again."
+
+; LotsLerum-160
+Branch = "Branch"
+Available copies = "Available copies"
+Total copies = "Total copies"
+No book found = "No book found"
+Select branch = "Select branch"
+; LOTS end

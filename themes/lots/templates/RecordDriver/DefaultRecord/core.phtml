@@ -19,15 +19,20 @@ if (!isset($showSummaryLink)) {
 // showCorefields[2] = "Language"
 // showCorefields[3] = "Published"
 // showCorefields[3] = "Subjects"
+
 $showAllCorefields = $config->Record->showAllCorefields;
 $showCorefields = $config->Record->showCorefields;
-$showCorefields = $showCorefields->toArray();
+if ($showCorefields instanceof Laminas\Config\Config) {
+    $showCorefields = $showCorefields->toArray();
+}
 if (!isset($showCorefields)) {
     $showCorefields = ['nope'];
 }
 
 $showCorefieldPrefixes = $config->Record->showCorefieldPrefixes;
-$showCorefieldPrefixes = $showCorefieldPrefixes->toArray();
+if ($showCorefieldPrefixes instanceof Laminas\Config\Config) {
+    $showCorefieldPrefixes = $showCorefieldPrefixes->toArray();
+}
 if (!isset($showCorefieldPrefixes)) {
     $showCorefieldPrefixes = ['nope'];
 }

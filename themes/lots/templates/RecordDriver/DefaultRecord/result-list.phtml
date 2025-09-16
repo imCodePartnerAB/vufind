@@ -160,6 +160,122 @@
       <div class="result-previews">
         <?=$this->record($this->driver)->getPreviews()?>
       </div>
+
+
+<!-- Availability section start -->
+<?php
+// Retrieve LOTS configuration
+$config = $this->config()->get('LOTS');
+$lots_show_availability_in_results = $config->Record->showAvailabilityInResults ?? false; // Toggle availability display
+$lots_enable_debug = $config->Record->enableDebug ?? false; // Toggle debug logging
+$max_branches = $config->Record->maxBranches ?? 100; // Maximum number of branches to process
+
+// Get base URL using VuFind's serverUrl method or config, fallback to relative path
+$base_url = method_exists($this, 'serverUrl') ? $this->serverUrl() : ($config->Site->url ?? '');
+$base_url = rtrim($base_url, '/'); // Ensure no trailing slash
+
+if ($lots_show_availability_in_results == 1):
+    // Get and validate the record's unique ID
+    $biblionumber = $this->driver->getUniqueID();
+    if (!preg_match('/^[a-zA-Z0-9]+$/', $biblionumber)) {
+        if ($lots_enable_debug) {
+            error_log('LOTS Debug: Invalid biblionumber: ' . $biblionumber);
+        }
+        $biblionumber = ''; // Prevent invalid ID from being used
+    }
+
+    // Only proceed if we have a valid biblionumber
+    if ($biblionumber):
+        // Get the catalog instance
+        $catalog = $this->ils();
+
+        // Fetch availability data for all branches (cached)
+        $availabilityData = $catalog->getAvailability(null, $biblionumber);
+
+        // Fetch all available branches (cached call)
+        static $allBranches = null;
+        if ($allBranches === null) {
+            $allBranches = [];
+            $branchData = $catalog->getAvailableBranches();
+            foreach ($branchData as $branch) {
+                $allBranches[$branch['id']] = $branch['name'];
+            }
+        }
+
+        // Build valid branches array with proper names
+        $validBranches = [];
+        $branchCount = 0;
+        if (is_array($availabilityData)) {
+            foreach ($availabilityData as $branchId => $data) {
+                // Stop processing if max_branches limit is reached
+                if ($branchCount >= $max_branches) {
+                    if ($lots_enable_debug) {
+                        error_log('LOTS Debug: Max branches limit (' . $max_branches . ') reached. Stopping processing.');
+                    }
+                    break;
+                }
+
+                // Validate branch ID format
+                if (!preg_match('/^[a-zA-Z0-9]+$/', $branchId)) {
+                    if ($lots_enable_debug) {
+                        error_log('LOTS Debug: Invalid branch ID: ' . $branchId);
+                    }
+                    continue;
+                }
+
+                // Only include branches with items
+                if ($data['total'] > 0) {
+                    $branchName = isset($allBranches[$branchId]) ? $allBranches[$branchId] : 'Unnamed Branch';
+                    $validBranches[$branchId] = [
+                        'name' => $branchName,
+                        'available' => $data['available'],
+                        'total' => $data['total']
+                    ];
+                    $branchCount++;
+                }
+            }
+        }
+
+        // Render availability section
+        if (!empty($validBranches)):
+            // Calculate total availability across all branches
+            $totalAvailable = array_sum(array_column($validBranches, 'available'));
+            $totalCopies = array_sum(array_column($validBranches, 'total'));
+?>
+<div class="availability-section">
+    <form method="GET" action="<?php echo $this->escapeHtmlAttr($base_url . '/vufind/Record/' . $biblionumber); ?>">
+        <label for="branch-select-<?=$this->escapeHtmlAttr($biblionumber)?>"><?=$this->transEsc('Branch')?>:</label>
+        <select id="branch-select-<?=$this->escapeHtmlAttr($biblionumber)?>" name="branch" onchange="this.form.submit()">
+            <option value=""><?=$this->transEsc('Select branch')?></option>
+            <?php foreach ($validBranches as $branchId => $branch): ?>
+                <option value="<?php echo $this->escapeHtmlAttr($branchId); ?>">
+                    <?php echo $this->escapeHtml($branch['name']) . ' (' . $branch['available'] . '/' . $branch['total'] . ')'; ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </form>
+
+    <div class="availability-info">
+        <span><?=$this->transEsc('Available copies')?>: <?php echo $totalAvailable; ?></span>
+        <span><?=$this->transEsc('Total copies')?>: <?php echo $totalCopies; ?></span>
+        <span class="availability-dot" style="color: <?php echo $totalAvailable > 0 ? '#00FF00' : '#FF0000'; ?>">●</span>
+    </div>
+</div>
+<?php else: ?>
+<div class="availability-section">
+    <div class="alert alert-warning"><?=$this->transEsc('No book found')?></div>
+    <div class="availability-info">
+        <span><?=$this->transEsc('Available copies')?>: 0</span>
+        <span><?=$this->transEsc('Total copies')?>: 0</span>
+        <span class="availability-dot" style="color: #FF0000;">●</span>
+    </div>
+</div>
+<?php endif; // End if (!empty($validBranches)) ?>
+<?php endif; // End if ($biblionumber) ?>
+<?php endif; // End if ($lots_show_availability_in_results) ?>
+<!-- Availability section end -->
+
+
     </div>
     <div class="result-links hidden-print">
       <?php /* Display qrcode if appropriate: */ ?>
