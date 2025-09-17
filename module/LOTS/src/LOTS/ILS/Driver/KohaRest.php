@@ -544,5 +544,145 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
             'count' => $result['headers']['X-Total-Count'] ?? count($transactions),
             $arrayKey => $transactions
         ];
-    }    
+    }   
+    
+    /**
+     * Helper method to check if debug logging is enabled
+     *
+     * @return bool True if debug logging is enabled, false otherwise
+     */
+    protected function isDebugEnabled()
+    {
+        return isset($this->lotsConfig->Record->enableDebug)
+            && $this->lotsConfig->Record->enableDebug == true;
+    }
+
+    /**
+     * Conditional debug logging method
+     *
+     * @param string $message Debug message to log
+     */
+    protected function debugLog($message)
+    {
+        if ($this->isDebugEnabled()) {
+            $this->debug($message);
+        }
+    }
+
+    /**
+     * Get a list of available branches from Koha (excluding hidden ones).
+     *
+     * @return array List of branches with 'id' and 'name'
+     */
+    public function getAvailableBranches()
+    {
+        // Cache the result to avoid multiple API calls
+        if ($this->availableBranches === null) {
+            $this->availableBranches = [];
+
+            $this->debugLog('Calling getAvailableBranches');
+
+            try {
+                // Fetch all branches in one request by setting high _per_page to handle pagination
+                $response = $this->makeRequest([
+                    'path' => ['v1', 'libraries'],
+                    'query' => ['_per_page' => 100]  // Assuming <100 branches; adjust if more
+                ]);
+                $this->debugLog('Response from /v1/libraries: ' . var_export($response, true));
+            } catch (\Exception $e) {
+                $this->debugLog('Exception in getAvailableBranches: ' . $e->getMessage());
+                return $this->availableBranches;
+            }
+
+            if ($response && isset($response['data'])) {
+                foreach ($response['data'] as $branch) {
+                    if (!isset($branch['hidden']) || $branch['hidden'] != 1) {
+                        $this->availableBranches[] = [
+                            'id' => $branch['library_id'] ?? $branch['id'] ?? null,
+                            'name' => $branch['name'] ?? $branch['branchname'] ?? 'Unnamed Branch',
+                        ];
+                    }
+                }
+            } else {
+                $this->debugLog('No branches data found in response');
+            }
+
+            $this->debugLog('Returning branches: ' . var_export($this->availableBranches, true));
+        }
+
+        return $this->availableBranches;
+    }
+
+    /**
+     * Get availability information for a specific branch or all branches if no branch is specified.
+     *
+     * @param string|null $branchId The branch ID to check, or null for all branches
+     * @param string|null $biblionumber The biblionumber to check availability for
+     * @return array Array with 'available' and 'total' counts per branch
+     */
+    public function getAvailability($branchId = null, $biblionumber = null)
+    {
+        $availability = [];
+
+        $this->debugLog('Calling getAvailability for branch: ' . ($branchId ?? 'all'));
+        if (!$biblionumber) {
+            $biblionumber = $this->getBiblionumber();
+            if (!$biblionumber) {
+                $this->debugLog('No biblionumber available, skipping availability check');
+                return [];
+            }
+        }
+
+        try {
+            $response = $this->makeRequest(
+                [
+                    'path' => ['v1', 'contrib', 'kohasuomi', 'availability', 'biblios', $biblionumber, 'search'],
+                ]
+            );
+            $this->debugLog('Response from /v1/contrib/kohasuomi/availability/biblios/' . $biblionumber . '/search: ' . var_export($response, true));
+        } catch (\Exception $e) {
+            $this->debugLog('Exception in getAvailability: ' . $e->getMessage());
+            return [];
+        }
+
+        if ($response && isset($response['data']['item_availabilities'])) {
+            foreach ($response['data']['item_availabilities'] as $item) {
+                $holdingLibraryId = $item['holding_library_id'];
+                if (!isset($availability[$holdingLibraryId])) {
+                    $availability[$holdingLibraryId] = [
+                        'available' => 0,
+                        'total' => 0,
+                    ];
+                }
+                $availability[$holdingLibraryId]['total']++;
+                if ($item['availability']['available']) {
+                    $availability[$holdingLibraryId]['available']++;
+                }
+            }
+        } else {
+            $this->debugLog('No items data found in response');
+        }
+
+        // If a specific branch is requested, return only that branch's data
+        if ($branchId && isset($availability[$branchId])) {
+            return $availability[$branchId];
+        }
+
+        $this->debugLog('Returning availability: ' . var_export($availability, true));
+        return $availability;
+    }
+
+    /**
+     * Get the biblionumber for the current record.
+     *
+     * @return string|null Biblionumber or null if not available
+     */
+    protected function getBiblionumber()
+    {
+        if (isset($this->driver) && method_exists($this->driver, 'getUniqueID')) {
+            return $this->driver->getUniqueID();
+        }
+        return null;
+    }
+
 }
