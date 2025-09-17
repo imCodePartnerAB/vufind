@@ -7,7 +7,6 @@
 .phpstan_cache
 .vagrant
 .vscode/*
-/local
 /downloads
 /Gruntfile.local.js
 /solr/vendor
@@ -20,11 +19,6 @@ lessphp_*.list
 module/VuFind/tests/.phpunit.result.cache
 node_modules
 public/swagger-ui
-
-local/cache
-local/harvest/**
-local/import/translation_maps
-local/chown_dirs.sh
 
 composer.json
 
