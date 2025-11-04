@@ -4,9 +4,6 @@ $allowRecreatePassword = $config->PasswordRecovery->enable;
 $newPatronUrl = $config->NewPatron->url;
 $enableNewPatron = $config->NewPatron->enable;
 ?>
-
-
-
 <?php $loginMethod = $this->auth()->getManager()->getILSLoginMethod(); ?>
 <?php if ('email' === $loginMethod): ?>
   <div class="form-group">
@@ -22,19 +19,19 @@ $enableNewPatron = $config->NewPatron->enable;
     <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_password"><?=$this->transEsc('Password')?>:</label>
     <input type="password" name="password" id="login_<?=$this->escapeHtmlAttr($topClass)?>_password" class="form-control"/>
   </div>
-
-
-
-<!-- Added for LOTS LOBININTEG-12 -->
+<!-- Fixed for WCAG compliance - LOBININTEG-12 -->
 <?php if ($allowRecreatePassword == 1) {?>
-<div class="forgot_pin_code" >
-    <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_forgot"><a href="<?=$this->url('home') ?>ForgotPassword/" ><?=$this->transEsc('Forgot login')?></a></label>
+<div class="forgot_pin_code">
+    <p class="control-label">
+        <a href="<?=$this->url('home') ?>ForgotPassword/"><?=$this->transEsc('Forgot login')?></a>
+    </p>
 </div>
 <?php } ?>
-
 <?php if (isset($newPatronUrl) && $enableNewPatron) {?>
-<div class="new_patron_url" >
-    <label class="control-label" for="login_<?=$this->escapeHtmlAttr($topClass)?>_newpatron_url"><a href="<?=$newPatronUrl?>" ><?=$this->transEsc('Create new patron')?></a></label>
+<div class="new_patron_url">
+    <p class="control-label">
+        <a href="<?=$newPatronUrl?>"><?=$this->transEsc('Create new patron')?></a>
+    </p>
 </div>
 <?php } ?>
 <?php endif; ?>
