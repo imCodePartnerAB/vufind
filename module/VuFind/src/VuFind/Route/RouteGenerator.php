@@ -114,11 +114,7 @@ class RouteGenerator
      *
      * @return void
      */
-<<<<<<< HEAD
-    public function addNonTabRecordAction(& $config, $action)
-=======
     public function addNonTabRecordAction(&$config, $action)
->>>>>>> upstream/release-9.0
     {
         self::$nonTabRecordActions[$action] = $action;
         foreach (self::$recordRoutes as $recordRoute) {
@@ -138,11 +134,7 @@ class RouteGenerator
      *
      * @return void
      */
-<<<<<<< HEAD
-    public function addNonTabRecordActions(& $config, $actions)
-=======
     public function addNonTabRecordActions(&$config, $actions)
->>>>>>> upstream/release-9.0
     {
         foreach ($actions as $action) {
             $this->addNonTabRecordAction($config, $action);
