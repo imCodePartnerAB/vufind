@@ -17,8 +17,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * along with this program; if not, see
+ * <https://www.gnu.org/licenses/>.
  *
  * @category VuFind
  * @package  View_Helpers
@@ -29,7 +29,6 @@
 
 namespace VuFindTheme\View\Helper;
 
-use function count;
 use function in_array;
 use function is_array;
 
@@ -110,22 +109,16 @@ class SetupThemeResources extends \Laminas\View\Helper\AbstractHelper
     protected function addLinks(bool $partial = false)
     {
         // Convenient shortcut to view helper:
-        $headLink = $this->getView()->plugin('headLink');
+        $assetManager = $this->getView()->plugin('assetManager');
 
         // Load CSS (make sure we prepend them in the appropriate order; theme
         // resources should load before extras added by individual templates):
         foreach (array_reverse($this->container->getCss()) as $current) {
-            $parts = $this->container->parseSetting($current);
-            // Special case for media with parentheses
-            // ie. (min-width: 768px)
-            if (count($parts) > 1 && str_starts_with($parts[1], '(')) {
-                $parts[1] .= ':' . $parts[2];
-                array_splice($parts, 2, 1);
-            }
-            $headLink()->forcePrependStylesheet(
-                trim($parts[0]),
-                isset($parts[1]) ? trim($parts[1]) : 'all',
-                isset($parts[2]) ? trim($parts[2]) : false
+            $assetManager->forcePrependStyleLink(
+                $current['file'],
+                empty($current['media']) ? 'all' : $current['media'],
+                $current['conditional'] ?? '',
+                $current['extras'] ?? []
             );
         }
 
@@ -135,6 +128,7 @@ class SetupThemeResources extends \Laminas\View\Helper\AbstractHelper
         // a link element for each.
         // Skip favicons in partial mode because they are illegal outside of <head>.
         if (!$partial && ($favicon = $this->container->getFavicon())) {
+            $headLink = $this->getView()->plugin('headLink');
             $imageLink = $this->getView()->plugin('imageLink');
             if (is_array($favicon)) {
                 foreach ($favicon as $attrs) {
@@ -163,27 +157,25 @@ class SetupThemeResources extends \Laminas\View\Helper\AbstractHelper
      */
     protected function addScripts()
     {
-        $legalHelpers = ['footScript', 'headScript'];
+        $legalPositions = ['header', 'footer'];
 
         // Load Javascript (same ordering considerations as CSS, above):
         $js = array_reverse($this->container->getJs());
 
         foreach ($js as $current) {
-            $position = $current['position'] ?? 'header';
-            $helper = substr($position, 0, 4) . 'Script';
-            if (!in_array($helper, $legalHelpers)) {
+            $position = strtolower($current['position'] ?? 'header');
+            if (!in_array($position, $legalPositions)) {
                 throw new \Exception(
                     'Invalid script position for '
                     . $current['file'] . ': ' . $position . '.'
                 );
             }
-
             $this->getView()
-                ->plugin($helper)
-                ->forcePrependFile(
+                ->plugin('assetManager')
+                ->forcePrependScriptLink(
                     $current['file'],
-                    'text/javascript',
-                    $current['attributes'] ?? []
+                    $current['attributes'] ?? [],
+                    position: $position
                 );
         }
     }

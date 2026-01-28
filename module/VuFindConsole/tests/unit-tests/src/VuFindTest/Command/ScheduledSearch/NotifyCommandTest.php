@@ -17,8 +17,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * along with this program; if not, see
+ * <https://www.gnu.org/licenses/>.
  *
  * @category VuFind
  * @package  Tests
@@ -37,6 +37,7 @@ use VuFind\Db\Entity\UserEntityInterface;
 use VuFind\Db\Service\SearchServiceInterface;
 use VuFindConsole\Command\ScheduledSearch\NotifyCommand;
 use VuFindTest\Container\MockContainer;
+use VuFindTest\Feature\ConfigRelatedServicesTrait;
 
 use function array_key_exists;
 
@@ -51,6 +52,8 @@ use function array_key_exists;
  */
 class NotifyCommandTest extends \PHPUnit\Framework\TestCase
 {
+    use ConfigRelatedServicesTrait;
+
     /**
      * Container for building mocks.
      *
@@ -151,7 +154,7 @@ class NotifyCommandTest extends \PHPUnit\Framework\TestCase
      */
     public function testNotificationsWithUnsupportedBackend(): void
     {
-        $resultsCallback = function ($results) {
+        $resultsCallback = function ($results): void {
             $results->expects($this->any())->method('getBackendId')->willReturn('unsupported');
             $results->expects($this->any())->method('getSearchId')->willReturn(1);
         };
@@ -182,10 +185,10 @@ class NotifyCommandTest extends \PHPUnit\Framework\TestCase
      */
     public function testNotificationsWithNoSearchResults(): void
     {
-        $optionsCallback = function ($options) {
+        $optionsCallback = function ($options): void {
             $options->expects($this->any())->method('supportsScheduledSearch')->willReturn(true);
         };
-        $resultsCallback = function ($results) {
+        $resultsCallback = function ($results): void {
             $results->expects($this->any())->method('getSearchId')->willReturn(1);
         };
         $command = $this->getCommand(
@@ -215,10 +218,10 @@ class NotifyCommandTest extends \PHPUnit\Framework\TestCase
      */
     public function testNotificationsWithNoNewSearchResults(): void
     {
-        $optionsCallback = function ($options) {
+        $optionsCallback = function ($options): void {
             $options->expects($this->any())->method('supportsScheduledSearch')->willReturn(true);
         };
-        $resultsCallback = function ($results) {
+        $resultsCallback = function ($results): void {
             $results->expects($this->any())->method('getSearchId')->willReturn(1);
             $results->expects($this->any())->method('getResults')->willReturn($this->getMockSearchResultsSet());
         };
@@ -250,10 +253,10 @@ class NotifyCommandTest extends \PHPUnit\Framework\TestCase
      */
     public function testNotificationsWithNewSearchResults(): void
     {
-        $optionsCallback = function ($options) {
+        $optionsCallback = function ($options): void {
             $options->expects($this->any())->method('supportsScheduledSearch')->willReturn(true);
         };
-        $paramsCallback = function ($params) {
+        $paramsCallback = function ($params): void {
             $params->expects($this->any())->method('getCheckboxFacets')->willReturn([]);
         };
         $date = date('Y-m-d H:i:s');
@@ -264,7 +267,7 @@ class NotifyCommandTest extends \PHPUnit\Framework\TestCase
                 'FirstIndexed' => $date,
             ]
         );
-        $resultsCallback = function ($results) use ($record) {
+        $resultsCallback = function ($results) use ($record): void {
             $results->expects($this->any())->method('getSearchId')->willReturn(1);
             $results->expects($this->any())->method('getResults')->willReturn($this->getMockSearchResultsSet($record));
         };
@@ -327,11 +330,11 @@ class NotifyCommandTest extends \PHPUnit\Framework\TestCase
     /**
      * Get mock search results.
      *
-     * @param \VuFind\RecordDriver\AbstractBase $record Record to return
+     * @param ?\VuFind\RecordDriver\AbstractBase $record Record to return
      *
      * @return array
      */
-    protected function getMockSearchResultsSet(\VuFind\RecordDriver\AbstractBase $record = null): array
+    protected function getMockSearchResultsSet(?\VuFind\RecordDriver\AbstractBase $record = null): array
     {
         return [
             $record ?? $this->container->createMock(\VuFind\RecordDriver\SolrDefault::class),
@@ -491,7 +494,7 @@ class NotifyCommandTest extends \PHPUnit\Framework\TestCase
             $renderer,
             $this->getMockResultsManager(),
             $options['scheduleOptions'] ?? [1 => 'Daily', 7 => 'Weekly'],
-            new \Laminas\Config\Config(
+            new \VuFind\Config\Config(
                 $options['configArray'] ?? [
                     'Site' => [
                         'institution' => 'My Institution',
@@ -507,6 +510,7 @@ class NotifyCommandTest extends \PHPUnit\Framework\TestCase
         $command->setTranslator(
             $options['translator'] ?? $this->container->createMock(\Laminas\Mvc\I18n\Translator::class)
         );
+        $command->setPathResolver($this->getPathResolver());
         return $command;
     }
 

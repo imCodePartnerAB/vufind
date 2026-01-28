@@ -17,8 +17,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * along with this program; if not, see
+ * <https://www.gnu.org/licenses/>.
  *
  * @category VuFind
  * @package  Controller
@@ -167,7 +167,7 @@ class AbstractRecord extends AbstractBase
         // something has gone wrong (or user submitted blank form) and we
         // should do nothing:
         if (!empty($comment)) {
-            $populator = $this->serviceLocator->get(ResourcePopulator::class);
+            $populator = $this->getService(ResourcePopulator::class);
             $resource = $populator->getOrCreateResourceForDriver($driver);
             $commentsService = $this->getDbService(
                 \VuFind\Db\Service\CommentsServiceInterface::class
@@ -179,7 +179,7 @@ class AbstractRecord extends AbstractBase
                 $driver->isRatingAllowed()
                 && '0' !== ($rating = $this->params()->fromPost('rating', '0'))
             ) {
-                $ratingsService = $this->serviceLocator->get(RatingsService::class);
+                $ratingsService = $this->getService(RatingsService::class);
                 $ratingsService->saveRating($driver, $user->getId(), intval($rating));
             }
 
@@ -241,7 +241,7 @@ class AbstractRecord extends AbstractBase
 
         // Save tags, if any:
         if ($tags = $this->params()->fromPost('tag')) {
-            $this->serviceLocator->get(TagsService::class)->linkTagsToRecord($driver, $user, $tags);
+            $this->getService(TagsService::class)->linkTagsToRecord($driver, $user, $tags);
             $this->flashMessenger()->addMessage(['msg' => 'add_tag_success'], 'success');
             return $this->redirectToRecord();
         }
@@ -274,7 +274,7 @@ class AbstractRecord extends AbstractBase
 
         // Delete tags, if any:
         if ($tag = $this->params()->fromPost('tag')) {
-            $this->serviceLocator->get(TagsService::class)->unlinkTagsFromRecord(
+            $this->getService(TagsService::class)->unlinkTagsFromRecord(
                 $driver,
                 $user,
                 [$tag]
@@ -311,11 +311,11 @@ class AbstractRecord extends AbstractBase
         if ($user && null !== ($rating = $this->params()->fromPost('rating'))) {
             if (
                 '' === $rating
-                && !($this->getConfig()->Social->remove_rating ?? true)
+                && !($this->getConfigArray()['Social']['remove_rating'] ?? true)
             ) {
                 throw new BadRequestException('error_inconsistent_parameters');
             }
-            $ratingsService = $this->serviceLocator->get(RatingsService::class);
+            $ratingsService = $this->getService(RatingsService::class);
             $ratingsService->saveRating(
                 $driver,
                 $user->getId(),
@@ -330,7 +330,7 @@ class AbstractRecord extends AbstractBase
 
         // Display the "add rating" form:
         $currentRating = $user
-            ? $this->serviceLocator->get(RatingsService::class)->getRatingData($driver, $user->getId())
+            ? $this->getService(RatingsService::class)->getRatingData($driver, $user->getId())
             : null;
         return $this->createViewModel(compact('currentRating'));
     }
@@ -347,10 +347,9 @@ class AbstractRecord extends AbstractBase
         $checkRoute = $this->params()->fromPost('checkRoute')
             ?? $this->params()->fromQuery('checkRoute')
             ?? false;
-        $config = $this->getConfig();
-        if ($checkRoute && $config->Collections->collections ?? false) {
-            $routeConfig = isset($config->Collections->route)
-                ? $config->Collections->route->toArray() : [];
+        $config = $this->getConfigArray();
+        if ($checkRoute && ($config['Collections']['collections'] ?? false)) {
+            $routeConfig = $config['Collections']['route'] ?? [];
             $collectionRoutes
                 = array_merge(['record' => 'collection'], $routeConfig);
             $routeName = $this->event->getRouteMatch()->getMatchedRouteName() ?? '';
@@ -412,9 +411,9 @@ class AbstractRecord extends AbstractBase
         // Perform the save operation:
         $driver = $this->loadRecord();
         $post = $this->getRequest()->getPost()->toArray();
-        $tagsService = $this->serviceLocator->get(TagsService::class);
+        $tagsService = $this->getService(TagsService::class);
         $post['mytags'] = $tagsService->parse($post['mytags'] ?? '');
-        $favorites = $this->serviceLocator->get(\VuFind\Favorites\FavoritesService::class);
+        $favorites = $this->getService(\VuFind\Favorites\FavoritesService::class);
         $results = $favorites->saveRecordToFavorites($post, $user, $driver);
 
         // Display a success status message:
@@ -422,8 +421,8 @@ class AbstractRecord extends AbstractBase
         $message = [
             'html' => true,
             'msg' => $this->translate('bulk_save_success') . '. '
-            . '<a href="' . $listUrl . '" class="gotolist">'
-            . $this->translate('go_to_list') . '</a>.',
+                . '<a href="' . $listUrl . '" class="gotolist">'
+                . $this->translate('go_to_list') . '</a>.',
         ];
         $this->flashMessenger()->addMessage($message, 'success');
 
@@ -529,10 +528,13 @@ class AbstractRecord extends AbstractBase
      */
     public function emailAction()
     {
+        $emailActionSettings = $this->getService(\VuFind\Config\AccountCapabilities::class)->getEmailActionSetting();
+        if ($emailActionSettings === 'disabled') {
+            throw new ForbiddenException('Email action disabled');
+        }
         // Force login if necessary:
-        $config = $this->getConfig();
         if (
-            (!isset($config->Mail->require_login) || $config->Mail->require_login)
+            $emailActionSettings !== 'enabled'
             && !$this->getUser()
         ) {
             return $this->forceLogin();
@@ -542,7 +544,7 @@ class AbstractRecord extends AbstractBase
         $driver = $this->loadRecord();
 
         // Create view
-        $mailer = $this->serviceLocator->get(\VuFind\Mailer\Mailer::class);
+        $mailer = $this->getService(\VuFind\Mailer\Mailer::class);
         $view = $this->createEmailViewModel(
             null,
             $mailer->getDefaultRecordSubject($driver)
@@ -585,8 +587,7 @@ class AbstractRecord extends AbstractBase
      */
     protected function smsEnabled()
     {
-        $check = $this->serviceLocator
-            ->get(\VuFind\Config\AccountCapabilities::class);
+        $check = $this->getService(\VuFind\Config\AccountCapabilities::class);
         return $check->getSmsSetting() !== 'disabled';
     }
 
@@ -606,7 +607,7 @@ class AbstractRecord extends AbstractBase
         $driver = $this->loadRecord();
 
         // Load the SMS carrier list:
-        $sms = $this->serviceLocator->get(\VuFind\SMS\SMSInterface::class);
+        $sms = $this->getService(\VuFind\SMS\SMSInterface::class);
         $view = $this->createViewModel();
         $view->carriers = $sms->getCarriers();
         $view->validation = $sms->getValidationType();
@@ -618,7 +619,7 @@ class AbstractRecord extends AbstractBase
         // Process form submission:
         if ($this->formWasSubmitted(useCaptcha: $view->useCaptcha)) {
             // Do CSRF check
-            $csrf = $this->serviceLocator->get(\VuFind\Validator\SessionCsrf::class);
+            $csrf = $this->getService(\VuFind\Validator\SessionCsrf::class);
             if (!$csrf->isValid($this->getRequest()->getPost()->get('csrf'))) {
                 throw new \VuFind\Exception\BadRequest(
                     'error_inconsistent_parameters'
@@ -680,7 +681,7 @@ class AbstractRecord extends AbstractBase
         $format = $this->params()->fromQuery('style');
 
         // Display export menu if missing/invalid option
-        $export = $this->serviceLocator->get(\VuFind\Export::class);
+        $export = $this->getService(\VuFind\Export::class);
         if (empty($format) || !$export->recordSupportsFormat($driver, $format)) {
             if (!empty($format)) {
                 $this->flashMessenger()
@@ -769,8 +770,7 @@ class AbstractRecord extends AbstractBase
             return $view;
         }
 
-        $explanation = $this->serviceLocator
-            ->get(\VuFind\Search\Explanation\PluginManager::class)
+        $explanation = $this->getService(\VuFind\Search\Explanation\PluginManager::class)
             ->get($record->getSourceIdentifier());
 
         $params = $explanation->getParams();
@@ -786,13 +786,13 @@ class AbstractRecord extends AbstractBase
      * init() method since we don't want to perform an expensive search twice
      * when homeAction() forwards to another method.
      *
-     * @param ParamBag $params Search backend parameters
-     * @param bool     $force  Set to true to force a reload of the record, even if
+     * @param ?ParamBag $params Search backend parameters
+     * @param bool      $force  Set to true to force a reload of the record, even if
      * already loaded (useful if loading a record using different parameters)
      *
      * @return AbstractRecordDriver
      */
-    protected function loadRecord(ParamBag $params = null, bool $force = false)
+    protected function loadRecord(?ParamBag $params = null, bool $force = false)
     {
         // Only load the record if it has not already been loaded. Note that
         // when determining record ID, we check both the route match (the most
@@ -912,17 +912,6 @@ class AbstractRecord extends AbstractBase
     }
 
     /**
-     * Is the result scroller active?
-     *
-     * @return bool
-     */
-    protected function resultScrollerActive()
-    {
-        // Disabled by default:
-        return false;
-    }
-
-    /**
      * Display a particular tab.
      *
      * @param string $tab  Name of tab to display
@@ -947,7 +936,7 @@ class AbstractRecord extends AbstractBase
             return $patron;
         }
 
-        $config = $this->getConfig();
+        $config = $this->getConfigArray();
 
         $view = $this->createViewModel();
         $view->tabs = $this->getAllTabs();
@@ -955,17 +944,15 @@ class AbstractRecord extends AbstractBase
         $view->defaultTab = strtolower($this->getDefaultTab());
         $view->backgroundTabs = $this->getBackgroundTabs();
         $view->tabsExtraScripts = $this->getTabsExtraScripts($view->tabs);
-        $view->loadInitialTabWithAjax
-            = isset($config->Site->loadInitialTabWithAjax)
-            ? (bool)$config->Site->loadInitialTabWithAjax : false;
+        $view->loadInitialTabWithAjax = (bool)($config['Site']['loadInitialTabWithAjax'] ?? false);
 
         // Set up next/previous record links (if appropriate)
-        if ($this->resultScrollerActive()) {
+        if ($this->getSearchMemory()->getCurrentSearch()?->getOptions()?->resultScrollerActive()) {
             $driver = $this->loadRecord();
             $view->scrollData = $this->resultScroller()->getScrollData($driver);
         }
 
-        $view->callnumberHandler = $config->Item_Status->callnumber_handler ?? false;
+        $view->callnumberHandler = $config['Item_Status']['callnumber_handler'] ?? false;
 
         $view->setTemplate($ajax ? 'record/ajaxtab' : 'record/view');
         return $view;

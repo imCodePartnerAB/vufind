@@ -17,8 +17,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * along with this program; if not, see
+ * <https://www.gnu.org/licenses/>.
  *
  * @category VuFind
  * @package  View_Helpers
@@ -29,7 +29,7 @@
 
 namespace VuFind\View\Helper\Root;
 
-use Laminas\Config\Config;
+use VuFind\Config\Config;
 use VuFind\Cover\Router as CoverRouter;
 use VuFind\Db\Entity\UserEntityInterface;
 use VuFind\Db\Entity\UserListEntityInterface;
@@ -44,7 +44,9 @@ use VuFind\Tags\TagsService;
 
 use function get_class;
 use function in_array;
+use function is_array;
 use function is_callable;
+use function is_string;
 
 /**
  * Record driver view helper
@@ -92,7 +94,7 @@ class Record extends \Laminas\View\Helper\AbstractHelper implements DbServiceAwa
      * Constructor
      *
      * @param TagsService $tagsService Tags service
-     * @param Config      $config      Configuration from config.ini
+     * @param ?Config     $config      Configuration from config.ini
      */
     public function __construct(protected TagsService $tagsService, protected ?Config $config = null)
     {
@@ -177,7 +179,7 @@ class Record extends \Laminas\View\Helper\AbstractHelper implements DbServiceAwa
     }
 
     /**
-     * Render the a brief record for use in collection mode.
+     * Render a brief record for use in collection mode.
      *
      * @return string
      */
@@ -262,13 +264,14 @@ class Record extends \Laminas\View\Helper\AbstractHelper implements DbServiceAwa
     /**
      * Render an entry in a favorite list.
      *
-     * @param ?UserListEntityInterface $list Currently selected list (null for
+     * @param ?UserListEntityInterface $list         Currently selected list (null for
      * combined favorites)
-     * @param ?UserEntityInterface     $user Current logged in user (null if none)
+     * @param ?UserEntityInterface     $user         Current logged in user (null if none)
+     * @param ?int                     $recordNumber Record number (null to omit/hide)
      *
      * @return string
      */
-    public function getListEntry($list = null, $user = null)
+    public function getListEntry($list = null, $user = null, $recordNumber = null)
     {
         // Get list of lists containing this entry
         $lists = null;
@@ -281,11 +284,8 @@ class Record extends \Laminas\View\Helper\AbstractHelper implements DbServiceAwa
         }
         return $this->renderTemplate(
             'list-entry.phtml',
-            [
+            compact('list', 'user', 'lists', 'recordNumber') + [
                 'driver' => $this->driver,
-                'list' => $list,
-                'user' => $user,
-                'lists' => $lists,
             ]
         );
     }
@@ -449,16 +449,16 @@ class Record extends \Laminas\View\Helper\AbstractHelper implements DbServiceAwa
     public function getTitleHtml($maxLength = 180)
     {
         $highlightedTitle = $this->driver->tryMethod('getHighlightedTitle');
-        $title = trim($this->driver->tryMethod('getTitle'));
-        if (!empty($highlightedTitle)) {
+        $title = $this->driver->tryMethod('getTitle');
+        if ('' !== $highlightedTitle) {
             $highlight = $this->getView()->plugin('highlight');
             $addEllipsis = $this->getView()->plugin('addEllipsis');
             return $highlight($addEllipsis($highlightedTitle, $title));
         }
-        if (!empty($title)) {
-            $escapeHtml = $this->getView()->plugin('escapeHtml');
+        if ('' !== trim($title)) {
+            $escape = $this->getView()->plugin('escapeOrCleanHtml');
             $truncate = $this->getView()->plugin('truncate');
-            return $escapeHtml($truncate($title, $maxLength));
+            return $escape($truncate($title, $maxLength), dataContext: 'title', renderingContext: 'link');
         }
         $transEsc = $this->getView()->plugin('transEsc');
         return $transEsc('Title not available');
@@ -484,9 +484,13 @@ class Record extends \Laminas\View\Helper\AbstractHelper implements DbServiceAwa
         $hiddenFilters = null;
         // Try to get hidden filters for the current search:
         if ($this->searchMemory) {
+            $view = $this->getView();
             $searchId = $this->driver->getExtraDetail('searchId')
-                ?? $this->getView()->plugin('searchMemory')->getLastSearchId();
-            if ($searchId && ($search = $this->searchMemory->getSearchById($searchId))) {
+                ?? $view->plugin('searchMemory')->getLastSearchId();
+            if (
+                $searchId
+                && ($search = $this->searchMemory->getSearchById($searchId, $view->plugin('auth')->getUserObject()))
+            ) {
                 $filters = UrlQueryHelper::buildQueryString(
                     [
                         'hiddenFilters' => $search->getParams()->getHiddenFiltersAsQueryParams(),
@@ -558,10 +562,11 @@ class Record extends \Laminas\View\Helper\AbstractHelper implements DbServiceAwa
      */
     public function getCheckbox($idPrefix = '', $formAttr = false, $number = null)
     {
-        $id = $this->driver->getSourceIdentifier() . '|'
-            . $this->driver->getUniqueId();
-        $context
-            = ['id' => $id, 'number' => $number, 'prefix' => $idPrefix];
+        $context = compact('number') + [
+            'id' => $this->getUniqueIdWithSourcePrefix(),
+            'checkboxElementId' => $this->getUniqueHtmlElementId($idPrefix),
+            'prefix' => $idPrefix,
+        ];
         if ($formAttr) {
             $context['formAttr'] = $formAttr;
         }
@@ -611,15 +616,20 @@ class Record extends \Laminas\View\Helper\AbstractHelper implements DbServiceAwa
     /**
      * Get the rendered cover plus some useful parameters.
      *
-     * @param string $context Context of code being generated
-     * @param string $default The default size of the cover
-     * @param string $link    The link for the anchor
+     * @param string             $context Context of code being generated
+     * @param string             $default The default size of the cover
+     * @param string|array|false $link    The href link for the anchor (false
+     * for no link, or a string to use as an href, or an array of attributes
+     * to include in the anchor tag)
      *
      * @return array
      */
     public function getCoverDetails($context, $default, $link = false)
     {
-        $details = compact('link', 'context') + [
+        $linkAttributes = is_string($link)
+            ? ['href' => $link]
+            : (is_array($link) ? $link : []);
+        $details = compact('linkAttributes', 'context') + [
             'driver' => $this->driver, 'cover' => false, 'size' => false,
             'linkPreview' => $this->getPreviewCoverLinkSetting($context),
         ];
@@ -824,16 +834,13 @@ class Record extends \Laminas\View\Helper\AbstractHelper implements DbServiceAwa
     }
 
     /**
-     * Get all the links associated with this record depending on the OpenURL setting
-     * replace_other_urls. Returns an array of associative arrays each containing
-     * 'desc' and 'url' keys.
+     * Return the OpenURL setting replace_other_urls, defaulting to false.
      *
      * @return bool
      */
     protected function hasOpenUrlReplaceSetting()
     {
-        return isset($this->config->OpenURL->replace_other_urls)
-            && $this->config->OpenURL->replace_other_urls;
+        return $this->config?->OpenURL?->replace_other_urls ?? false;
     }
 
     /**
@@ -849,5 +856,39 @@ class Record extends \Laminas\View\Helper\AbstractHelper implements DbServiceAwa
     protected function deduplicateLinks($links)
     {
         return array_values(array_unique($links, SORT_REGULAR));
+    }
+
+    /**
+     * Get the source identifier + unique id of the record without spaces
+     *
+     * @param string $idPrefix Prefix for HTML ids
+     *
+     * @return string
+     */
+    public function getUniqueHtmlElementId($idPrefix = '')
+    {
+        $resultSetId = $this->driver->getResultSetIdentifier() ?? '';
+
+        return preg_replace(
+            "/\s+/",
+            '_',
+            ($idPrefix ? $idPrefix . '-' : '')
+            . ($resultSetId ? $resultSetId . '-' : '')
+            . $this->driver->getUniqueId()
+        );
+    }
+
+    /**
+     * Get the source identifier + unique id of the record
+     *
+     * @return string
+     */
+    public function getUniqueIdWithSourcePrefix()
+    {
+        if ($this->driver) {
+            return "{$this->driver->getSourceIdentifier()}"
+                . "|{$this->driver->getUniqueId()}";
+        }
+        throw new \Exception('No record driver found.');
     }
 }

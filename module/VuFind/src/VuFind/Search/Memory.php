@@ -17,8 +17,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * along with this program; if not, see
+ * <https://www.gnu.org/licenses/>.
  *
  * @category VuFind
  * @package  Search
@@ -31,6 +31,7 @@ namespace VuFind\Search;
 
 use Laminas\Http\Request;
 use Laminas\Session\Container;
+use VuFind\Db\Entity\UserEntityInterface;
 use VuFind\Db\Service\SearchServiceInterface;
 use VuFind\Search\Results\PluginManager as ResultsManager;
 
@@ -254,16 +255,19 @@ class Memory
     /**
      * Get a search by id
      *
-     * @param int $id Search ID
+     * @param int                  $id   Search ID
+     * @param ?UserEntityInterface $user Currently logged-in user to also check saved searches
      *
      * @return ?\VuFind\Search\Base\Results
      */
-    public function getSearchById(int $id): ?\VuFind\Search\Base\Results
+    public function getSearchById(int $id, ?UserEntityInterface $user = null): ?\VuFind\Search\Base\Results
     {
-        if (!array_key_exists($id, $this->searchCache)) {
-            $search = $this->searchService->getSearchByIdAndOwner($id, $this->sessionId, null);
-            $this->searchCache[$id] = $search?->getSearchObject()?->deminify($this->resultsManager);
+        $userId = $user?->getId();
+        $cacheKey = $userId ? "{$id}_$userId" : $id;
+        if (!array_key_exists($cacheKey, $this->searchCache)) {
+            $search = $this->searchService->getSearchByIdAndOwner($id, $this->sessionId, $user);
+            $this->searchCache[$cacheKey] = $search?->getSearchObject()?->deminify($this->resultsManager);
         }
-        return $this->searchCache[$id];
+        return $this->searchCache[$cacheKey];
     }
 }

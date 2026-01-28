@@ -1,20 +1,17 @@
 <?php
-    // Set up page title:
-    $this->headTitle($this->translate('Library Cards'));
-
     // Set up breadcrumbs:
-    $this->layout()->breadcrumbs = '<li><a href="' . $this->url('myresearch-home') . '">' . $this->transEsc('Your Account') . '</a></li> <li class="active">' . $this->transEsc('Library Cards') . '</li>';
+    $this->breadcrumbs()->set($this->translate('Your Account'), $this->url('myresearch-home'))->add($this->translate('Library Cards'), active: true);
 ?>
 <div class="<?=$this->layoutClass('mainbody')?>">
 
   <?=$this->flashmessages()?>
 
-  <h2><?=$this->transEsc('Library Cards')?></h2>
+  <?=$this->component('page-title', ['title' => $this->translate('Library Cards')]);?>
   <?php if (count($this->libraryCards) == 0): ?>
     <div><?=$this->transEsc('You do not have any library cards')?></div>
   <?php else: ?>
     <table class="table table-striped">
-      <caption class="sr-only"><?=$this->transEsc('Library Cards')?></caption>
+      <caption class="visually-hidden"><?=$this->transEsc('Library Cards')?></caption>
     <tr>
       <th><?=$this->transEsc('Library Card Name')?></th>
       <?php if ($this->multipleTargets): ?>
@@ -37,7 +34,7 @@
         <td><?=$this->escapeHtml($username)?></td>
         <td>
           <?php if ($this->auth()->getManager()->allowsUserIlsLogin()): ?>
-            <a class="btn btn-link icon-link" href="<?=$this->url('editLibraryCard') . $this->escapeHtmlAttr($record->getId()) ?>" title="<?=$this->transEscAttr('Edit Library Card')?>">
+            <a class="btn btn-default icon-link" href="<?=$this->url('editLibraryCard') . $this->escapeHtmlAttr($record->getId()) ?>" title="<?=$this->transEscAttr('Edit Library Card')?>">
               <?=$this->icon('profile-card-edit', 'icon-link__icon') ?>
               <span class="icon-link__label"><?=$this->transEsc('Edit')?></span>
             </a>
@@ -49,8 +46,10 @@
                     'buttonLink' => $this->url('librarycards-deletecard', [], ['query' => ['cardID' => $record->getId()]]),
                     'buttonIcon' => 'profile-card-delete',
                     'buttonLabel' => 'Delete',
+                    'buttonClass' => 'btn btn-default',
                     'confirmLink' => $this->url('librarycards-deletecard', [], ['query' => ['cardID' => $record->getId(), 'confirm' => 1]]),
                     'clearAccountCache' => true,
+                    'header' => 'confirm_delete_library_card_brief',
                 ]
             )
           ?>

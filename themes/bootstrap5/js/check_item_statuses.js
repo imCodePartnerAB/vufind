@@ -1,29 +1,17 @@
 /*global AjaxRequestQueue, VuFind */
 
 VuFind.register('itemStatuses', function ItemStatuses() {
-  function formatCallnumbers(callnumber, callnumber_handler) {
-    var cns = callnumber.split(',\t');
-    for (var i = 0; i < cns.length; i++) {
-      // If the call number has a special delimiter, it indicates a prefix that
-      // should be used for display but not for sorting/searching.
-      var actualCallNumber = cns[i];
-      var displayCallNumber = cns[i];
-      var parts = cns[i].split('::::');
-      if (parts.length > 1) {
-        displayCallNumber = parts[0] + " " + parts[1];
-        actualCallNumber = parts[1];
-      }
+  var _checkItemHandlers = {};
+  var _handlerUrls = {};
 
-      cns[i] = callnumber_handler
-        ? '<a href="' + VuFind.path + '/Alphabrowse/Home?source=' + encodeURI(callnumber_handler) + '&amp;from=' + encodeURI(actualCallNumber) + '">' + displayCallNumber + '</a>'
-        : displayCallNumber;
-    }
-    return cns.join(',\t');
-  }
-
+  /**
+   * Display the item status details in the specified element.
+   * @param {object}      result The item status data returned from the server.
+   * @param {HTMLElement} el     The HTML element to update.
+   */
   function displayItemStatus(result, el) {
     el.querySelectorAll('.status').forEach((status) => {
-      status.innerHTML = result.availability_message;
+      VuFind.setInnerHtml(status, result.availability_message || '');
     });
     el.querySelectorAll('.ajax-availability').forEach((ajaxAvailability) => {
       ajaxAvailability.classList.remove('ajax-availability');
@@ -35,7 +23,7 @@ VuFind.register('itemStatuses', function ItemStatuses() {
       && result.error.length > 0
     ) {
       callnumAndLocations.forEach((callnumAndLocation) => {
-        callnumAndLocation.innerHTML = result.error;
+        callnumAndLocation.textContent = result.error;
         callnumAndLocation.classList.add('text-danger');
       });
       el.querySelectorAll('.callnumber,.hideIfDetailed,.location').forEach((e) => { e.classList.add('hidden'); });
@@ -45,7 +33,7 @@ VuFind.register('itemStatuses', function ItemStatuses() {
     ) {
       // Full status mode is on -- display the HTML and hide extraneous junk:
       callnumAndLocations.forEach((callnumAndLocation) => {
-        VuFind.setElementContents(callnumAndLocation, VuFind.updateCspNonce(result.full_status));
+        VuFind.setInnerHtml(callnumAndLocation, VuFind.updateCspNonce(result.full_status));
       });
       el.querySelectorAll('.callnumber,.hideIfDetailed,.location,.status').forEach((e) => { e.classList.add('hidden'); });
     } else if (typeof(result.missing_data) !== 'undefined'
@@ -54,48 +42,23 @@ VuFind.register('itemStatuses', function ItemStatuses() {
       // No data is available -- hide the entire status area:
       el.querySelectorAll('.callnumAndLocation,.status').forEach((e) => e.classList.add('hidden'));
     } else if (result.locationList) {
-      // We have multiple locations -- build appropriate HTML and hide unwanted labels:
+      // We have multiple locations - hide unwanted labels and display HTML from response:
       el.querySelectorAll('.callnumber,.hideIfDetailed,.location').forEach((e) => e.classList.add('hidden'));
-      var locationListHTML = "";
-      for (var x = 0; x < result.locationList.length; x++) {
-        locationListHTML += '<div class="groupLocation">';
-        if (result.locationList[x].availability) {
-          locationListHTML += '<span class="text-success">'
-            + VuFind.icon("status-available")
-            + result.locationList[x].location
-            + '</span> ';
-        } else if (typeof(result.locationList[x].status_unknown) !== 'undefined'
-          && result.locationList[x].status_unknown
-        ) {
-          if (result.locationList[x].location) {
-            locationListHTML += '<span class="text-warning">'
-              + VuFind.icon("status-unknown")
-              + result.locationList[x].location
-              + '</span> ';
-          }
-        } else {
-          locationListHTML += '<span class="text-danger">'
-            + VuFind.icon("status-unavailable")
-            + result.locationList[x].location
-            + '</span> ';
-        }
-        locationListHTML += '</div>';
-        locationListHTML += '<div class="groupCallnumber">';
-        locationListHTML += (result.locationList[x].callnumbers)
-          ? formatCallnumbers(result.locationList[x].callnumbers, result.locationList[x].callnumber_handler) : '';
-        locationListHTML += '</div>';
-      }
       el.querySelectorAll('.locationDetails').forEach((locationDetails) => {
         locationDetails.classList.remove('hidden');
-        locationDetails.innerHTML = locationListHTML;
+        VuFind.setInnerHtml(locationDetails, result.locationList);
       });
     } else {
       // Default case -- load call number and location into appropriate containers:
       el.querySelectorAll('.callnumber').forEach((callnumber) => {
-        callnumber.innerHTML = formatCallnumbers(result.callnumber, result.callnumber_handler) + '<br>';
+        if (result.callnumberHtml) {
+          VuFind.setInnerHtml(callnumber, result.callnumberHtml + '<br>');
+        } else {
+          callnumber.textContent = '';
+        }
       });
       el.querySelectorAll('.location').forEach((location) => {
-        location.innerHTML = result.reserve === 'true'
+        location.textContent = result.reserve === 'true'
           ? result.reserve_message
           : result.location;
       });
@@ -104,6 +67,11 @@ VuFind.register('itemStatuses', function ItemStatuses() {
     el.classList.remove('js-item-pending');
   }
 
+  /**
+   * Handle a successful item status AJAX request.
+   * @param {Array}    items    The items that were requested.
+   * @param {Response} response The fetch API response object.
+   */
   function itemStatusAjaxSuccess(items, response) {
     let idMap = {};
 
@@ -128,6 +96,12 @@ VuFind.register('itemStatuses', function ItemStatuses() {
     });
   }
 
+  /**
+   * Handle a failed item status AJAX request.
+   * @param {Array}    items      The items that were requested.
+   * @param {Response} response   The fetch API response object.
+   * @param {string}   textStatus The status of the request.
+   */
   function itemStatusAjaxFailure(items, response, textStatus) {
     if (
       textStatus === "error" ||
@@ -142,11 +116,11 @@ VuFind.register('itemStatuses', function ItemStatuses() {
       items.forEach(function displayItemStatusFailure(item) {
         item.el.querySelectorAll(".callnumAndLocation").forEach((callNumAndLocation) => {
           callNumAndLocation.classList.add("text-danger");
-          callNumAndLocation.innerHTML = "";
           callNumAndLocation.classList.remove("hidden");
-          callNumAndLocation.innerHTML = typeof body.data === "string"
+          const content = typeof body.data === "string"
             ? body.data
             : VuFind.translate("error_occurred");
+          VuFind.setInnerHtml(callNumAndLocation, content);
         });
       });
     }).finally(() => {
@@ -154,48 +128,88 @@ VuFind.register('itemStatuses', function ItemStatuses() {
     });
   }
 
-  function makeItemStatusQueue({
-    url = "/AJAX/JSON?method=getItemStatuses",
+  /**
+   * Get the URL for a specific status handler.
+   * @param {string} handlerName The name of the handler.
+   * @returns {string} The URL for the handler.
+   */
+  function getStatusUrl(handlerName) {
+    if (_handlerUrls[handlerName] !== undefined) {
+      return _handlerUrls[handlerName];
+    }
+    return "/AJAX/JSON?method=getItemStatuses";
+  }
+
+  /**
+   * Create a promise-based function to fetch item statuses.
+   * @param {object} options               Options for the fetch request.
+   * @param {string} [options.handlerName] The name of the handler to use (default = "ils").
+   * @param {string} [options.acceptType]  The Accept header type (default = "application/json").
+   * @param {string} [options.method]      The HTTP method (default = "POST").
+   * @returns {Function} A function that takes items and returns a fetch promise.
+   */
+  function getItemStatusPromise({
+    handlerName = "ils",
     acceptType = "application/json",
     method = "POST",
+  } = {}) {
+    return function runFetchItem(items) {
+      let body = new URLSearchParams();
+      items.forEach((item) => {
+        body.append("id[]", item.id);
+      });
+      body.append("sid", VuFind.getCurrentSearchId());
+      return fetch(
+        VuFind.path + getStatusUrl(handlerName),
+        {
+          method: method,
+          headers: {
+            'Accept': acceptType,
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+          },
+          body: body
+        }
+      );
+    };
+  }
+
+  /**
+   * Create a new AjaxRequestQueue for item status checks.
+   * @param {object} options               Options for the queue.
+   * @param {string} [options.handlerName] The name of the handler (default = "ils").
+   * @param {number} [options.delay]       The debounce delay (default = 200).
+   * @returns {AjaxRequestQueue} A new AjaxRequestQueue instance.
+   */
+  function makeItemStatusQueue({
+    handlerName = "ils",
     delay = 200,
   } = {}) {
     return new AjaxRequestQueue({
-      run: function runFetchItem(items) {
-        let body = new URLSearchParams();
-        items.forEach((item) => {
-          body.append("id[]", item.id);
-        });
-        body.append("sid", VuFind.getCurrentSearchId());
-        return fetch(
-          VuFind.path + url,
-          {
-            method: method,
-            headers: {
-              'Accept': acceptType,
-              'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-            },
-            body: body
-          }
-        );
-      },
+      run: getItemStatusPromise({handlerName: handlerName}),
       success: itemStatusAjaxSuccess,
       failure: itemStatusAjaxFailure,
       delay,
     });
   }
 
-  //store the handlers in a "hash" obj
-  var checkItemHandlers = {
-    ils: makeItemStatusQueue(),
-    overdrive: makeItemStatusQueue({ url: "/Overdrive/getStatus" }),
-  };
-
+  /**
+   * Check the status of a single item and add it to the request queue.
+   * @param {HTMLElement} el The element representing the item.
+   */
   function checkItemStatus(el) {
-    const hiddenIdEl = el.querySelector(".hiddenId");
+    let hiddenIdEl = el.querySelector(".hiddenId");
+    // hiddenoverrideId is an ID provided by a search backend, when 
+    // the ID required for item status lookup is different from the
+    // record ID.
+    const hiddenOverrideIdEl = el.querySelector(".hiddenOverrideId");
+
+    if (hiddenOverrideIdEl != null) {
+      hiddenIdEl = hiddenOverrideIdEl;
+    }
 
     if (
       hiddenIdEl === null ||
+      hiddenIdEl.value === "" ||
       el.classList.contains("js-item-pending") ||
       el.classList.contains("js-item-done")
     ) {
@@ -231,9 +245,24 @@ VuFind.register('itemStatuses', function ItemStatuses() {
     }
 
     // queue the element into the queue
-    checkItemHandlers[handlerName].add({ el, id: hiddenIdEl.value });
+    let payload = { el, id: hiddenIdEl.value };
+    if (VuFind.isPrinting() || VuFind.config.get('item-status:load-batch-wise', true)) {
+      _checkItemHandlers[handlerName].add(payload);
+    } else {
+      let runFunc = getItemStatusPromise({handlerName: handlerName});
+      runFunc([payload])
+        .then((...res) => itemStatusAjaxSuccess([payload], ...res))
+        .catch((...error) => {
+          console.error(...error);
+          itemStatusAjaxFailure([payload], ...error);
+        });
+    }
   }
 
+  /**
+   * Check the status of all items within a container.
+   * @param {HTMLElement} [container] The container to search for items (default = document).
+   */
   function checkAllItemStatuses(container = document) {
     const records = container.querySelectorAll(".ajaxItem");
 
@@ -245,9 +274,13 @@ VuFind.register('itemStatuses', function ItemStatuses() {
     records.forEach(checkItemStatus);
   }
 
+  /**
+   * Update the item status within a container, either immediately or via an IntersectionObserver.
+   * @param {object} params Object containing the container
+   */
   function updateContainer(params) {
     let container = params.container;
-    if (VuFind.isPrinting()) {
+    if (VuFind.isPrinting() || !(VuFind.config.get('item-status:load-observable-only', true))) {
       checkAllItemStatuses(container);
     } else {
       VuFind.observerManager.createIntersectionObserver(
@@ -258,10 +291,27 @@ VuFind.register('itemStatuses', function ItemStatuses() {
     }
   }
 
+  /**
+   * Add a new item status handler.
+   * @param {string} handlerName The name of the handler.
+   * @param {string} handlerUrl  The URL for the handler.
+   */
+  function addHandler(handlerName, handlerUrl) {
+    _checkItemHandlers[handlerName] = makeItemStatusQueue({handlerName: handlerName});
+    _handlerUrls[handlerName] = handlerUrl;
+  }
+
+  /**
+   * Initialize the item status module, setting up handlers and listening for events.
+   */
   function init() {
+    _checkItemHandlers = {
+      ils: makeItemStatusQueue()
+    };
+    addHandler("overdrive", "/Overdrive/getStatus");
     updateContainer({container: document});
     VuFind.listen('results-init', updateContainer);
   }
 
-  return { init: init, check: checkAllItemStatuses, checkRecord: checkItemStatus };
+  return { init: init, addHandler: addHandler, check: checkAllItemStatuses, checkRecord: checkItemStatus };
 });

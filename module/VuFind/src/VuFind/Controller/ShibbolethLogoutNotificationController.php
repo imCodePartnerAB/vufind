@@ -17,8 +17,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * along with this program; if not, see
+ * <https://www.gnu.org/licenses/>.
  *
  * @category VuFind
  * @package  Controller
@@ -119,7 +119,7 @@ class ShibbolethLogoutNotificationController extends AbstractBase
         $rows = $this->getDbService(ExternalSessionServiceInterface::class)
             ->getAllByExternalSessionId(trim($sessionId));
         if ($rows) {
-            $sessionManager = $this->serviceLocator->get(\Laminas\Session\SessionManager::class);
+            $sessionManager = $this->getService(\Laminas\Session\SessionManager::class);
             $handler = $sessionManager->getSaveHandler();
             foreach ($rows as $row) {
                 $handler->destroy($row->getSessionId());

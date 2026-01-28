@@ -1,8 +1,10 @@
 <?php
     $this->headTitle('Deminifier');
+    $this->breadcrumbs()->set('Development Tools', $this->url('devtools-home'))
+      ->add('Deminifier', active: true);
 ?>
 
-<h2>Deminifier</h2>
+<h1>Deminifier</h1>
 
 <?php if (empty($min)): ?>
   <form method='POST'>
