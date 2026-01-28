@@ -12,9 +12,10 @@
 /downloads
 /Gruntfile.local.js
 /solr/vendor
+/themes/minktest
 /vendor
 ChangeLog
-TAGS
+/TAGS
 composer.phar
 env.bat
 env.sh
@@ -26,12 +27,17 @@ package-lock.json
 public/swagger-ui
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 composer.json
 
 .php-cs-fixer.cache
 =======
 =======
+=======
+tests/phpcs.cache.json
+themes/bootstrap5/scss/vendor/bootstrap
+>>>>>>> upstream/release-10.0
 local/DirLocations.ini
 >>>>>>> upstream/release-9.1
 local/config/vufind/*.ini
