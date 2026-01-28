@@ -16,17 +16,24 @@
 ChangeLog
 TAGS
 composer.phar
+env.bat
+env.sh
 import/solrmarc.log*
 lessphp_*.list
-module/VuFind/tests/.phpunit.result.cache
+module/VuFind/tests/.phpunit*
 node_modules
+package-lock.json
 public/swagger-ui
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 composer.json
 
 .php-cs-fixer.cache
 =======
+=======
+local/DirLocations.ini
+>>>>>>> upstream/release-9.1
 local/config/vufind/*.ini
 local/config/vufind/*.json
 local/config/vufind/*.yaml
