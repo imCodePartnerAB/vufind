@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Database table plugin manager
  *
@@ -25,6 +26,7 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org/wiki/development:plugins:database_gateways Wiki
  */
+
 namespace VuFind\Db\Table;
 
 /**
@@ -44,6 +46,7 @@ class PluginManager extends \VuFind\ServiceManager\AbstractPluginManager
      * @var array
      */
     protected $aliases = [
+        'accesstoken' => AccessToken::class,
         'changetracker' => ChangeTracker::class,
         'comments' => Comments::class,
         'externalsession' => ExternalSession::class,
@@ -68,10 +71,12 @@ class PluginManager extends \VuFind\ServiceManager\AbstractPluginManager
      * @var array
      */
     protected $factories = [
+        AccessToken::class => GatewayFactory::class,
         AuthHash::class => GatewayFactory::class,
         ChangeTracker::class => GatewayFactory::class,
         Comments::class => GatewayFactory::class,
         ExternalSession::class => GatewayFactory::class,
+        Feedback::class => GatewayFactory::class,
         OaiResumption::class => GatewayFactory::class,
         Ratings::class => GatewayFactory::class,
         Record::class => GatewayFactory::class,

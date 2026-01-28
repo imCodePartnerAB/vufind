@@ -26,6 +26,7 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org
  */
+
 namespace VuFindTest\Controller;
 
 /**
@@ -64,6 +65,10 @@ class SocialstatsControllerTest extends \PHPUnit\Framework\TestCase
             ->getMock();
         $resourcetags->expects($this->once())->method('getStatistics')->will($this->returnValue('resourcetags-data'));
         $tables->set('resourcetags', $resourcetags);
+        $ratings = $this->getMockBuilder(\VuFind\Db\Table\Ratings::class)
+            ->disableOriginalConstructor()->onlyMethods(['getStatistics'])->getMock();
+        $ratings->expects($this->once())->method('getStatistics')->will($this->returnValue(['ratings-data']));
+        $tables->set('ratings', $ratings);
 
         $ratings = $this->getMockBuilder(\VuFind\Db\Table\Ratings::class)
             ->disableOriginalConstructor()->onlyMethods(['getStatistics'])->getMock();

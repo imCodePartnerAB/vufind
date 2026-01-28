@@ -1,4 +1,8 @@
 <?php
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/release-9.0
 /**
  * Row Definition for ratings
  *
@@ -25,6 +29,10 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org Main Site
  */
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/release-9.0
 namespace VuFind\Db\Row;
 
 /**

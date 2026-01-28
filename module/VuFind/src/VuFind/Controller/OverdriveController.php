@@ -1,4 +1,5 @@
 <?php
+
 /**
  * LOTS Changes
  * Changed driver to work with Overdrive imported to KOHA 2021-12
@@ -16,6 +17,7 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org Main Site
  */
+
 namespace VuFind\Controller;
 
 use Laminas\Log\LoggerAwareInterface;
@@ -67,8 +69,12 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
     public function mycontentAction()
     {
         $this->debug("ODC mycontent action");
+<<<<<<< HEAD
         $searchService = $this->serviceLocator->get(\VuFindSearch\Service::class);
         //force login
+=======
+        // force login
+>>>>>>> upstream/release-9.0
         if (!is_array($patron = $this->catalogLogin())) {
             return $patron;
         }
@@ -77,28 +83,26 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
         $checkoutsUnavailable = false;
         $holdsUnavailable = false;
 
-        //check on this patrons's access to Overdrive
+        // check on this patrons's access to Overdrive
         $odAccessResult = $this->connector->getAccess();
 
-        if (!$odAccessResult->status) {
+        if (!($odAccessResult->status ?? false)) {
             $this->debug("result:" . print_r($odAccessResult, true));
             $this->flashMessenger()->addErrorMessage(
                 $this->translate(
-                    $odAccessResult->code,
-                    ["%%message%%" => $odAccessResult->msg]
+                    $odAccessResult->code ?? 'An error has occurred',
+                    ["%%message%%" => $odAccessResult->msg ?? '']
                 )
             );
             $checkoutsUnavailable = true;
             $holdsUnavailable = true;
-        }
-
-        if ($odAccessResult->status) {
-            //get the current Overdrive checkouts
-            //for this user and add to our array of IDS
+        } else {
+            // get the current Overdrive checkouts
+            // for this user and add to our array of IDS
             $checkoutResults = $this->connector->getCheckouts(true);
-            if (!$checkoutResults->status) {
+            if (!($checkoutResults->status ?? false)) {
                 $this->flashMessenger()->addMessage(
-                    $checkoutResults->code,
+                    $checkoutResults->code ?? 'An error has occurred',
                     'error'
                 );
                 $checkoutsUnavailable = true;
@@ -118,16 +122,17 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
                     }
                 }
             }
-            //get the current Overdrive holds for this user and add to
+            // get the current Overdrive holds for this user and add to
             // our array of IDS
             $holdsResults = $this->connector->getHolds(true);
-            if (!$holdsResults->status) {
-                if ($checkoutResults->status) {
-                    $this->flashMessenger()->addMessage(
-                        $holdsResults->code,
-                        'error'
-                    );
-                }
+            if (
+                !($holdsResults->status ?? false)
+                && ($checkoutResults->status ?? false) // avoid double errors
+            ) {
+                $this->flashMessenger()->addMessage(
+                    $holdsResults->code ?? 'An error has occurred',
+                    'error'
+                );
                 $holdsUnavailable = true;
             } else {
                 foreach ($holdsResults->data as $hold) {
@@ -139,8 +144,8 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
                 }
             }
         }
-        //Future: get reading history will be here
-        //Future: get hold and checkoutlimit using the Patron Info API
+        // TODO: Future: get reading history will be here
+        // TODO: Future: get hold and checkoutlimit using the Patron Info API
 
         $view = $this->createViewModel(
             compact(
@@ -239,7 +244,8 @@ class OverdriveController extends AbstractBase implements LoggerAwareInterface
                 $action = "holdConfirm";
             }
         }
-
+        $result = null;
+        $actionTitleCode = '';
         if ($action == "checkoutConfirm") {
             $result = $this->connector->getResultObject();
             //check to make sure they don't already have this checked out

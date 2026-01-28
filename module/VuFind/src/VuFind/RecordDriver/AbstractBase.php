@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Abstract base record model.
  *
@@ -25,6 +26,7 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org Main Page
  */
+
 namespace VuFind\RecordDriver;
 
 use VuFind\XSLT\Import\VuFind as ArticleStripper;
@@ -40,19 +42,14 @@ use VuFind\XSLT\Import\VuFind as ArticleStripper;
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org Main Page
  */
-abstract class AbstractBase implements \VuFind\Db\Table\DbTableAwareInterface,
+abstract class AbstractBase implements
+    \VuFind\Db\Table\DbTableAwareInterface,
     \VuFind\I18n\Translator\TranslatorAwareInterface,
     \VuFindSearch\Response\RecordInterface
 {
     use \VuFind\Db\Table\DbTableAwareTrait;
     use \VuFind\I18n\Translator\TranslatorAwareTrait;
-
-    /**
-     * Used for identifying search backends
-     *
-     * @var string
-     */
-    protected $sourceIdentifier = 'Solr';
+    use \VuFindSearch\Response\RecordTrait;
 
     /**
      * For storing extra data with record
@@ -81,6 +78,13 @@ abstract class AbstractBase implements \VuFind\Db\Table\DbTableAwareInterface,
      * @var array
      */
     protected $fields = [];
+
+    /**
+     * Cache for rating data
+     *
+     * @var array
+     */
+    protected $ratingCache = [];
 
     /**
      * Constructor
@@ -242,6 +246,7 @@ abstract class AbstractBase implements \VuFind\Db\Table\DbTableAwareInterface,
      * rating - average rating (0-100)
      * count  - count of ratings
      *
+<<<<<<< HEAD
      * @param ?\VuFind\Db\Row\User $user User, or null for all users
      *
      * @return array
@@ -253,12 +258,53 @@ abstract class AbstractBase implements \VuFind\Db\Table\DbTableAwareInterface,
             $this->getUniqueId(),
             $this->getSourceIdentifier(),
             $user ? $user->id : null
+=======
+     * @param ?int $userId User ID, or null for all users
+     *
+     * @return array
+     */
+    public function getRatingData(?int $userId = null)
+    {
+        // Cache data since comments list may ask for same information repeatedly:
+        $cacheKey = $userId ?? '-';
+        if (!isset($this->ratingCache[$cacheKey])) {
+            $table = $this->getDbTable('Ratings');
+            $this->ratingCache[$cacheKey] = $table->getForResource(
+                $this->getUniqueId(),
+                $this->getSourceIdentifier(),
+                $userId
+            );
+        }
+        return $this->ratingCache[$cacheKey];
+    }
+
+    /**
+     * Get rating breakdown for this record.
+     *
+     * Returns an array with the following keys:
+     *
+     * rating - average rating (0-100)
+     * count  - count of ratings
+     * groups - grouped counts
+     *
+     * @param array $groups Group definition (key => [min, max])
+     *
+     * @return array
+     */
+    public function getRatingBreakdown(array $groups)
+    {
+        return $this->getDbTable('Ratings')->getCountsForResource(
+            $this->getUniqueId(),
+            $this->getSourceIdentifier(),
+            $groups
+>>>>>>> upstream/release-9.0
         );
     }
 
     /**
      * Add or update user's rating for the record.
      *
+<<<<<<< HEAD
      * @param \VuFind\Db\Row\User $user   The user posting the rating
      * @param int                 $rating The user-provided rating
      *
@@ -266,15 +312,33 @@ abstract class AbstractBase implements \VuFind\Db\Table\DbTableAwareInterface,
      */
     public function addOrUpdateRating(\VuFind\Db\Row\User $user, int $rating): void
     {
+=======
+     * @param int  $userId ID of the user posting the rating
+     * @param ?int $rating The user-provided rating, or null to clear any existing
+     * rating
+     *
+     * @return void
+     */
+    public function addOrUpdateRating(int $userId, ?int $rating): void
+    {
+        // Clear rating cache:
+        $this->ratingCache = [];
+>>>>>>> upstream/release-9.0
         $resources = $this->getDbTable('Resource');
         $resource = $resources->findResource(
             $this->getUniqueId(),
             $this->getSourceIdentifier()
         );
+<<<<<<< HEAD
         $resource->addOrUpdateRating($user, $rating);
     }
 
 
+=======
+        $resource->addOrUpdateRating($userId, $rating);
+    }
+
+>>>>>>> upstream/release-9.0
     /**
      * Get notes associated with this record in user lists.
      *
@@ -319,28 +383,6 @@ abstract class AbstractBase implements \VuFind\Db\Table\DbTableAwareInterface,
     }
 
     /**
-     * Set the source backend identifier.
-     *
-     * @param string $identifier Backend identifier
-     *
-     * @return void
-     */
-    public function setSourceIdentifier($identifier)
-    {
-        $this->sourceIdentifier = $identifier;
-    }
-
-    /**
-     * Return the source backend identifier.
-     *
-     * @return string
-     */
-    public function getSourceIdentifier()
-    {
-        return $this->sourceIdentifier;
-    }
-
-    /**
      * Returns true if the record supports real-time AJAX status lookups.
      *
      * @return bool
@@ -368,6 +410,16 @@ abstract class AbstractBase implements \VuFind\Db\Table\DbTableAwareInterface,
     public function supportsCoinsOpenUrl()
     {
         return true;
+    }
+
+    /**
+     * Check if rating the record is allowed.
+     *
+     * @return bool
+     */
+    public function isRatingAllowed(): bool
+    {
+        return !empty($this->recordConfig->Social->rating);
     }
 
     /**

@@ -1,4 +1,8 @@
 <?php
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/release-9.0
 /**
  * Table Definition for ratings
  *
@@ -25,6 +29,10 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org Main Site
  */
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/release-9.0
 namespace VuFind\Db\Table;
 
 use Laminas\Db\Adapter\Adapter;
@@ -78,7 +86,11 @@ class Ratings extends Gateway
         if (empty($resource)) {
             return [
                 'count' => 0,
+<<<<<<< HEAD
                 'rating' => 0
+=======
+                'rating' => 0,
+>>>>>>> upstream/release-9.0
             ];
         }
 
@@ -112,11 +124,16 @@ class Ratings extends Gateway
         $result = $this->select($callback)->current();
         return [
             'count' => $result->count,
+<<<<<<< HEAD
             'rating' => $result->rating ?? 0
+=======
+            'rating' => $result->rating ?? 0,
+>>>>>>> upstream/release-9.0
         ];
     }
 
     /**
+<<<<<<< HEAD
      * Delete a rating if the owner is logged in.  Returns true on success.
      *
      * @param int                 $id   ID of row to delete
@@ -140,6 +157,77 @@ class Ratings extends Gateway
         // If we got this far, everything is okay:
         $row->delete();
         return true;
+=======
+     * Get rating breakdown for the specified resource.
+     *
+     * @param string $id     Record ID to look up
+     * @param string $source Source of record to look up
+     * @param array  $groups Group definition (key => [min, max])
+     *
+     * @return array Array with keys count and rating (between 0 and 100) as well as
+     * an groups array with ratings from lowest to highest
+     */
+    public function getCountsForResource(
+        string $id,
+        string $source,
+        array $groups
+    ): array {
+        $result = [
+            'count' => 0,
+            'rating' => 0,
+            'groups' => [],
+        ];
+        foreach (array_keys($groups) as $key) {
+            $result['groups'][$key] = 0;
+        }
+
+        $resourceTable = $this->getDbTable('Resource');
+        $resource = $resourceTable->findResource($id, $source, false);
+        if (empty($resource)) {
+            return $result;
+        }
+
+        $callback = function ($select) use ($resource) {
+            $select->columns(
+                [
+                    // RowGateway requires an id field:
+                    'id' => new Expression(
+                        '1',
+                        [],
+                        [Expression::TYPE_IDENTIFIER]
+                    ),
+                    'count' => new Expression(
+                        'COUNT(?)',
+                        [Select::SQL_STAR],
+                        [Expression::TYPE_IDENTIFIER]
+                    ),
+                    'rating' => 'rating',
+                ]
+            );
+            $select->where->equalTo('ratings.resource_id', $resource->id);
+            $select->group('rating');
+        };
+
+        $ratingTotal = 0;
+        $groupCount = 0;
+        foreach ($this->select($callback) as $rating) {
+            $result['count'] += $rating->count;
+            $ratingTotal += $rating->rating;
+            ++$groupCount;
+            if ($groups) {
+                foreach ($groups as $key => $range) {
+                    if (
+                        $rating->rating >= $range[0] && $rating->rating <= $range[1]
+                    ) {
+                        $result['groups'][$key] = ($result['groups'][$key] ?? 0)
+                            + $rating->count;
+                    }
+                }
+            }
+        }
+        $result['rating'] = $groupCount ? floor($ratingTotal / $groupCount) : 0;
+        return $result;
+>>>>>>> upstream/release-9.0
     }
 
     /**
@@ -174,13 +262,18 @@ class Ratings extends Gateway
                     ['resource_id'],
                     [Expression::TYPE_IDENTIFIER]
                 ),
+<<<<<<< HEAD
                 'total' => new Expression('COUNT(*)')
+=======
+                'total' => new Expression('COUNT(*)'),
+>>>>>>> upstream/release-9.0
             ]
         );
         $statement = $this->sql->prepareStatementForSqlObject($select);
         $result = $statement->execute();
         return (array)$result->current();
     }
+<<<<<<< HEAD
 
     /**
      * Get rating information for this record.
@@ -223,3 +316,6 @@ class Ratings extends Gateway
     }
 }
 
+=======
+}
+>>>>>>> upstream/release-9.0
