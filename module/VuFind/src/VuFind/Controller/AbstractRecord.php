@@ -279,31 +279,6 @@ class AbstractRecord extends AbstractBase
     }
 
     /**
-<<<<<<< HEAD
-     * Add a rating
-     *
-     * @return mixed
-     */
-    public function addratingAction()
-    {
-        // Force login:
-        if (!($user = $this->getUser())) {
-            return $this->forceLogin();
-        }
-
-        // Obtain the current record object:
-        $driver = $this->loadRecord();
-
-        // Make sure ratings are enabled for the driver:
-        $recordHelper = $this->getViewRenderer()->plugin('record');
-        if (!$recordHelper($driver)->isRatingEnabled()) {
-            throw new ForbiddenException('rating_disabled');
-        }
-
-        // Save rating, if any:
-        if (null !== ($rating = $this->params()->fromPost('rating'))) {
-            $driver->addOrUpdateRating($user, intval($rating));
-=======
      * Display and add ratings
      *
      * @return mixed
@@ -331,7 +306,6 @@ class AbstractRecord extends AbstractBase
                 $user->id,
                 '' === $rating ? null : intval($rating)
             );
->>>>>>> upstream/release-9.0
             $this->flashMessenger()->addSuccessMessage('rating_add_success');
             if ($this->inLightbox()) {
                 return $this->getRefreshResponse();
@@ -342,11 +316,7 @@ class AbstractRecord extends AbstractBase
         // Display the "add rating" form:
         $view = $this->createViewModel(
             [
-<<<<<<< HEAD
-                'currentRating' => $driver->getRatingData($user)
-=======
                 'currentRating' => $user ? $driver->getRatingData($user->id) : null,
->>>>>>> upstream/release-9.0
             ]
         );
         return $view;

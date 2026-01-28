@@ -166,23 +166,6 @@ class Resource extends RowGateway implements \VuFind\Db\Table\DbTableAwareInterf
     /**
      * Add or update user's rating for the current resource.
      *
-<<<<<<< HEAD
-     * @param \VuFind\Db\Row\User $user   User
-     * @param int                 $rating Rating
-     *
-     * @throws LoginRequiredException
-     * @throws \Exception
-     * @return int ID of newly-created rating
-     */
-    public function addOrUpdateRating(\VuFind\Db\Row\User $user, int $rating)
-    {
-        if (!isset($user->id)) {
-            throw new LoginRequiredException(
-                "Can't add ratings without logging in."
-            );
-        }
-        if ($rating < 0 || $rating > 100) {
-=======
      * @param int  $userId User ID
      * @param ?int $rating Rating (null to delete)
      *
@@ -193,25 +176,10 @@ class Resource extends RowGateway implements \VuFind\Db\Table\DbTableAwareInterf
     public function addOrUpdateRating(int $userId, ?int $rating): int
     {
         if (null !== $rating && ($rating < 0 || $rating > 100)) {
->>>>>>> upstream/release-9.0
             throw new \Exception('Rating value out of range');
         }
 
         $ratings = $this->getDbTable('Ratings');
-<<<<<<< HEAD
-        $callback = function ($select) use ($user) {
-            $select->where->equalTo('ratings.resource_id', $this->id);
-            $select->where->equalTo('ratings.user_id', $user->id);
-        };
-        if ($existing = $ratings->select($callback)->current()) {
-            $existing->rating = $rating;
-            $existing->save();
-            return $existing->id;
-        }
-
-        $row = $ratings->createRow();
-        $row->user_id = $user->id;
-=======
         $callback = function ($select) use ($userId) {
             $select->where->equalTo('ratings.resource_id', $this->id);
             $select->where->equalTo('ratings.user_id', $userId);
@@ -232,7 +200,6 @@ class Resource extends RowGateway implements \VuFind\Db\Table\DbTableAwareInterf
 
         $row = $ratings->createRow();
         $row->user_id = $userId;
->>>>>>> upstream/release-9.0
         $row->resource_id = $this->id;
         $row->rating = $rating;
         $row->created = date('Y-m-d H:i:s');
@@ -240,10 +207,6 @@ class Resource extends RowGateway implements \VuFind\Db\Table\DbTableAwareInterf
         return $row->id;
     }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> upstream/release-9.0
     /**
      * Use a record driver to assign metadata to the current row.  Return the
      * current object to allow fluent interface.

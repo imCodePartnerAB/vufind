@@ -1,8 +1,5 @@
 <?php
-<<<<<<< HEAD
-=======
 
->>>>>>> upstream/release-9.0
 /**
  * Helper to check if a translation is empty
  *
@@ -29,17 +26,12 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org/wiki/development Wiki
  */
-<<<<<<< HEAD
-namespace VuFind\View\Helper\Root;
-
-=======
 
 namespace VuFind\View\Helper\Root;
 
 use Laminas\View\Helper\AbstractHelper;
 use VuFind\I18n\Translator\TranslatorAwareInterface;
 
->>>>>>> upstream/release-9.0
 /**
  * Helper to check if a translation is empty
  *
@@ -49,12 +41,7 @@ use VuFind\I18n\Translator\TranslatorAwareInterface;
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org/wiki/development Wiki
  */
-<<<<<<< HEAD
-class TranslationEmpty extends \Laminas\View\Helper\AbstractHelper
-    implements \VuFind\I18n\Translator\TranslatorAwareInterface
-=======
 class TranslationEmpty extends AbstractHelper implements TranslatorAwareInterface
->>>>>>> upstream/release-9.0
 {
     use \VuFind\I18n\Translator\TranslatorAwareTrait;
 

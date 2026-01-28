@@ -246,19 +246,6 @@ abstract class AbstractBase implements
      * rating - average rating (0-100)
      * count  - count of ratings
      *
-<<<<<<< HEAD
-     * @param ?\VuFind\Db\Row\User $user User, or null for all users
-     *
-     * @return array
-     */
-    public function getRatingData(?\VuFind\Db\Row\User $user = null)
-    {
-        $table = $this->getDbTable('Ratings');
-        return $table->getForResource(
-            $this->getUniqueId(),
-            $this->getSourceIdentifier(),
-            $user ? $user->id : null
-=======
      * @param ?int $userId User ID, or null for all users
      *
      * @return array
@@ -297,22 +284,12 @@ abstract class AbstractBase implements
             $this->getUniqueId(),
             $this->getSourceIdentifier(),
             $groups
->>>>>>> upstream/release-9.0
         );
     }
 
     /**
      * Add or update user's rating for the record.
      *
-<<<<<<< HEAD
-     * @param \VuFind\Db\Row\User $user   The user posting the rating
-     * @param int                 $rating The user-provided rating
-     *
-     * @return void
-     */
-    public function addOrUpdateRating(\VuFind\Db\Row\User $user, int $rating): void
-    {
-=======
      * @param int  $userId ID of the user posting the rating
      * @param ?int $rating The user-provided rating, or null to clear any existing
      * rating
@@ -323,22 +300,14 @@ abstract class AbstractBase implements
     {
         // Clear rating cache:
         $this->ratingCache = [];
->>>>>>> upstream/release-9.0
         $resources = $this->getDbTable('Resource');
         $resource = $resources->findResource(
             $this->getUniqueId(),
             $this->getSourceIdentifier()
         );
-<<<<<<< HEAD
-        $resource->addOrUpdateRating($user, $rating);
-    }
-
-
-=======
         $resource->addOrUpdateRating($userId, $rating);
     }
 
->>>>>>> upstream/release-9.0
     /**
      * Get notes associated with this record in user lists.
      *

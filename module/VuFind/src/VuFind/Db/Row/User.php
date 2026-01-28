@@ -728,11 +728,7 @@ class User extends RowGateway implements
      * Destroy the user.
      *
      * @param bool $removeComments Whether to remove user's comments
-<<<<<<< HEAD
-    * @param bool $removeRatings  Whether to remove user's ratings
-=======
      * @param bool $removeRatings  Whether to remove user's ratings
->>>>>>> upstream/release-9.0
      *
      * @return int The number of rows deleted.
      */
@@ -753,11 +749,6 @@ class User extends RowGateway implements
             $comments = $this->getDbTable('Comments');
             $comments->deleteByUser($this);
         }
-        if ($removeRatings) {
-            $ratings = $this->getDbTable('Ratings');
-            $ratings->deleteByUser($this);
-        }
-
         if ($removeRatings) {
             $ratings = $this->getDbTable('Ratings');
             $ratings->deleteByUser($this);

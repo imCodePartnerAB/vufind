@@ -1,8 +1,5 @@
 <?php
-<<<<<<< HEAD
-=======
 
->>>>>>> upstream/release-9.0
 /**
  * Table Definition for ratings
  *
@@ -29,10 +26,7 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org Main Site
  */
-<<<<<<< HEAD
-=======
 
->>>>>>> upstream/release-9.0
 namespace VuFind\Db\Table;
 
 use Laminas\Db\Adapter\Adapter;
@@ -86,11 +80,7 @@ class Ratings extends Gateway
         if (empty($resource)) {
             return [
                 'count' => 0,
-<<<<<<< HEAD
-                'rating' => 0
-=======
                 'rating' => 0,
->>>>>>> upstream/release-9.0
             ];
         }
 
@@ -124,40 +114,11 @@ class Ratings extends Gateway
         $result = $this->select($callback)->current();
         return [
             'count' => $result->count,
-<<<<<<< HEAD
-            'rating' => $result->rating ?? 0
-=======
             'rating' => $result->rating ?? 0,
->>>>>>> upstream/release-9.0
         ];
     }
 
     /**
-<<<<<<< HEAD
-     * Delete a rating if the owner is logged in.  Returns true on success.
-     *
-     * @param int                 $id   ID of row to delete
-     * @param \VuFind\Db\Row\User $user Logged in user object
-     *
-     * @return bool
-     */
-    public function deleteIfOwnedByUser(int $id, \VuFind\Db\Row\User $user)
-    {
-        // User must have an ID:
-        if (!isset($user->id)) {
-            return false;
-        }
-
-        // Rating row must exist and be owned by the user:
-        $matches = $this->select(['id' => $id, 'user_id' => $user->id]);
-        if (!($row = $matches->current())) {
-            return false;
-        }
-
-        // If we got this far, everything is okay:
-        $row->delete();
-        return true;
-=======
      * Get rating breakdown for the specified resource.
      *
      * @param string $id     Record ID to look up
@@ -227,7 +188,6 @@ class Ratings extends Gateway
         }
         $result['rating'] = $groupCount ? floor($ratingTotal / $groupCount) : 0;
         return $result;
->>>>>>> upstream/release-9.0
     }
 
     /**
@@ -262,60 +222,11 @@ class Ratings extends Gateway
                     ['resource_id'],
                     [Expression::TYPE_IDENTIFIER]
                 ),
-<<<<<<< HEAD
-                'total' => new Expression('COUNT(*)')
-=======
                 'total' => new Expression('COUNT(*)'),
->>>>>>> upstream/release-9.0
             ]
         );
         $statement = $this->sql->prepareStatementForSqlObject($select);
         $result = $statement->execute();
         return (array)$result->current();
     }
-<<<<<<< HEAD
-
-    /**
-     * Get rating information for this record.
-     *
-     * Returns an array with the following keys:
-     *
-     * rating - average rating (0-100)
-     * count  - count of ratings
-     *
-     * @param ?\VuFind\Db\Row\User $user User, or null for all users
-     *
-     * @return array
-     */
-    public function getRatingData(?\VuFind\Db\Row\User $user = null)
-    {
-        $table = $this->getDbTable('Ratings');
-        return $table->getForResource(
-            $this->getUniqueId(),
-            $this->getSourceIdentifier(),
-            $user ? $user->id : null
-        );
-    }
-
-    /**
-     * Add or update user's rating for the record.
-     *
-     * @param \VuFind\Db\Row\User $user   The user posting the rating
-     * @param int                 $rating The user-provided rating
-     *
-     * @return void
-     */
-    public function addOrUpdateRating(\VuFind\Db\Row\User $user, int $rating): void
-    {
-        $resources = $this->getDbTable('Resource');
-        $resource = $resources->findResource(
-            $this->getUniqueId(),
-            $this->getSourceIdentifier()
-        );
-        $resource->addOrUpdateRating($user, $rating);
-    }
 }
-
-=======
-}
->>>>>>> upstream/release-9.0
