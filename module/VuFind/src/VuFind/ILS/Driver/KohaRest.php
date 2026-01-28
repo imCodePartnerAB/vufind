@@ -1,12 +1,5 @@
 <?php
 /**
- * LOTS Changes
- *
- * 2021-12
- * Mostly changes to get more data for templates to access.
- */
-
-/*
  * VuFind Driver for Koha, using REST API
  *
  * PHP version 7
@@ -35,13 +28,12 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org/wiki/development:plugins:ils_drivers Wiki
  */
-
 namespace VuFind\ILS\Driver;
 
 use VuFind\Date\DateException;
 use VuFind\Exception\AuthToken as AuthTokenException;
 use VuFind\Exception\ILS as ILSException;
-use VuFind\View\Helper\Root\SafeMoneyFormat;
+use VuFind\Service\CurrencyFormatter;
 
 /**
  * VuFind Driver for Koha, using REST API
@@ -58,7 +50,6 @@ use VuFind\View\Helper\Root\SafeMoneyFormat;
  * @link     https://vufind.org/wiki/development:plugins:ils_drivers Wiki
  */
 class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
-    \VuFind\Db\Table\DbTableAwareInterface,
     \VuFindHttp\HttpServiceAwareInterface,
     \VuFind\I18n\Translator\TranslatorAwareInterface,
     \Laminas\Log\LoggerAwareInterface
@@ -67,7 +58,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     use \VuFind\I18n\Translator\TranslatorAwareTrait;
     use \VuFind\ILS\Driver\CacheTrait;
     use \VuFind\ILS\Driver\OAuth2TokenTrait;
-    use \VuFind\Db\Table\DbTableAwareTrait;
 
     /**
      * Library prefix
@@ -91,11 +81,11 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     protected $sessionFactory;
 
     /**
-     * Money formatting view helper
+     * Currency formatter
      *
-     * @var SafeMoneyFormat
+     * @var CurrencyFormatter
      */
-    protected $safeMoneyFormat;
+    protected $currencyFormatter;
 
     /**
      * Session cache
@@ -226,19 +216,19 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     /**
      * Constructor
      *
-     * @param \VuFind\Date\Converter $dateConverter   Date converter object
-     * @param callable               $sessionFactory  Factory function returning
+     * @param \VuFind\Date\Converter $dateConverter     Date converter object
+     * @param callable               $sessionFactory    Factory function returning
      * SessionContainer object
-     * @param ?SafeMoneyFormat       $safeMoneyFormat Money formatting view helper
+     * @param CurrencyFormatter      $currencyFormatter Currency formatter
      */
     public function __construct(
         \VuFind\Date\Converter $dateConverter,
         $sessionFactory,
-        ?SafeMoneyFormat $safeMoneyFormat
+        currencyFormatter $currencyFormatter
     ) {
         $this->dateConverter = $dateConverter;
         $this->sessionFactory = $sessionFactory;
-        $this->safeMoneyFormat = $safeMoneyFormat;
+        $this->currencyFormatter = $currencyFormatter;
     }
 
     /**
@@ -560,10 +550,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
         }
 
         $result = $result['data'];
-        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username);
-        if (isset($dbUser) && empty($dbUser->home_library)) {
-            $dbUser->changeHomeLibrary($result['library_id']);
-        }
         return [
             'id' => $result['patron_id'],
             'firstname' => $result['firstname'],
@@ -727,7 +713,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
         return $this->getTransactions($patron, $params, true);
     }
 
-
     /**
      * Get Patron Holds
      *
@@ -884,15 +869,14 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                         'query' => [
                             'patron_id' => (int)$patron['id'],
                             'query_pickup_locations' => 1,
-                            'ignore_patron_holds' => $requestId ? 1 : 0,
                         ]
                     ]
                 );
                 if (empty($result['data'])) {
                     return [];
                 }
-                $notes = $result['data']['availability']['notes'];
-                $included = $notes['Item::PickupLocations']['to_libraries'];
+                $notes = $result['data']['availability']['notes'] ?? [];
+                $included = $notes['Item::PickupLocations']['to_libraries'] ?? [];
             } else {
                 $result = $this->makeRequest(
                     [
@@ -910,8 +894,8 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 if (empty($result['data'])) {
                     return [];
                 }
-                $notes = $result['data']['availability']['notes'];
-                $included = $notes['Biblio::PickupLocations']['to_libraries'];
+                $notes = $result['data']['availability']['notes'] ?? [];
+                $included = $notes['Biblio::PickupLocations']['to_libraries'] ?? [];
             }
         }
 
@@ -1087,8 +1071,8 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
             'pickup_library_id' => $pickUpLocation,
             'notes' => $comment,
             'expiration_date' => $holdDetails['requiredByTS']
-                ? date('Y-m-d', $holdDetails['requiredByTS'])
-                : null,
+                        ? date('Y-m-d', $holdDetails['requiredByTS'])
+                        : null,
         ];
         if ($level == 'copy') {
             $request['item_id'] = (int)$itemId;
@@ -1161,15 +1145,23 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
             if (isset($fields['frozen'])) {
                 if ($fields['frozen']) {
                     if (isset($fields['frozenThrough'])) {
+                        // Convert the date to end of day in RFC3339 format. Note
+                        // that as of May 2022 Koha only uses the date part and
+                        // ignores time, but requires a valid RFC3339 date+time.
+                        $date = $this->dateConverter->convertToDateTime(
+                            'U',
+                            $fields['frozenThroughTS']
+                        );
+                        $date->setTime(23, 59, 59, 999);
                         $updateFields['suspended_until']
-                            = date('Y-m-d', $fields['frozenThroughTS'])
-                                . ' 23:59:59';
+                            = $date->format($date::RFC3339);
                         $result = false;
                     } else {
                         $result = $this->makeRequest(
                             [
                                 'path' => ['v1', 'holds', $requestId, 'suspension'],
                                 'method' => 'POST',
+                                'json' => new \stdClass(), // For empty JSON object
                                 'errors' => true
                             ]
                         );
@@ -1179,6 +1171,7 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                         [
                             'path' => ['v1', 'holds', $requestId, 'suspension'],
                             'method' => 'DELETE',
+                            'json' => new \stdClass(), // For empty JSON object
                             'errors' => true
                         ]
                     );
@@ -1638,8 +1631,9 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
 
         // Set timeout value
         $timeout = $this->config['Catalog']['http_timeout'] ?? 30;
+        // Make sure keepalive is disabled as this is known to cause problems:
         $client->setOptions(
-            ['timeout' => $timeout, 'useragent' => 'VuFind', 'keepalive' => true]
+            ['timeout' => $timeout, 'useragent' => 'VuFind', 'keepalive' => false]
         );
 
         // Set Accept header
@@ -1847,9 +1841,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 'errors' => true
             ]
         );
-        if (400 == $result['code']) {
-            return [];
-        }
         if (404 == $result['code']) {
             return [];
         }
@@ -1878,7 +1869,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
 
             $entry = [
                 'id' => $id,
-                'item' => $item,
                 'item_id' => $item['item_id'],
                 'location' => $this->getItemLocationName($item),
                 'availability' => $available,
@@ -1890,7 +1880,6 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 'number' => $item['serial_issue_number'],
                 'barcode' => $item['external_id'],
                 'sort' => $i,
-                'item_location_description' => $item["location_description"],
                 'requests_placed' => max(
                     [$item['hold_queue_length'],
                     $result['data']['hold_queue_length']]
@@ -2521,8 +2510,9 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
             }
 
             $renewable = $entry['renewable'];
-            #$renewals = $entry['renewals'];
-            $renewals = isset($entry['renewals']) ? $entry['renewals'] : null;
+            // Koha 22.11 introduced a backward compatibility break by renaming
+            // renewals to renewals_count (bug 30275), so check both:
+            $renewals = $entry['renewals_count'] ?? $entry['renewals'];
             $renewLimit = $entry['max_renewals'];
             $message = '';
             if (!$renewable && !$checkedIn) {
@@ -2545,12 +2535,15 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
                 'item_id' => $entry['item_id'],
                 'barcode' => $entry['external_id'] ?? null,
                 'title' => $this->getBiblioTitle($entry),
-                'volume' => $entry['serial_issue_number'] ?? '',
+                // enumchron should have been mapped to serial_issue_number, but the
+                // mapping is missing from all plugin versions up to v22.05.02:
+                'volume' => $entry['serial_issue_number'] ?? $entry['enumchron']
+                    ?? '',
                 'publication_year' => $entry['copyright_date']
                     ?? $entry['publication_year'] ?? '',
                 'borrowingLocation' => $this->getLibraryName($entry['library_id']),
                 'checkoutDate' => $this->convertDate($entry['checkout_date']),
-                'duedate' => $this->convertDate($entry['due_date']),#, true),
+                'duedate' => $this->convertDate($entry['due_date'], true),
                 'returnDate' => $this->convertDate($entry['checkin_date']),
                 'dueStatus' => $dueStatus,
                 'renew' => $renewals,
@@ -2604,18 +2597,12 @@ class KohaRest extends \VuFind\ILS\Driver\AbstractBase implements
     /**
      * Helper function for formatting currency
      *
-     * @param $amount Number to format
+     * @param float $amount Number to format
      *
      * @return string
      */
     protected function formatMoney($amount)
     {
-        # LOTS  SafeMoney does not work
-        if (isset($this->config['LOTS']['bypasSafeMoneyFormat']) && $this->config['LOTS']['bypasSafeMoneyFormat']) {
-            return $amount;
-        } elseif (null === $this->safeMoneyFormat) {
-            throw new \Exception('SafeMoneyFormat helper not available');
-        }
-        return ($this->safeMoneyFormat)($amount);
+        return $this->currencyFormatter->convertToDisplayFormat($amount);
     }
 }

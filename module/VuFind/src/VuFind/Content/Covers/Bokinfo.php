@@ -1,11 +1,11 @@
 <?php
 
 /**
- * VuFind Driver for Koha, using REST API
+ * Plugin for Bokinfo coverimages
  *
  * PHP version 7
  *
- * Copyright (C) The National Library of Finland 2016-2020.
+ * Copyright (C) imCode Partner AB 2022.
  * Copyright (C) Moravian Library 2019.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,20 +25,18 @@
  * @package  Content
  * @author   Jacob Sandin <jacob@imcode.com>
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
- * @link     Wiki
- * https://vufind.org/wiki/development:plugins:content_provider_components#covers
+ * @link     https://vufind.org/wiki/development Wiki
  */
-
 namespace VuFind\Content\Covers;
 
 use SimpleXMLElement;
 
 /**
- * Summon cover content loader.
+ * Plugin for Bokinfo coverimages
  *
  * @category VuFind
  * @package  Content
- * @author   Demian Katz <demian.katz@villanova.edu>
+ * @author   Jacob Sandin <jacob@imcode.com>
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     https://vufind.org/wiki/development Wiki
  */
@@ -54,8 +52,8 @@ class Bokinfo extends \VuFind\Content\AbstractCover implements
      */
     public function __construct()
     {
-        //I will leave this untill I know if they allow it.
-        //$this->cacheAllowed = true;
+        // Checked with vendor to be sure caching is allowed as of February, 2022.
+        $this->cacheAllowed = true;
         $this->supportsIsbn = true;
     }
 
@@ -72,10 +70,9 @@ class Bokinfo extends \VuFind\Content\AbstractCover implements
     public function getUrl($key, $size, $ids)
     {
         if (!isset($ids['isbn'])) {
-            $this->debug("Bokinfo cannot find isbn for record " . $ids['recordid']);
             return false;
         }
-        if (!isset($key)) {
+        if (empty($key)) {
             return false;
         }
 
@@ -86,27 +83,17 @@ class Bokinfo extends \VuFind\Content\AbstractCover implements
             );
 
             $client->getRequest()->getHeaders()
-                ->addHeaderLine("Ocp-Apim-Subscription-Key", $key);
-
+                  ->addHeaderLine("Ocp-Apim-Subscription-Key", $key);
 
             $resp = $client->send();
             $body = $resp->getBody();
-            $urls = $this->getImageUrl($body);
-            foreach ($urls as $x) 
-            {
-                $url = trim($x);
-                if ($this->testUrlFunction($url)) {
-                    return "$url";
-                } else {
-                    $this->debug("Bokinfo cant verify url $url");
-                }
+            $url = $this->getImageUrl($body);
+            if ($this->testUrlFunction($url)) {
+                return $url;
             }
         } catch (\Throwable $ex) {
-            $this->debug("Bokinfo error finding image for isbn13: $isbn isbn10: " . $ids['isbn']->get10());
             return false;
         }
-
-        $this->debug("Bokinfo could not find image for isbn13: $isbn isbn10: " . $ids['isbn']->get10());
 
         return false;
     }
@@ -126,17 +113,11 @@ class Bokinfo extends \VuFind\Content\AbstractCover implements
             ['useragent' => 'VuFind', 'keepalive' => true]
         );
 
-        // Set Accept header
-        $client->getRequest()->getHeaders()->addHeaderLine(
-            'Accept',
-            'application/json'
-        );
-
         return $client;
     }
 
     /**
-     * Test that the url is realy working
+     * Test that the url is really working
      *
      * @param string $url image Url
      *
@@ -144,21 +125,12 @@ class Bokinfo extends \VuFind\Content\AbstractCover implements
      */
     protected function testUrlFunction($url)
     {
-
         try {
-            $client = $this->createHttpClient(
-                "$url"
-            );
-        $client->getRequest()->getHeaders()->addHeaderLine(
-            'Accept',
-            'image/webp,image/png,image/svg+xml,image/*;q=0.8,video/*;q=0.8,*/*;q=0.5'
-        );
+            $client = $this->createHttpClient($url);
             $resp = $client->send();
             $headers = $resp->getHeaders();
-            if ($headers && $resp->getStatusCode() == 200){
+            if ($headers) {
                 return true;
-            } else {
-                    $this->debug("Bokinfo got error number: ".$resp->getStatusCode()." for url: $url");
             }
         } catch (\Throwable $ex) {
             return false;
@@ -171,7 +143,7 @@ class Bokinfo extends \VuFind\Content\AbstractCover implements
      *
      * @param string $rawXML XML returned from API
      *
-     * @return array url of the image
+     * @return string url of the image
      */
     protected function getImageUrl($rawXML)
     {
@@ -179,20 +151,20 @@ class Bokinfo extends \VuFind\Content\AbstractCover implements
             return "";
         }
 
-        //This is already wrapped in try..catch
+        // This is already wrapped in try..catch
         $xml = new SimpleXMLElement($rawXML);
 
         foreach ($xml->getDocNamespaces() as $strPrefix => $strNamespace) {
             if (strlen($strPrefix) == 0) {
-                $strPrefix = "_"; //Assign an arbitrary namespace prefix.
+                $strPrefix = "_"; // Assign an arbitrary namespace prefix.
             }
             $xml->registerXPathNamespace($strPrefix, $strNamespace);
         }
 
         $result = $xml->xpath(
             '//_:SupportingResource[_:ResourceContentType="01"]' .
-                '/_:ResourceVersion/_:ResourceLink'
+            '/_:ResourceVersion/_:ResourceLink'
         );
-        return $result;
+        return trim($result[0]);
     }
 }
