@@ -1,120 +1,231 @@
 <?php
-/*
- * Controler to help recover passwords
+/**
+ * Controller to help recover passwords
  *
  * /vufind/ForgotPassword
- * 
  */
 
 namespace LOTS\Controller;
 
+use VuFind\Exception\ILS as ILSException;
+
 class ForgotPasswordController extends \VuFind\Controller\AbstractBase implements
-\VuFindHttp\HttpServiceAwareInterface
+    \VuFindHttp\HttpServiceAwareInterface
 {
     use \VuFindHttp\HttpServiceAwareTrait;
+    use \VuFind\ILS\Driver\OAuth2TokenTrait;
 
-    public function homeAction()
-    {
-        # Geting LOTS.ini file for reading config.
-        $config = $this->getConfig('LOTS');
-        $opacUrl = $config->PasswordRecovery->kohaOpacUrl;
+    protected $koha_rest_config = null;
+    protected $oauth_token = null;
 
-        # Type of call represent the answer to give bellow.
-        $typeOfCall  = 'home';
-        #Get username so we can test if this is a post
-        $username = $this->params()->fromPost('username');
-        # resp contains the responce for a http request.
-        $resp = "";
-        # message store any message to send back to user.
-        $message = '';
-        # together with opacUrl we create this url for any local http calls.
-        # none local we could give the whole url.
-        $url = '';
-
-        if ($this->params()->fromQuery('resendEmail', false)) {
-            /*
-             * if the querystring has resendEmail=true then this is a
-             * request to resend the email. We recreeate the request
-             * and sends it to the opac backend instead.
-             */
-            $typeOfCall = 'resend';
-            $email = $this->params()->fromQuery('email');
-            $username = $this->params()->fromQuery('username', false);
-            $message = "Email: ".$email." username: ".$username;
-            $fields = [
-               'username'     => $username,
-               'email'        => $email,
-               'resendEmail'  => 'true',
-               'language'     => 'sv-SE',
-            ];
-            $url = $opacUrl."/cgi-bin/koha/opac-password-recovery.pl";
-            $resp =  $this->httpPost($url, $fields, 'GET');
-        } elseif (empty($username) != true) {
-            /*
-             * If we get a value in username, then we should be dealing
-             * with a request to reset password. So we will take the
-             * username value and send it to the backend koha-opac.
-             */
-
-            $typeOfCall = 'recover';
-            $fields = [
-               'username'      => $username,
-               'sendEmail'     => 'Submit',
-               'language'     => 'sv-SE',
-            ];
-            $url = $opacUrl."/cgi-bin/koha/opac-password-recovery.pl";
-            $resp =  $this->httpPost($url, $fields, 'POST');
-        }
-        /* ELSE
-         * If none of the two above is set (resendEmail and username)
-         * We are dealing with a new visitor to request new password.
-         *
-         * We will still test the response for messages from koha-opac
-         * bellow, we will preg_match to get only the message part of
-         * the html response. And then we use preg_replace to rewrite
-         * "known" urls to our own.
-         */
-        if (preg_match("/alert-warning/i",$resp)) {
-            $typeOfCall = 'warning';
-        }
-        preg_match('/<div class="alert alert-(warning|info)">(.*?)<\/div>/s', $resp, $message);
-        $message = preg_replace('/\<a.*href.*opac-password-recovery\.pl(.*)">(.*)\<\/a\>/m', '<a href="/vufind/ForgotPassword$1">'.$this->translate('SendNewEmail').'</a>', $message);
-        $message = preg_replace('/\<a.*href.*opac-main\.pl(.*)">(.*)\<\/a\>/m', '<a href="/">'.$this->translate('Go to homepage').'</a>', $message);
-
-        # We must test if the message exists or set it to nothing.
-        # To not get an error
-        if (isset($message[0])) {
-            $message = $message[0];
-        } else {
-            $message = "";
-        }
-
-        # Here we sendback the variables to the viewmodel.
-        # typeOfCall to determine the response template and
-        # any message we got from koha-opac
-        return $this->createViewModel(
-            [
-            'typeOfCall' => $typeOfCall,
-            'message' => $message,
-            ]
-        );
-    }
-    /*
-     * Simple function to make http requests with vufind
-     * builtin curl client.
+    /**
+     * Main action - show form and process password reset request
+     *
+     * @return \Laminas\View\Model\ViewModel
      */
-    public function httpPost($url, $data, $type)
+
+     public function homeAction()
+     {
+         $message = '';
+         $messageType = 'info';
+
+         // Get configured search fields for display in template
+         $config = $this->getConfig('LOTS');
+         $searchFields = [];
+
+         if (isset($config->PasswordRecovery->patron_search_fields)) {
+             $fieldsString = $config->PasswordRecovery->patron_search_fields;
+             $searchFields = array_map('trim', explode(',', $fieldsString));
+         } else {
+             $searchFields = ['cardnumber'];
+         }
+
+         // Validate fields
+         $validFields = ['cardnumber', 'email', 'userid'];
+         $searchFields = array_intersect($searchFields, $validFields);
+
+         // Handle form submission
+         $username = $this->params()->fromPost('username');
+
+         if (!empty($username)) {
+             try {
+                 // Search for patron using configured search fields
+                 $patron = $this->findPatron($username);
+
+                 if ($patron && !empty($patron['email'])) {
+                     // Generate and save token
+                     $tokenTable = $this->getTable('PasswordResetToken');
+                     $token = $tokenTable->createToken($patron['patron_id'], $patron['email']);
+
+                     // Send email
+                     $this->sendResetEmail($patron['email'], $token);
+
+                     // Generic message (don't reveal if user exists)
+                     $message = $this->translate('password_reset_email_sent');
+                     $messageType = 'success';
+                 } else {
+                     // Generic message (don't reveal if user exists or has no email)
+                     $message = $this->translate('password_reset_email_sent');
+                     $messageType = 'success';
+                 }
+             } catch (\Exception $e) {
+                 error_log('Password reset error: ' . $e->getMessage());
+                 $message = $this->translate('password_reset_error');
+                 $messageType = 'error';
+             }
+         }
+
+         return $this->createViewModel([
+             'message' => $message,
+             'messageType' => $messageType,
+             'searchFields' => $searchFields
+         ]);
+     }
+
+
+    /**
+     * Find patron by searching configured fields
+     *
+     * @param string $searchValue Value to search for
+     *
+     * @return ?array Patron data or null
+     */
+    protected function findPatron(string $searchValue): ?array
     {
+        $config = $this->getConfig('LOTS');
+        $searchFields = [];
+
+        // Get configured search fields from LOTS.ini
+        if (isset($config->PasswordRecovery->patron_search_fields)) {
+            $fieldsString = $config->PasswordRecovery->patron_search_fields;
+            $searchFields = array_map('trim', explode(',', $fieldsString));
+        } else {
+            // Default to cardnumber only if not configured
+            $searchFields = ['cardnumber'];
+        }
+
+        // Valid field names that Koha API supports
+        $validFields = ['cardnumber', 'email', 'userid'];
+        $searchFields = array_intersect($searchFields, $validFields);
+
+        if (empty($searchFields)) {
+            error_log('No valid patron search fields configured');
+            return null;
+        }
+
+        // Initialize Koha connection
+        $this->koha_rest_config = $this->getConfig('KohaRest');
+        $this->oauth_token = $this->getOAuth2Token();
+
+        // Try each configured field until we find a patron
+        foreach ($searchFields as $field) {
+            $patron = $this->searchPatronByField($field, $searchValue);
+            if ($patron) {
+                return $patron;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Search for patron by specific field using Koha REST API
+     *
+     * @param string $field Field name (cardnumber, email, or userid)
+     * @param string $value Value to search for
+     *
+     * @return ?array Patron data or null
+     */
+    protected function searchPatronByField(string $field, string $value): ?array
+    {
+        $baseUrl = $this->koha_rest_config->Catalog->host . '/v1';
+        $url = $baseUrl . '/patrons?' . $field . '=' . urlencode($value);
 
         $client = $this->httpService->createClient($url);
-        $adapter = $client->getAdapter();
-        $adapter->setCurlOption(CURLOPT_SSL_VERIFYHOST, false);
-        $adapter->setCurlOption(CURLOPT_CUSTOMREQUEST, $type);
-        $adapter->setCurlOption(CURLOPT_POSTFIELDS, http_build_query($data));
-        $adapter->setCurlOption(CURLOPT_ENCODING, '');
-        $adapter->setCurlOption(CURLOPT_RETURNTRANSFER, true);
-        $adapter->setCurlOption(CURLOPT_COOKIE, "KohaOpacLanguage=sv-SE;a=a");
-        $response = $client->send();
-        return $response->getBody();
+        $client->getRequest()->getHeaders()
+            ->addHeaderLine('Authorization', $this->oauth_token)
+            ->addHeaderLine('Content-Type', 'application/json');
+
+        try {
+            $response = $client->send();
+
+            if ($response->getStatusCode() !== 200) {
+                return null;
+            }
+
+            $data = json_decode($response->getBody(), true);
+
+            // API returns array of patrons, we need the first one
+            if (empty($data) || !is_array($data) || count($data) === 0) {
+                return null;
+            }
+
+            $patron = $data[0];
+
+            return [
+                'patron_id' => $patron['patron_id'] ?? null,
+                'email' => $patron['email'] ?? null,
+                'cardnumber' => $patron['cardnumber'] ?? null,
+                'userid' => $patron['userid'] ?? null
+            ];
+        } catch (\Exception $e) {
+            error_log("Patron search by $field failed: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Send password reset email
+     *
+     * @param string $email User email
+     * @param string $token Reset token
+     *
+     * @return void
+     */
+    protected function sendResetEmail(string $email, string $token): void
+    {
+        $config = $this->getConfig();
+        $fromEmail = $config->Site->email ?? 'noreply@library.se';
+
+        $request = $this->getRequest();
+        $serverUrl = $request->getUri()->getScheme() . '://' . $request->getUri()->getHost();
+        $resetUrl = $serverUrl . '/vufind/ResetPassword?token=' . urlencode($token);
+
+        $body = $this->translate('password_reset_line1') . PHP_EOL . PHP_EOL .
+                $this->translate('password_reset_line2') . PHP_EOL .
+                $resetUrl . PHP_EOL . PHP_EOL .
+                $this->translate('password_reset_line3') . PHP_EOL . PHP_EOL .
+                $this->translate('password_reset_line4');
+
+        $mailer = $this->serviceLocator->get('VuFind\Mailer');
+        $mailer->send($email, $fromEmail, $this->translate('password_reset_email_subject'), $body);
+    }
+
+    /**
+     * Get OAuth2 token for Koha API
+     *
+     * @return string Token header value
+     */
+    protected function getOAuth2Token(): string
+    {
+        $baseUrl = $this->koha_rest_config->Catalog->host . '/v1';
+        $clientId = $this->koha_rest_config->Catalog->clientId;
+        $clientSecret = $this->koha_rest_config->Catalog->clientSecret;
+        $grantType = $this->koha_rest_config->Catalog->grantType ?? 'client_credentials';
+        $tokenUrl = $baseUrl . '/oauth/token';
+
+        try {
+            $token = $this->getNewOAuth2Token(
+                $tokenUrl,
+                $clientId,
+                $clientSecret,
+                $grantType
+            );
+        } catch (\Exception $exception) {
+            throw new ILSException(
+                'Problem with Koha REST API: ' . $exception->getMessage()
+            );
+        }
+        return $token->getHeaderValue();
     }
 }

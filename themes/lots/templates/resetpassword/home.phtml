@@ -1,0 +1,77 @@
+<?php
+$this->headTitle($this->translate('reset_pin_code_title'));
+?>
+<div class="container">
+    <h2><?=$this->transEsc('reset_pin_code_title')?></h2>
+    <?php if (!empty($this->message)): ?>
+        <div class="alert alert-<?=$this->messageType == 'error' ? 'danger' : $this->messageType?>">
+            <?=$this->transEsc($this->message)?>
+        </div>
+    <?php endif; ?>
+    <?php if ($this->tokenValid): ?>
+    <p><?=$this->transEsc('reset_pin_code_instruction')?></p>
+    <form action="<?=$this->url('resetpassword-home')?>" method="post" class="form-horizontal">
+        <input type="hidden" name="token" value="<?=$this->escapeHtmlAttr($this->token)?>">
+        <div class="form-group">
+            <label for="new_pin" class="col-sm-3 control-label">
+                <?=$this->transEsc('new_pin_code')?>
+            </label>
+            <div class="col-sm-6">
+                <input type="password"
+                       name="new_pin"
+                       id="new_pin"
+                       class="form-control"
+                       required
+                       pattern="\d{4}"
+                       maxlength="4"
+                       placeholder="****"
+                       autocomplete="new-password">
+                <small class="help-block">
+                    <?=$this->transEsc('pin_code_4_digits')?>
+                </small>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="confirm_pin" class="col-sm-3 control-label">
+                <?=$this->transEsc('confirm_pin_code')?>
+            </label>
+            <div class="col-sm-6">
+                <input type="password"
+                       name="confirm_pin"
+                       id="confirm_pin"
+                       class="form-control"
+                       required
+                       pattern="\d{4}"
+                       maxlength="4"
+                       placeholder="****"
+                       autocomplete="new-password">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-6">
+                <button type="submit" class="btn btn-primary">
+                    <?=$this->transEsc('save_new_pin_code')?>
+                </button>
+            </div>
+        </div>
+    </form>
+    <?php elseif ($this->messageType === 'success'): ?>
+        <p>
+            <a href="<?=$this->url('myresearch-home')?>" class="btn btn-primary">
+                <?=$this->transEsc('go_to_login')?>
+            </a>
+        </p>
+        <script>
+            // Auto redirect after 3 seconds
+            setTimeout(function() {
+                window.location.href = '<?=$this->url('myresearch-home')?>';
+            }, 3000);
+        </script>
+    <?php else: ?>
+        <p>
+            <a href="<?=$this->url('forgotpassword-home')?>" class="btn btn-default">
+                <?=$this->transEsc('request_new_reset_link')?>
+            </a>
+        </p>
+    <?php endif; ?>
+</div>

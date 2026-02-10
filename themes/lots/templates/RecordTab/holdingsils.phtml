@@ -28,11 +28,15 @@
     // Set page title.
     $this->headTitle($this->translate('Holdings') . ': ' . $this->driver->getBreadcrumb());
 
- // LOTS-51 start
+    // LOTS-51 start
     $config = $this->config()->get('LOTS');
     $defaultColumns = "holds_library, holds_status, holds_department";
     $addTypeColumn = $config->Record->addTypeColumn ?? false;
     $hideDetailReserveEvenIfInKoha = $config->Record->hideDetailReserveEvenIfInKoha ?? false;
+    $showInventoryDetails = $config->Record->showInventoryDetails ?? true;
+    $hideReserveDuplicates = $config->Record->hideReserveDuplicates ?? true;
+    $layoutMode = $config->Theme->layoutMode ?? "plain";
+
     if ($addTypeColumn) {
       $defaultColumns = "holds_library, holds_status, holds_type, holds_department";
     }
@@ -61,15 +65,14 @@
         ?>
           <div class="reservations-wrapper">
             <div class="reservations-data ">
-              <?php  
+              <?php
                 printf($this->translate('ils_availability'),$global_avail_items, $global_total_items, $global_reserve_items);
               ?>
             </div>
           </div>
 
-     <?php  
+     <?php
     }
-  //printf($this->translate('ils_availability2'),$global_avail_items, $global_total_items, $global_reserve_items);
     // LOTS-51 end
 
 
@@ -81,8 +84,7 @@
         case "On Shelf":
           return "item-avail";
         default:
-        return "item-reserved"; // Röd som default
-        //return "item-default";
+        return "item-reserved"; // Red as default
       }
     }
 
@@ -99,18 +101,22 @@
 <?php endif; ?>
 
 <?=($offlineMode == "ils-offline") ? $this->render('Helpers/ils-offline.phtml', ['offlineModeMsg' => 'ils_offline_holdings_message']) : ''?>
+
+<!-- Desktop table view - hidden on mobile -->
+<div class="desktop-holdings-wrapper">
 <table class="table table-striped">
-<colgroup><!-- Ny <colgroup> - om du vill styra bredder. Tog bort width="30%" på första kolumnen -->
+<colgroup>
       <col span="1" class="min-w150">
       <col span="4">
     </colgroup>
     <tbody>
 <tr>
   <?php foreach ($columns as $column): ?>
-          <th><?=$this->transEsc($column)?></th>
-  <?php endforeach; ?>  
+          <th scope="col"><?=$this->transEsc($column)?></th>
+  <?php endforeach; ?>
 
 </tr>
+<tr class="mobile-spacer"><td style='border:thin;background-color:#fff;'></td></tr>
 <tr>
 <?php if (!empty($holdings['electronic_holdings'])): ?>
   <?=
@@ -133,10 +139,10 @@
     <td width="30%"><?=$locationTextEsc?></td>
     <td class="<?= holdsColor($holdStatus) ?>">
         <?=$this->transEsc($holdStatus)?>
-<?php if (!$hideDetailReserveEvenIfInKoha): ?>
-        <div><!-- Ny <div> och <a> -->
-          <a data-toggle="collapse" role="button" aria-expanded="false" data-target="#exTr_<?=$holdDetailIterate?>" aria-expanded="false" aria-controls="exTr_<?=$holdDetailIterate?>"><!-- href="#exTr_1" + aria-controls="exTr_[ID/INDEX] exTr_2 exTr_3" -->
-        <?php 
+<?php if ($showInventoryDetails): ?>
+        <div>
+          <a data-toggle="collapse" role="button" aria-expanded="false" data-target="#exTr_<?=$holdDetailIterate?>" aria-expanded="false" aria-controls="exTr_<?=$holdDetailIterate?>">
+        <?php
         if ($lots_showItemsInVufind) {
           $library_total_items = 0;
           $library_avail_items = 0;
@@ -154,9 +160,9 @@
               $library_total_items++;
             }
           }
-          
+
           printf($this->translate('ils_availability_detail'),$library_avail_items, $library_total_items,  $library_holds_queued);
-          
+
         }
         ?>
           </a>
@@ -168,11 +174,11 @@
     if ($addTypeColumn) {
       echo "<td>".$this->transEsc($holding["items"]["0"]['item']['item_type_id'])."</td>";
     }
-  ?>  <td>
+  ?>  <td class="main-department">
   <?=(isset($holding["items"][0]["item"]["collection_code_description"])) ? $this->transEsc($holding["items"][0]["item"]["collection_code_description"]) : ''; ?>
   <?php
     if (!$addPlacementColumn) {
-      echo (isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"])) ? ''.$this->transEsc($holding["items"][0]["item"]["callnumber"]) : ''; 
+      echo (isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"])) ? ''.$this->transEsc($holding["items"][0]["item"]["callnumber"]) : '';
       echo (isset($holding["items"][0]["item"]["location_description"])) ? ', '.$this->transEsc($holding["items"][0]["item"]["location_description"]) : '';
         }
   ?>
@@ -180,7 +186,7 @@
 
     <?php
     if ($addPlacementColumn) {
-      echo "<td>".(isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"]) ? $this->transEsc($holding["items"][0]["item"]["callnumber"]) : '').(isset($holding["items"][0]["item"]["location_description"]) ? ', '.$this->transEsc($holding["items"][0]["item"]["location_description"]) : '')."</td>";
+      echo "<td class='main-placement'>".(isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"]) ? $this->transEsc($holding["items"][0]["item"]["callnumber"]) : '').(isset($holding["items"][0]["item"]["location_description"]) ? ', '.$this->transEsc($holding["items"][0]["item"]["location_description"]) : '')."</td>";
     }
     ?>
   </tr>
@@ -201,12 +207,12 @@
         try {
             echo $this->context($this)->renderInContext(
                 'RecordTab/holdingsils/' . $this->tab->getTemplate() . '.phtml',
-                ['holding' => $row, 'iteration'=>$holdDetailIterate]
+                ['holding' => $row, 'iteration'=>$holdDetailIterate, 'hideDetailReserveEvenIfInKoha'=>$hideDetailReserveEvenIfInKoha]
             );
         } catch (Exception $e) {
             echo $this->context($this)->renderInContext(
                 'RecordTab/holdingsils/standard.phtml',
-                ['holding' => $row, 'iteration'=>$holdDetailIterate]
+                ['holding' => $row, 'iteration'=>$holdDetailIterate, 'hideDetailReserveEvenIfInKoha'=>$hideDetailReserveEvenIfInKoha]
             );
         }
     ?>
@@ -221,9 +227,150 @@
       </td>
     </tr>
   <?php endif; ?>
+  <tr class="mobile-spacer"><td style='border:thin;background-color:#fff;'></td></tr>
 <?php endforeach; ?>
 <tbody>
 </table>
+</div>
+<!-- End desktop table -->
+
+<!-- Mobile view - layout depends on layoutMode setting -->
+<?php if ($layoutMode === "bootstrap"): ?>
+<!-- Mobile Bootstrap Cards View - only visible on mobile -->
+<div class="mobile-holdings-cards">
+<?php foreach ($holdings['holdings'] ?? [] as $holding): ?>
+  <?php
+    $holdStatus = $holding["items"]["0"]['status'] ?? '';
+    $locationTextEsc = $this->transEscWithPrefix('location_', $holding['location']);
+    $statusColorClass = holdsColor($holdStatus);
+
+    // Get first item for reserve link
+    $firstItem = $holding["items"][0] ?? null;
+    $hasReserveLink = $firstItem && ($firstItem['link'] ?? false);
+    $check = $firstItem['check'] ?? false;
+
+    // Get type if enabled
+    $itemType = '';
+    if ($addTypeColumn && isset($holding["items"]["0"]['item']['item_type_id'])) {
+      $itemType = $this->transEsc($holding["items"]["0"]['item']['item_type_id']);
+    }
+
+    // Get department
+    $department = '';
+    if (isset($holding["items"][0]["item"]["collection_code_description"])) {
+      $department = $this->transEsc($holding["items"][0]["item"]["collection_code_description"]);
+    }
+
+    // Get placement/call number
+    $placement = '';
+    if ($addPlacementColumn) {
+      $placementParts = [];
+      if (isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"])) {
+        $placementParts[] = $this->transEsc($holding["items"][0]["item"]["callnumber"]);
+      }
+      if (isset($holding["items"][0]["item"]["location_description"])) {
+        $placementParts[] = $this->transEsc($holding["items"][0]["item"]["location_description"]);
+      }
+      $placement = implode(', ', $placementParts);
+    } else {
+      // When addPlacementColumn is false, call number and location are in department cell
+      $placementParts = [];
+      if (isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"])) {
+        $placementParts[] = $this->transEsc($holding["items"][0]["item"]["callnumber"]);
+      }
+      if (isset($holding["items"][0]["item"]["location_description"])) {
+        $placementParts[] = $this->transEsc($holding["items"][0]["item"]["location_description"]);
+      }
+      if (!empty($placementParts)) {
+        $placement = implode(', ', $placementParts);
+      }
+    }
+
+    // Calculate inventory details for mobile if enabled
+    $library_total_items = 0;
+    $library_avail_items = 0;
+    $library_holds_queued = 0;
+    if ($showInventoryDetails && $lots_showItemsInVufind) {
+      foreach ($holding["items"] ?? [] as $local_item) {
+        if (strlen($local_item['barcode'] ?? '') > 0){
+          $library_holds_queued += $local_item["requests_placed"];
+          if ($local_item["availability"]) {
+            $library_avail_items++;
+          }
+          $library_total_items++;
+        }
+      }
+    }
+  ?>
+
+  <div class="card mb-3 holding-card">
+    <div class="card-body">
+      <!-- Library name -->
+      <h5 class="card-title mb-2">
+        <i class="fa fa-book" aria-hidden="true"></i> <?=$locationTextEsc?>
+      </h5>
+
+      <!-- Status with color badge -->
+      <div class="mb-3">
+        <span class="badge badge-<?=$statusColorClass == 'item-avail' ? 'success' : 'danger'?> status-badge">
+          <?=$statusColorClass == 'item-avail' ? '<i class="fa fa-check-circle"></i>' : '<i class="fa fa-times-circle"></i>'?>
+          <?=$this->transEsc($holdStatus)?>
+        </span>
+        
+        <!-- Show inventory details if enabled -->
+        <?php if ($showInventoryDetails && $lots_showItemsInVufind && $library_total_items > 0): ?>
+        <div class="inventory-info mt-2">
+          <small class="text-muted">
+            <?php printf($this->translate('ils_availability_detail'), $library_avail_items, $library_total_items, $library_holds_queued); ?>
+          </small>
+        </div>
+        <?php endif; ?>
+      </div>
+
+      <!-- Reserve button - if available and not hidden -->
+      <?php if ($hasReserveLink && !$hideDetailReserveEvenIfInKoha): ?>
+      <div class="mb-3">
+        <a class="<?=$check ? 'checkRequest ' : ''?>placehold btn btn-primary btn-block"
+           <?php if (!empty($firstItem['linkLightbox'])): ?>data-lightbox <?php endif; ?>
+           href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($firstItem['link']))?>">
+           <i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Hold" : "Place a Hold")?>
+        </a>
+      </div>
+      <?php endif; ?>
+
+      <!-- Details in compact format -->
+      <div class="holding-details">
+        <?php if ($addTypeColumn && $itemType): ?>
+        <div class="detail-row">
+          <span class="detail-label"><?=$this->transEsc('holds_type')?>:</span>
+          <span class="detail-value"><?=$itemType?></span>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($department): ?>
+        <div class="detail-row">
+          <span class="detail-label"><?=$this->transEsc('holds_department')?>:</span>
+          <span class="detail-value"><?=$department?></span>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($placement): ?>
+        <div class="detail-row">
+          <span class="detail-label"><?=$this->transEsc($addPlacementColumn ? 'holds_placing' : 'holds_department')?>:</span>
+          <span class="detail-value"><?=$placement?></span>
+        </div>
+        <?php endif; ?>
+      </div>
+
+    </div>
+  </div>
+
+<?php endforeach; ?>
+</div>
+<!-- End Mobile Bootstrap Cards -->
+<?php endif; ?>
+<!-- End mobile view -->
+
 <?php if (!empty($holdings['total']) && $paginator = $this->tab->getPaginator($holdings['total'], $holdings['page'], $holdings['itemLimit'])): ?>
   <?=$this->paginationControl($paginator, 'Sliding', 'Helpers/pagination.phtml', ['page' => $holdings['page']])?>
 <?php endif; ?>
@@ -236,11 +383,9 @@
     <?php endforeach; ?>
 
 <?php endif; ?>
-<!-- /table -->
-<!--
-Lägg in detta script för att få rätt utseende. Lättare än att ändra CSS på alla siter, om du ska ha in samma lösning på fler ställen.
-Bootstrap har en bug som gör att Collapsible på TR blir display:block istället för display:table-row, som det ska vara -->
 
+<!-- Add this script to get the correct appearance. Easier than changing CSS on all sites if you want to add the same solution in more places.
+Bootstrap has a bug that makes Collapsible on TR become display:block instead of display:table-row as it should be -->
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     const style = document.createElement('style');
@@ -254,13 +399,76 @@ Bootstrap har en bug som gör att Collapsible på TR blir display:block iställe
   });
 </script>
 
+<?php if ($hideReserveDuplicates): ?>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Hide duplicate values in collapse rows
+    document.querySelectorAll('tr.collapse').forEach(function(collapseRow) {
+      // Find the parent main row (previous non-collapse, non-mobile-spacer tr)
+      let mainRow = collapseRow.previousElementSibling;
+      while (mainRow && (mainRow.classList.contains('collapse') || mainRow.classList.contains('mobile-spacer'))) {
+        mainRow = mainRow.previousElementSibling;
+      }
+      if (mainRow) {
+        // Compare department (works for both addPlacementColumn true and false)
+        const mainDept = mainRow.querySelector('.main-department');
+        const collapseDept = collapseRow.querySelector('.collapse-department');
+        if (mainDept && collapseDept) {
+          const mainText = mainDept.textContent.trim();
+          const collapseText = collapseDept.textContent.trim();
+          if (mainText === collapseText && mainText !== '') {
+            collapseDept.style.setProperty('display', 'none', 'important');
+          }
+        }
+        // Compare placement (only when addPlacementColumn is true)
+        const mainPlace = mainRow.querySelector('.main-placement');
+        const collapsePlace = collapseRow.querySelector('.collapse-placement');
+        if (mainPlace && collapsePlace) {
+          const mainText = mainPlace.textContent.trim();
+          const collapseText = collapsePlace.textContent.trim();
+          if (mainText === collapseText && mainText !== '') {
+            collapsePlace.style.setProperty('display', 'none', 'important');
+          }
+        }
+      }
+    });
+  });
+</script>
+<?php endif; ?>
+
 <style>
+/* Desktop view - always show table, hide mobile cards */
+.desktop-holdings-wrapper {
+    display: block;
+}
+
+.mobile-holdings-cards {
+    display: none;
+}
+
+.mobile-spacer {
+    display: none;
+}
+
+/* Desktop - use existing color classes */
+.item-avail {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.item-reserved {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
 .template-dir-record.template-name-view .media.row .media-body {
 	padding-bottom: 30px !important;
 }
+
 .reservations-wrapper {
 	position: relative;
 }
+
 .reservations-data {
 	position: absolute;
 	top: -52px;
@@ -268,9 +476,114 @@ Bootstrap har en bug som gör att Collapsible på TR blir display:block iställe
 	font-size: 0.9rem;
 	color: #777;
 }
+
 @media screen and (max-width: 900px) {
 	.reservations-data {
 		top: -90px;
 	}
+}
+
+/* Mobile responsive behavior */
+@media screen and (max-width: 768px) {
+    .mobile-spacer {
+        display: table-row;
+    }
+
+    <?php if ($layoutMode === "bootstrap"): ?>
+    /* Bootstrap mobile cards layout */
+    .desktop-holdings-wrapper {
+        display: none !important;
+    }
+
+    .mobile-holdings-cards {
+        display: block !important;
+    }
+
+    /* Card styling */
+    .holding-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .holding-card .card-body {
+        padding: 15px;
+    }
+
+    .holding-card .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 12px;
+    }
+
+    .holding-card .card-title i {
+        color: #666;
+        margin-right: 6px;
+    }
+
+    /* Status badge */
+    .status-badge {
+        font-size: 0.95rem;
+        padding: 6px 12px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .status-badge i {
+        margin-right: 4px;
+    }
+
+    .badge-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .badge-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    /* Inventory info styling */
+    .inventory-info {
+        font-size: 0.85rem;
+        padding: 6px 0;
+    }
+
+    /* Reserve button */
+    .holding-card .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        font-weight: 500;
+        padding: 10px;
+    }
+
+    .holding-card .btn-block {
+        display: block;
+        width: 100%;
+    }
+
+    /* Details section */
+    .holding-details {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #eee;
+    }
+
+    .detail-row {
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #666;
+        margin-right: 6px;
+    }
+
+    .detail-value {
+        color: #333;
+    }
+    <?php endif; ?>
 }
 </style>

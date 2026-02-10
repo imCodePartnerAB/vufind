@@ -1,27 +1,67 @@
 <?php
+$this->headTitle($this->translate('forgot_password_title'));
 
-use Laminas\Log\Writer\Noop;
-    #Lots extention to recover password template for
-    #LOTS\Controller\ForgotPasswordController
-    
-    
-    #ini_set("xdebug.var_display_max_children", '-1');
-    #ini_set("xdebug.var_display_max_data", '-1');
-    #ini_set("xdebug.var_display_max_depth", '-1');
-    #echo $typeOfCall;
-    #var_dump($message);
-    #var_dump($resp);
-    #
-    # message and typeOfCall is set in the controller
-    # and determines what response the user gets
-    echo $message;
-    if ($typeOfCall == 'home') {
-        echo $this->render('forgotpassword/whatuser.phtml');
-    } elseif ($typeOfCall=='warning') {
-        echo $this->render('forgotpassword/whatuser.phtml');
-    } elseif ($typeOfCall=='recover') {
-    } elseif ($typeOfCall=='resend') {
-        # Nothing to do, we do not want any more information
-        # than the message when we are on resend.
+// Build dynamic label and help text based on configured search fields
+$fieldLabels = [];
+$fieldPlaceholders = [];
+
+foreach ($this->searchFields as $field) {
+    switch ($field) {
+        case 'cardnumber':
+            $fieldLabels[] = $this->transEsc('field_label_cardnumber');
+            $fieldPlaceholders[] = $this->transEsc('field_placeholder_cardnumber');
+            break;
+        case 'email':
+            $fieldLabels[] = $this->transEsc('field_label_email');
+            $fieldPlaceholders[] = $this->transEsc('field_placeholder_email');
+            break;
+        case 'userid':
+            $fieldLabels[] = $this->transEsc('field_label_userid');
+            $fieldPlaceholders[] = $this->transEsc('field_placeholder_userid');
+            break;
     }
+}
+
+$labelText = implode(' / ', $fieldLabels);
+$placeholderText = implode(' / ', $fieldPlaceholders);
 ?>
+<div class="container">
+    <h2><?=$this->transEsc('forgot_password_title')?></h2>
+    <?php if (!empty($this->message)): ?>
+        <div class="alert alert-<?=$this->messageType == 'error' ? 'danger' : $this->messageType?>">
+            <?=$this->transEsc($this->message)?>
+        </div>
+    <?php endif; ?>
+    <?php if ($this->messageType !== 'success'): ?>
+    <p><?=$this->transEsc('forgot_password_instruction')?></p>
+    <form action="<?=$this->url('forgotpassword-home')?>" method="post" class="form-horizontal">
+        <div class="form-group">
+            <label for="username" class="col-sm-3 control-label">
+                <?=$labelText?>
+            </label>
+            <div class="col-sm-6">
+                <input type="text"
+                       name="username"
+                       id="username"
+                       class="form-control"
+                       required
+                       placeholder="<?=$placeholderText?>"
+                       maxlength="100">
+                <small class="help-block">
+                    <?=$this->transEsc('forgot_password_help_text')?>
+                </small>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-6">
+                <button type="submit" class="btn btn-primary">
+                    <?=$this->transEsc('send_reset_link')?>
+                </button>
+                <a href="<?=$this->url('myresearch-home')?>" class="btn btn-default">
+                    <?=$this->transEsc('Cancel')?>
+                </a>
+            </div>
+        </div>
+    </form>
+    <?php endif; ?>
+</div>

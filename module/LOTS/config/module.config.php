@@ -1,32 +1,58 @@
 <?php
-
 $config = array (
-  'controllers' => 
+  'router' => [
+    'routes' => [
+      'forgotpassword-home' => [
+        'type' => 'Laminas\Router\Http\Literal',
+        'options' => [
+          'route' => '/ForgotPassword',
+          'defaults' => [
+            'controller' => 'ForgotPassword',
+            'action' => 'Home',
+          ]
+        ],
+      ],
+      'resetpassword-home' => [
+        'type' => 'Laminas\Router\Http\Literal',
+        'options' => [
+          'route' => '/ResetPassword',
+          'defaults' => [
+            'controller' => 'ResetPassword',
+            'action' => 'Home',
+          ]
+        ],
+      ],
+    ],
+  ],
+  'controllers' =>
   array (
-    'factories' => 
+    'factories' =>
     array (
       'LOTS\\Controller\\MyResearchController' => 'VuFind\\Controller\\MyResearchControllerFactory',
       'LOTS\\Controller\\ForgotPasswordController' => 'VuFind\\Controller\\AbstractBaseFactory',
+      'LOTS\\Controller\\ResetPasswordController' => 'VuFind\\Controller\\AbstractBaseFactory',
       'LOTS\\Controller\\SuggestionsController' => 'VuFind\\Controller\\AbstractBaseFactory',
     ),
-    'aliases' => 
+    'aliases' =>
     array (
       'MyResearch' => 'LOTS\\Controller\\MyResearchController',
       'myresearch' => 'LOTS\\Controller\\MyResearchController',
       'ForgotPassword' => 'LOTS\\Controller\\ForgotPasswordController',
       'forgotpassword' => 'LOTS\\Controller\\ForgotPasswordController',
+      'ResetPassword' => 'LOTS\\Controller\\ResetPasswordController',
+      'resetpassword' => 'LOTS\\Controller\\ResetPasswordController',
       'Suggestions' => 'LOTS\\Controller\\SuggestionsController',
       'suggestions' => 'LOTS\\Controller\\SuggestionsController',
     ),
   ),
-  'service_manager' => 
+  'service_manager' =>
   array (
     'allow_override' => true,
-    'factories' => 
+    'factories' =>
     array (
       'LOTS\\ILS\\Connection' => 'VuFind\\ILS\\ConnectionFactory',
     ),
-    'aliases' => 
+    'aliases' =>
     array (
       'VuFind\\ILS\\Connection' => 'LOTS\\ILS\\Connection',
     ),
@@ -42,40 +68,42 @@ $config = array (
       'sessionTimeout' => 'LOTS\\View\\Helper\\SessionTimeout',
     ),
   ),
-  'vufind' => 
+  'vufind' =>
   array (
     'allow_override' => true,
-    'plugin_managers' => 
+    'plugin_managers' =>
     array (
-      'ils_driver' => 
+      'ils_driver' =>
       array (
-        'factories' => 
+        'factories' =>
         array (
           'LOTS\\ILS\\Driver\\KohaRest' => 'LOTS\\ILS\\Driver\\KohaRestFactory',
         ),
-        'aliases' => 
+        'aliases' =>
         array (
           'VuFind\\ILS\\Driver\\KohaRest' => 'LOTS\\ILS\\Driver\\KohaRest',
         ),
       ),
-      'db_table' => 
+      'db_table' =>
       array (
-        'factories' => 
+        'factories' =>
         array (
+          'LOTS\\Db\\Table\\PasswordResetToken' => 'VuFind\\Db\\Table\\GatewayFactory',
 //          'LOTS\\Db\\Table\\Ratings' => 'VuFind\\Db\\Row\\GatewayFactory',
         ),
-        'aliases' => 
+        'aliases' =>
         array (
+          'PasswordResetToken' => 'LOTS\\Db\\Table\\PasswordResetToken',
 //          'VuFind\\Db\\Table\\Ratings' => 'LOTS\\Db\Table\\Ratings',
         ),
       ),
-     'db_row' => 
+     'db_row' =>
       array (
-        'factories' => 
+        'factories' =>
         array (
           'LOTS\\Db\\Row\\Ratings' => 'VuFind\\Db\\Row\\RowGatewayFactory',
         ),
-        'aliases' => 
+        'aliases' =>
         array (
           'VuFind\\Db\\Row\\Ratings' => 'LOTS\\Db\Row\\Ratings',
         ),
@@ -83,17 +111,14 @@ $config = array (
     ),
   ),
 );
-
 // Define non tab record actions
-/*
+/* */
 $nonTabRecordActions = [
     'AddComment', 'DeleteComment', 'AddTag', 'DeleteTag', 'Save', 'Email', 'SMS',
     'Cite', 'Export', 'RDF', 'Hold', 'Home', 'StorageRetrievalRequest',
     'AjaxTab', 'ILLRequest', 'PDF', 'Epub', 'LinkedText', 'Permalink', 'AddRating'
 ];
-
 $routeGenerator = new \VuFind\Route\RouteGenerator();
 $routeGenerator->addNonTabRecordActions($config, $nonTabRecordActions);
-*/
-
 return $config;
+

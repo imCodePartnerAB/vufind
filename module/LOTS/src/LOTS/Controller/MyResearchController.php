@@ -343,5 +343,67 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
         }
         return $this->forwardTo('MyResearch', $page);
     }
+
+public function requestnewpinAction()
+{
+    // Redirect to login if user is not authenticated
+    if (!$this->getUser()) {
+        return $this->forceLogin();
+    }
+
+    // Get email from POST or user profile
+    $email = $this->params()->fromPost('email', $this->getUser()->email);
+    if (!$email) {
+        $this->flashMessenger()->addErrorMessage('Email is required');
+        return $this->createViewModel(['user' => $this->getUser()]);
+    }
+
+    if ($this->getRequest()->isPost()) {
+        // Generate a random 4-digit PIN
+        $pin = sprintf("%04d", rand(1000, 9999));
+        $patronId = $this->getUser()->cat_id;
+
+        // Update PIN in Koha via API (maps to borrowers.password)
+        try {
+            $this->koha_rest_config = $this->getConfig('KohaRest');
+            $this->oath_token = $this->getOAuth2Token(false);
+            $response = $this->json_http("PATCH", "/contrib/kohasuomi/patrons/$patronId", json_encode(['password' => $pin]));
+            error_log("Koha PIN update success for patron $patronId: " . json_encode($response));
+        } catch (\Exception $e) {
+            // Log error and proceed to send email as fallback
+            error_log("Koha API error: " . $e->getMessage());
+        }
+
+        // Send PIN via email
+        try {
+            $config = $this->getConfig();
+            $fromEmail = $config->Site->email ?? 'no-reply@lots.imcode.com'; // Fallback email
+            if (!$fromEmail || $fromEmail === 'no-reply@lots.imcode.com') {
+                error_log("Site email not configured - using fallback");
+            }
+
+            $mailer = $this->serviceLocator->get('VuFind\Mailer');
+            $mailer->send(
+                $email, // to
+                $fromEmail, // from
+                'Ny PIN-kod för LOTS', // subject
+                "Din nya PIN-kod är: <strong>$pin</strong><br>Visa inte för andra!", // body
+                null, // cc
+                null, // bcc
+                'text/html' // content type
+            );
+            $this->flashMessenger()->addSuccessMessage('new_pin_sent');
+            return $this->redirect()->toRoute('myresearch-home');
+        } catch (\Exception $e) {
+            // Log email error and show user-friendly message
+            error_log("Mailer error: " . $e->getMessage());
+            $this->flashMessenger()->addErrorMessage('Failed to send PIN email. Please try again.');
+        }
+    }
+
+    return $this->createViewModel(['user' => $this->getUser()]);
+}
+
+
 }
 

@@ -78,6 +78,8 @@ if ($this->layout()->rtl) {
 }
 $bodytxt = '<body class="template-dir-'.$this->templateDir.' template-name-'.$this->templateName.' '.$this->layoutClass('offcanvas-row').$rtl.'">';
 $header = file_get_contents('https://'.$http_host.'?cont=pageStart', false, stream_context_create($arrContextOptions));
+// LotsLerum-163, remove check_item_statuses
+$header = preg_replace('/<script[^>]*check_item_statuses\.js[^>]*><\/script>\s*/i', '', $header);
 $bodytag = str_replace('<body id="startPage">', $bodytxt, $header);
 $bodytag = str_replace('<!-- TITLE-TAG -->', '<title>'.$title.'</title>', $bodytag);
 echo $bodytag;
@@ -192,7 +194,11 @@ if ($sessionData['enabled']):
 <div id="sessionExpiredModal" class="session-expired-modal">
     <div class="session-expired-content">
         <p><?= $sessionData['message'] ?></p>
-        <button class="btn btn-primary session-expired-button" onclick="window.location.href='<?= $sessionData['logoutUrl'] ?>'">OK</button>
+        <button class="btn btn-primary session-expired-button"
+          onclick="window.location.href='/vufind/MyResearch/Home'"
+          aria-label="<?=$this->transEsc('session_expired_ok_button')?>">
+        OK
+        </button>
     </div>
 </div>
 <script>
@@ -213,6 +219,79 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <?php endif; ?>
+
+<!-- WCAG Compliance Fixes -->
+<script>
+$(document).ready(function() {
+    console.log('WCAG: Starting compliance fixes');
+
+
+    // Fix #3332648: Add aria-describedby instead
+var $searchInput = $('#searchForm_lookfor, input[name="lookfor"]');
+
+if ($searchInput.length && $searchInput.attr('placeholder')) {
+    var placeholder = $searchInput.attr('placeholder');
+    var labelText = '';
+    var $label = null;
+
+    // Find label
+    if ($searchInput.attr('aria-labelledby')) {
+        var labelId = $searchInput.attr('aria-labelledby');
+        $label = $('#' + labelId);
+        labelText = $label.text().trim();
+    }
+
+    if (labelText && placeholder) {
+        // Create a hidden description element
+        var descId = 'searchForm_lookfor_description';
+
+        if (!$('#' + descId).length) {
+            $searchInput.after('<span id="' + descId + '" class="sr-only">' + placeholder + '</span>');
+        }
+
+        // Update aria attributes
+        var ariaDescribedby = $searchInput.attr('aria-describedby') || '';
+        if (ariaDescribedby.indexOf(descId) === -1) {
+            ariaDescribedby = ariaDescribedby ? ariaDescribedby + ' ' + descId : descId;
+            $searchInput.attr('aria-describedby', ariaDescribedby);
+        }
+
+        // Also update aria-label
+        $searchInput.attr('aria-label', labelText + ' - ' + placeholder);
+        $searchInput.removeAttr('aria-labelledby');
+
+        // Update visible label
+        if ($label && $label.length) {
+            $label.html(labelText + ' <span class="text-muted small">(' + placeholder + ')</span>');
+        }
+
+        console.log('WCAG: Fixed search with aria-describedby');
+    }
+}
+
+    // Fix #3332646, #3332647: New window warning for links
+    setTimeout(function() {
+    $('a[href^="tel:"], a[href^="mailto:"]').each(function() {
+        var $link = $(this);
+
+        if (!$link.find('.new-window-notice').length) {
+            var $icon = $link.find('.newWinIconSpan');
+            var noticeHtml = ' <span class="new-window-notice">(öppnas i nytt fönster)</span> ';
+
+            if ($icon.length) {
+                $icon.before(noticeHtml);
+            } else {
+                $link.append(noticeHtml);
+            }
+
+            console.log('WCAG: Fixed link - ' + $link.attr('href'));
+        }
+    });
+    }, 1500); 
+
+    console.log('WCAG: All fixes applied');
+});
+</script>
 
 </body>
 </html>
