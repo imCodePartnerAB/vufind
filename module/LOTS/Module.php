@@ -56,6 +56,7 @@ class Module
      *
      * @return array
      */
+
     public function getAutoloaderConfig()
     {
         return [

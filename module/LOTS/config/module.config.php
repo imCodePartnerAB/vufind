@@ -5,7 +5,7 @@ $config = array (
   array (
     'factories' => 
     array (
-      'LOTS\\Controller\\MyResearchController' => 'VuFind\\Controller\\AbstractBaseFactory',
+      'LOTS\\Controller\\MyResearchController' => 'VuFind\\Controller\\MyResearchControllerFactory',
       'LOTS\\Controller\\ForgotPasswordController' => 'VuFind\\Controller\\AbstractBaseFactory',
       'LOTS\\Controller\\SuggestionsController' => 'VuFind\\Controller\\AbstractBaseFactory',
     ),
@@ -85,6 +85,7 @@ $config = array (
 );
 
 // Define non tab record actions
+/*
 $nonTabRecordActions = [
     'AddComment', 'DeleteComment', 'AddTag', 'DeleteTag', 'Save', 'Email', 'SMS',
     'Cite', 'Export', 'RDF', 'Hold', 'Home', 'StorageRetrievalRequest',
@@ -93,5 +94,6 @@ $nonTabRecordActions = [
 
 $routeGenerator = new \VuFind\Route\RouteGenerator();
 $routeGenerator->addNonTabRecordActions($config, $nonTabRecordActions);
+*/
 
 return $config;

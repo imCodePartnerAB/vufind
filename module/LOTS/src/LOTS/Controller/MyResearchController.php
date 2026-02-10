@@ -282,17 +282,17 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
         // Process login request, if necessary (either because a form has been
         // submitted or because we're using an external login provider):
         if ($this->params()->fromPost('processLogin')
-            || $this->getSessionInitiator()
+            || $this->getAuthManager()->getSessionInitiator()
             || $this->params()->fromPost('auth_method')
             || $this->params()->fromQuery('auth_method')
         ) {
             try {
-                if (!$this->getAuthManager()->isLoggedIn()) {
+                if (!$this->getAuthManager()->getUserObject()) {
                     $this->getAuthManager()->login($this->getRequest());
                     // Return early to avoid unnecessary processing if we are being
                     // called from login lightbox and don't have a followup action.
-                    if ($this->getAuthManager()->isLoggedIn()) {
-                        $user = $this->getAuthManager()->isLoggedIn();
+                    if ($this->getAuthManager()->getUserObject()) {
+                        $user = $this->getAuthManager()->getUserObject();
                         setrawcookie("currentVufindUserHoldLibrary", $user["home_library"], 0, "/");
                         setrawcookie("currentVufindUser", urlencode($user["username"]), 0, "/");
                         setcookie("currentVufindUserFirstName", urlencode($user["firstname"]), 0, "/");
@@ -312,7 +312,7 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
         }
 
         // Not logged in?  Force user to log in:
-        if (!$this->getAuthManager()->isLoggedIn()) {
+        if (!$this->getAuthManager()->getUserObject()) {
             // Allow bypassing of post-login redirect
             if ($this->params()->fromQuery('redirect', true)) {
                 $this->setFollowupUrlToReferer();

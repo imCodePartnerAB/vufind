@@ -8,7 +8,7 @@ $branchcodeAllowChange = $config->Suggestions->branchcodeAllowChange ?? true;
 $fieldsToHideArray = explode(",", $fieldsToHide);
 $fieldsToHideArray = array_map('trim', $fieldsToHideArray);
 
-$user = $this->auth()->isLoggedIn();
+$user = $this->auth()->getUserObject();
 
 // Function to check if a field should be hidden
 function shouldHideField($fieldName, $fieldsToHideArray) {

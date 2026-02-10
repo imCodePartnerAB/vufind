@@ -74,15 +74,25 @@ class KohaRestFactory extends \VuFind\ILS\Driver\DriverWithDateConverterFactory
         // Create safeMoneyFormat helper conditionally to avoid hard dependency on
         // themes (which otherwise could cause problems for command line tools that
         // use the ILS driver when the theme system is not active).
+/*
         $helperManager = $container->get('ViewHelperManager');
         $safeMoneyFormat = $helperManager->has('safeMoneyFormat')
             ? $helperManager->get('safeMoneyFormat') : null;
-
         $driver = parent::__invoke(
             $container,
             $requestedName,
             [$sessionFactory, $safeMoneyFormat]
         );
+*/
+
+        // VuFind 11: Use CurrencyFormatter service instead of safeMoneyFormat helper
+        $currencyFormatter = $container->get(\VuFind\Service\CurrencyFormatter::class);
+        $driver = parent::__invoke(
+            $container,
+            $requestedName,
+            [$sessionFactory, $currencyFormatter]
+        );
+
         // Sending along LOTS.ini as a configuration file to LOTS::KohaRest.php
         $driver->setLotsConfig($container->
             get(\VuFind\Config\PluginManager::class)->get('LOTS')); 

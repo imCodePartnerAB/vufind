@@ -2,7 +2,9 @@
 
 namespace LOTS\ILS\Driver;
 use VuFind\Exception\ILS as ILSException;
-use VuFind\View\Helper\Root\SafeMoneyFormat;
+/*use VuFind\View\Helper\Root\SafeMoneyFormat;*/
+use VuFind\Service\CurrencyFormatter;
+
 
 class KohaRest extends \VuFind\ILS\Driver\KohaRest
 {
@@ -11,9 +13,9 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
     public function __construct(
         \VuFind\Date\Converter $dateConverter,
         $sessionFactory,
-        ?SafeMoneyFormat $safeMoneyFormat
+        ?CurrencyFormatter $currencyFormatter
     ) {
-        parent::__construct($dateConverter, $sessionFactory, $safeMoneyFormat);
+        parent::__construct($dateConverter, $sessionFactory, $currencyFormatter);
     }
 
     public function setLotsConfig($lotsConfig)

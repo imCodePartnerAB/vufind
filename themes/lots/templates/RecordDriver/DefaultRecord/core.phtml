@@ -98,7 +98,7 @@ $this->metadata()->generateMetatags($this->driver);
       <?php endif; ?>
 
       <?php /* Display rating if enabled: */ ?>
-      <?php if ($this->record($this->driver)->isRatingEnabled()): ?>
+      <?php if (($this->config()->Social->rating ?? false)): ?>
         <?=$this->record($driver)->renderTemplate('rating.phtml')?>
       <?php endif; ?>
 
@@ -128,7 +128,7 @@ $this->metadata()->generateMetatags($this->driver);
     <?php if ($summary && $showSummary): ?>
       <p><?=$this->truncate($summary, $showSummaryLength)?></p>
       <?php if(strlen($summary) > $showSummaryLength && $showSummaryLink): ?>
-          <p><a href='<?=$this->recordLink()->getTabUrl($this->driver, 'Description')?>#tabnav'><?=$this->transEsc('Full description')?></a></p>
+          <p><a href='<?=$this->recordLinker()->getTabUrl($this->driver, 'Description')?>#tabnav'><?=$this->transEsc('Full description')?></a></p>
       <?php endif; ?>
     <?php endif; ?>
 
@@ -192,7 +192,7 @@ $this->metadata()->generateMetatags($this->driver);
 <?php $holdingTitleHold = $this->driver->tryMethod('getRealTimeTitleHold'); if (!empty($holdingTitleHold)): ?>
     <a class="placehold" data-light-box title="<?=$this->transEscAttr('request_place_text')?>" href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holdingTitleHold))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('title_hold_place')?></a>
 <?php else: ?>
-  <?php if ($this->auth()->isLoggedIn()): ?>
+  <?php if ($this->auth()->getUserObject()): ?>
     <?php 
     $result = $this->translate('no_rights_to_hold');
     $result = trim($result);
@@ -211,7 +211,7 @@ $this->metadata()->generateMetatags($this->driver);
      <?php if ($this->userlist()->getMode() !== 'disabled'): ?>
         <?php if ($this->permission()->allowDisplay('feature.Favorites')): ?>
           <?php /* Add to favorites */ ?>
-          <a href="<?=$this->recordLink()->getActionUrl($this->driver, 'Save')?>" data-light-box class="save-record" data-id="<?=$this->escapeHtmlAttr($this->driver->getUniqueId()) ?>">
+          <a href="<?=$this->recordLinker()->getActionUrl($this->driver, 'Save')?>" data-light-box class="save-record" data-id="<?=$this->escapeHtmlAttr($this->driver->getUniqueId()) ?>">
             <i class="result-link-icon fa fa-fw fa-star" aria-hidden="true"></i>
             <span class="result-link-label"><?=$this->transEsc('Add to favorites')?></span>
           </a><br/>

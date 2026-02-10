@@ -1,5 +1,5 @@
 <?php
-  $user = $this->auth()->isLoggedIn();
+  $user = $this->auth()->getUserObject();
   $patron = $user ? $this->auth()->getILSPatron() : false;
   $capabilityParams = $patron ? ['patron' => $patron] : [];
   $ilsOnline = ('ils-none' !== $this->ils()->getOfflineMode());

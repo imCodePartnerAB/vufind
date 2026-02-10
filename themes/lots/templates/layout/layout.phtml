@@ -8,8 +8,8 @@ $http_host = $_SERVER['HTTP_X_FORWARDED_HOST'];
   // Set default value if necessary:
     #$account = $this->auth()->getManager();
     $matomoparrams['url'] = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-    if ($this->auth()->isLoggedIn()) {
-        $user = $this->auth()->isLoggedIn();
+    $user = $this->auth()->getUserObject();
+    if ($user) {
         $matomoparrams['username']=$user["username"];
         setrawcookie("currentVufindUserHoldLibrary", $user["home_library"], 0, "/");
         // LOTS-58
@@ -20,7 +20,7 @@ $http_host = $_SERVER['HTTP_X_FORWARDED_HOST'];
         } else {
              setrawcookie("currentVufindUser", $user["username"], $expiry, "/");
         }
-        $justLoggedIn = isset($user["username"]);       
+        $justLoggedIn = isset($user["username"]);
         // end LOTS-58
         setcookie("currentVufindUserFirstName", $user["firstname"], 0, "/");
         setcookie("currentVufindUserLastName", $user["lastname"], 0, "/");
@@ -85,7 +85,7 @@ echo $bodytag;
 ?>
 
 
-<?php if ($justLoggedIn): ?>
+<?php if (isset($justLoggedIn) && $justLoggedIn): ?>
  <script>
  console.log('justLoggedIn passed');
  window.addEventListener('load', function() {

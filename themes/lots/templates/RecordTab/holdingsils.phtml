@@ -3,11 +3,13 @@
     // Set up convenience variables:
     $holdDetailIterate = 0;
     $account = $this->auth()->getManager();
-    $user = $account->isLoggedIn();
+    //$user = $account->isLoggedIn();
+    $user = $this->auth()->getUserObject();
     $openUrl = $this->openUrl($this->driver, 'holdings');
     $openUrlActive = $openUrl->isActive();
-    $doi = $this->doi($this->driver, 'holdings');
-    $doiActive = $doi->isActive();
+    //    $doi = $this->doi($this->driver, 'holdings');
+    $dois = $this->driver->tryMethod('getDOIs');
+    $doiActive = !empty($dois);
     // Account for replace_other_urls setting
     $urls = $this->record($this->driver)->getLinkDetails($openUrlActive);
     $offlineMode = $this->ils()->getOfflineMode();
@@ -88,7 +90,7 @@
 ?>
 
   <?php //endforeach; ?>
-<?=$this->context($this)->renderInContext('librarycards/selectcard.phtml', ['user' => $this->auth()->isLoggedIn()]); ?>
+<?=$this->context($this)->renderInContext('librarycards/selectcard.phtml', ['user' => $this->auth()->getUserObject()]); ?>
 
 <?php if (!empty($holdings['blocks'])):?>
   <div id="account-block-msg" class="alert alert-danger">

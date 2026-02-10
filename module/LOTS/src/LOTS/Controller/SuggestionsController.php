@@ -115,7 +115,7 @@ class SuggestionsController extends \VuFind\Controller\AbstractBase implements
             ]
         );
 
-        $view->user = $this->getAuthManager()->isLoggedIn();;
+        $view->user = $this->getAuthManager()->getUserObject();;
 
         return $view;
 

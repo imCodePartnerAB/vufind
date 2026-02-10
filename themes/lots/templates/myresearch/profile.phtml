@@ -34,7 +34,7 @@
 
     // Template for use by the renderArray helper:
     $arrTemplate = '<tr><th>%%LABEL%%:</th><td> %%VALUE%%</td></tr>';
-    $user = $this->auth()->isLoggedIn();
+    $user = $this->auth()->getUserObject();
     $patron = $user ? $this->auth()->getILSPatron() : false;
     $capabilityParams = $patron ? ['patron' => $patron] : [];
     $updatePhone = $this->ils()->checkFunction('updatePhone', $capabilityParams);

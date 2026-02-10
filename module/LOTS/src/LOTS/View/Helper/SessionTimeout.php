@@ -20,7 +20,7 @@ class SessionTimeout extends AbstractHelper
 
     public function getSessionTimeoutData()
     {
-        $isLoggedIn = $this->authManager->isLoggedIn();
+        $user = $this->authManager->getUserObject(); $isLoggedIn = ($user !== null);
 
         // Get configuration from existing location (via VuFind's config system)
         $configManager = $this->getView()->getHelperPluginManager()->get('config');
