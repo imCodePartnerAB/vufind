@@ -65,8 +65,12 @@
     <?=
       $this->renderArray(
           $arrTemplate,
-          $this->user,
           [
+          'firstname' => $this->user->getFirstname(),
+          'lastname' => $this->user->getLastname(),
+          'email' => $this->user->getEmail(),
+          ],
+	  [
               $this->transEsc('First Name') => 'firstname',
               $this->transEsc('Last Name') => 'lastname',
               $this->transEsc('Email') => 'email',

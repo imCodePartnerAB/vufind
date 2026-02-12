@@ -57,15 +57,17 @@ $config = array (
       'VuFind\\ILS\\Connection' => 'LOTS\\ILS\\Connection',
     ),
   ),
-  'view_helpers' =>
+'view_helpers' =>
   array (
     'factories' =>
     array (
       'LOTS\\View\\Helper\\SessionTimeout' => 'LOTS\\View\\Helper\\SessionTimeoutFactory',
+      'VuFind\\View\\Helper\\Root\\UserList' => 'VuFind\\View\\Helper\\Root\\UserListFactory',
     ),
     'aliases' =>
     array (
       'sessionTimeout' => 'LOTS\\View\\Helper\\SessionTimeout',
+      'userList' => 'VuFind\\View\\Helper\\Root\\UserList',
     ),
   ),
   'vufind' =>
@@ -112,7 +114,8 @@ $config = array (
   ),
 );
 // Define non tab record actions
-/* */
+/* vufind v11, off: */
+/*
 $nonTabRecordActions = [
     'AddComment', 'DeleteComment', 'AddTag', 'DeleteTag', 'Save', 'Email', 'SMS',
     'Cite', 'Export', 'RDF', 'Hold', 'Home', 'StorageRetrievalRequest',
@@ -120,5 +123,6 @@ $nonTabRecordActions = [
 ];
 $routeGenerator = new \VuFind\Route\RouteGenerator();
 $routeGenerator->addNonTabRecordActions($config, $nonTabRecordActions);
+*/
 return $config;
 

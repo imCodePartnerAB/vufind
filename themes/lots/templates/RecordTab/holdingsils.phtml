@@ -130,7 +130,7 @@
 <?php foreach ($holdings['holdings'] ?? [] as $holding): ?>
   <?php $holdDetailIterate += 1 ?>
 
-  <?php $holdStatus = $holding["items"]["0"]['status'] ?>
+  <?php $holdStatus = $holding["items"][0]["status"] ?? null ?>
   <?php $locationTextEsc = $this->transEscWithPrefix('location_', $holding['location']); ?>
   <?php if ($holding['locationhref'] ?? false): ?>
     <a href="<?=$this->escapeHtmlAttr($holding['locationhref'])?>" target="_blank"><?=$locationTextEsc?></a>
@@ -172,21 +172,21 @@
      </td>
      <?php
     if ($addTypeColumn) {
-      echo "<td>".$this->transEsc($holding["items"]["0"]['item']['item_type_id'])."</td>";
+      echo "<td>".$this->transEsc($holding["items"][0]['item_type_id'])."</td>";
     }
   ?>  <td class="main-department">
-  <?=(isset($holding["items"][0]["item"]["collection_code_description"])) ? $this->transEsc($holding["items"][0]["item"]["collection_code_description"]) : ''; ?>
+  <?=(isset($holding["items"][0]["collection_code_description"])) ? $this->transEsc($holding["items"][0]["collection_code_description"]) : ''; ?>
   <?php
     if (!$addPlacementColumn) {
-      echo (isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"])) ? ''.$this->transEsc($holding["items"][0]["item"]["callnumber"]) : '';
-      echo (isset($holding["items"][0]["item"]["location_description"])) ? ', '.$this->transEsc($holding["items"][0]["item"]["location_description"]) : '';
+      echo (isset($holding["items"][0]["callnumber"]) && !empty($holding["items"][0]["callnumber"])) ? ''.$this->transEsc($holding["items"][0]["callnumber"]) : '';
+      echo (isset($holding["items"][0]["location_description"])) ? ', '.$this->transEsc($holding["items"][0]["location_description"]) : '';
         }
   ?>
     </td>
 
     <?php
     if ($addPlacementColumn) {
-      echo "<td class='main-placement'>".(isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"]) ? $this->transEsc($holding["items"][0]["item"]["callnumber"]) : '').(isset($holding["items"][0]["item"]["location_description"]) ? ', '.$this->transEsc($holding["items"][0]["item"]["location_description"]) : '')."</td>";
+      echo "<td class='main-placement'>".(isset($holding["items"][0]["callnumber"]) && !empty($holding["items"][0]["callnumber"]) ? $this->transEsc($holding["items"][0]["callnumber"]) : '').(isset($holding["items"][0]["location_description"]) ? ', '.$this->transEsc($holding["items"][0]["location_description"]) : '')."</td>";
     }
     ?>
   </tr>
@@ -240,7 +240,7 @@
 <div class="mobile-holdings-cards">
 <?php foreach ($holdings['holdings'] ?? [] as $holding): ?>
   <?php
-    $holdStatus = $holding["items"]["0"]['status'] ?? '';
+    $holdStatus = $holding["items"][0]["status"] ?? null ?? '';
     $locationTextEsc = $this->transEscWithPrefix('location_', $holding['location']);
     $statusColorClass = holdsColor($holdStatus);
 
@@ -251,35 +251,35 @@
 
     // Get type if enabled
     $itemType = '';
-    if ($addTypeColumn && isset($holding["items"]["0"]['item']['item_type_id'])) {
-      $itemType = $this->transEsc($holding["items"]["0"]['item']['item_type_id']);
+    if ($addTypeColumn && isset($holding["items"][0]['item_type_id'])) {
+      $itemType = $this->transEsc($holding["items"][0]['item_type_id']);
     }
 
     // Get department
     $department = '';
-    if (isset($holding["items"][0]["item"]["collection_code_description"])) {
-      $department = $this->transEsc($holding["items"][0]["item"]["collection_code_description"]);
+    if (isset($holding["items"][0]["collection_code_description"])) {
+      $department = $this->transEsc($holding["items"][0]["collection_code_description"]);
     }
 
     // Get placement/call number
     $placement = '';
     if ($addPlacementColumn) {
       $placementParts = [];
-      if (isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"])) {
-        $placementParts[] = $this->transEsc($holding["items"][0]["item"]["callnumber"]);
+      if (isset($holding["items"][0]["callnumber"]) && !empty($holding["items"][0]["callnumber"])) {
+        $placementParts[] = $this->transEsc($holding["items"][0]["callnumber"]);
       }
-      if (isset($holding["items"][0]["item"]["location_description"])) {
-        $placementParts[] = $this->transEsc($holding["items"][0]["item"]["location_description"]);
+      if (isset($holding["items"][0]["location_description"])) {
+        $placementParts[] = $this->transEsc($holding["items"][0]["location_description"]);
       }
       $placement = implode(', ', $placementParts);
     } else {
       // When addPlacementColumn is false, call number and location are in department cell
       $placementParts = [];
-      if (isset($holding["items"][0]["item"]["callnumber"]) && !empty($holding["items"][0]["item"]["callnumber"])) {
-        $placementParts[] = $this->transEsc($holding["items"][0]["item"]["callnumber"]);
+      if (isset($holding["items"][0]["callnumber"]) && !empty($holding["items"][0]["callnumber"])) {
+        $placementParts[] = $this->transEsc($holding["items"][0]["callnumber"]);
       }
-      if (isset($holding["items"][0]["item"]["location_description"])) {
-        $placementParts[] = $this->transEsc($holding["items"][0]["item"]["location_description"]);
+      if (isset($holding["items"][0]["location_description"])) {
+        $placementParts[] = $this->transEsc($holding["items"][0]["location_description"]);
       }
       if (!empty($placementParts)) {
         $placement = implode(', ', $placementParts);

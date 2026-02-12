@@ -23,6 +23,15 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
         $this->lotsConfig = $lotsConfig;
     }
 
+    /* vufind v 11 fix*/
+    protected $userService = null;
+
+    public function setUserService(\VuFind\Db\Service\UserServiceInterface $userService)
+    {
+      $this->userService = $userService;
+    }
+    /* /vufind v 11 fix*/
+
     /** Added for LOTS to set history. LOBININTEG-19
       * Update Patron Transaction History State
       *
@@ -428,23 +437,24 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
         return $this->config[$function] ?? false;
     }
     
+
     public function patronLogin($username, $password)
     {
+      $parent_info = parent::patronLogin($username, $password);
+      if ($parent_info === null) {
+          return null;
+      }
 
-        $parent_info =  parent::patronLogin($username, $password);
-        if ($parent_info === null) {
-            return null;
-        }
+//      if ($this->userService) {
+//          $dbUser = $this->userService->getUserByUsername($username);
+//          if ($dbUser && $dbUser->getEmail() != $parent_info['email']) {
+//              $this->userService->updateUserEmail($dbUser, $parent_info['email'], true);
+//          }
+//      }
 
-        $dbUser = $this->getDbTableManager()->get('User')->getByUsername($username);
-
-        if ($dbUser['email'] != $parent_info['email']) {
-            $dbUser->updateEmail($parent_info['email'],true);
-            $dbUser->save();
-        }
-
-        return $parent_info;
+      return $parent_info;
     }
+
 
     protected function getTransactions($patron, $params, $checkedIn)
     {

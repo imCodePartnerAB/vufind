@@ -10,21 +10,21 @@ $http_host = $_SERVER['HTTP_X_FORWARDED_HOST'];
     $matomoparrams['url'] = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
     $user = $this->auth()->getUserObject();
     if ($user) {
-        $matomoparrams['username']=$user["username"];
-        setrawcookie("currentVufindUserHoldLibrary", $user["home_library"], 0, "/");
+        $matomoparrams['username']=$user->getUsername();
+        setrawcookie("currentVufindUserHoldLibrary", $user->getHomeLibrary(), 0, "/");
         // LOTS-58
         $forbiddenChars = ",; \t\r\n\013\014";
         $expiry = time() + 86400;
-        if (strpbrk($user["username"], $forbiddenChars) !== false) {
-             setrawcookie("currentVufindUser", urlencode($user["username"]), $expiry, "/");
+        if (strpbrk($user->getUsername(), $forbiddenChars) !== false) {
+             setrawcookie("currentVufindUser", urlencode($user->getUsername()), $expiry, "/");
         } else {
-             setrawcookie("currentVufindUser", $user["username"], $expiry, "/");
+             setrawcookie("currentVufindUser", $user->getUsername(), $expiry, "/");
         }
-        $justLoggedIn = isset($user["username"]);
+        $justLoggedIn = (null !== $user->getUsername());
         // end LOTS-58
-        setcookie("currentVufindUserFirstName", $user["firstname"], 0, "/");
-        setcookie("currentVufindUserLastName", $user["lastname"], 0, "/");
-        $logedin_json='{"logedin":"true", "firstname": "'.$user["firstname"].'" , "lastname": "'.$user["lastname"].'", "username": "'.$user["username"].'", "library": "'.$user["home_library"].'"}';
+        setcookie("currentVufindUserFirstName", $user->getFirstname(), 0, "/");
+        setcookie("currentVufindUserLastName", $user->getLastname(), 0, "/");
+        $logedin_json='{"logedin":"true", "firstname": "'.$user->getFirstname().'" , "lastname": "'.$user->getLastname().'", "username": "'.$user->getUsername().'", "library": "'.$user->getHomeLibrary().'"}';
     } else {
         $matomoparrams['username']="Unknown";
         $logedin_json='{"logedin":"false"}';

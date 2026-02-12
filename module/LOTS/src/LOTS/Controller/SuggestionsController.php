@@ -34,7 +34,7 @@ class SuggestionsController extends \VuFind\Controller\AbstractBase implements
         } elseif ($user == false and $anonymous == true) {
             $userid=null;
         } else {
-            $userid=$user->cat_id;
+            $userid=$user->getCatId();
         }
 
         

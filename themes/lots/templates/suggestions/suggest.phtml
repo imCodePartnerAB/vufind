@@ -142,7 +142,7 @@ function shouldHideField($fieldName, $fieldsToHideArray) {
                 
                         <?php foreach ($libraries as $library) : ?>
                             
-                            <option value="<?php echo $library->library_id; ?>" <?php if ($library->library_id === $user['home_library']) echo "selected"; ?>><?php echo $library->name; ?></option>
+                            <option value="<?php echo $library->library_id; ?>" <?php if ($user && $library->library_id === $user->getHomeLibrary()) echo "selected"; ?>><?php echo $library->name; ?></option>
                         <?php endforeach; ?>
                     </select>
             </div>

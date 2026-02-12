@@ -293,15 +293,15 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
                     // called from login lightbox and don't have a followup action.
                     if ($this->getAuthManager()->getUserObject()) {
                         $user = $this->getAuthManager()->getUserObject();
-                        setrawcookie("currentVufindUserHoldLibrary", $user["home_library"], 0, "/");
-                        setrawcookie("currentVufindUser", urlencode($user["username"]), 0, "/");
-                        setcookie("currentVufindUserFirstName", urlencode($user["firstname"]), 0, "/");
-                        setcookie("currentVufindUserLastName", urlencode($user["lastname"]), 0, "/");                    
+                        setrawcookie("currentVufindUserHoldLibrary", $user->getHomeLibrary(), 0, "/");
+                        setrawcookie("currentVufindUser", urlencode($user->getUsername()), 0, "/");
+                        setcookie("currentVufindUserFirstName", urlencode($user->getFirstname()), 0, "/");
+                        setcookie("currentVufindUserLastName", urlencode($user->getLastname()), 0, "/");                    
                     }
 
                     if ($this->params()->fromPost('processLogin')
                         && $this->inLightbox()
-                        && empty($this->getFollowupUrl())
+                        && empty($this->getAndClearFollowupUrl(true))
                     ) {
                         return $this->getRefreshResponse();
                     }
@@ -321,7 +321,7 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
         }
         // Logged in?  Forward user to followup action
         // or default action (if no followup provided):
-        if ($url = $this->getFollowupUrl()) {
+        if ($url = $this->getAndClearFollowupUrl(true)) {
             // If a user clicks on the "Your Account" link, we want to be sure
             // they get to their account rather than being redirected to an old
             // followup URL.
@@ -330,7 +330,7 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
                 $this->clearFollowupUrl();
             } else {
                 // LOTS-58
-                return $this->redirect()->toUrl($this->getFollowupUrl());
+                return $this->redirect()->toUrl($this->getAndClearFollowupUrl(true));
             }
         }
 

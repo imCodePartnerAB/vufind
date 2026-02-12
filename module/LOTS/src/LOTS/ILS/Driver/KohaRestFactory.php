@@ -95,7 +95,14 @@ class KohaRestFactory extends \VuFind\ILS\Driver\DriverWithDateConverterFactory
 
         // Sending along LOTS.ini as a configuration file to LOTS::KohaRest.php
         $driver->setLotsConfig($container->
-            get(\VuFind\Config\PluginManager::class)->get('LOTS')); 
+            get(\VuFind\Config\PluginManager::class)->get('LOTS'));
+//        $driver->setUserService(
+//            $container->get(\VuFind\Db\Service\UserServiceInterface::class)
+//        );
+        // VuFind 11: inject Sorter required by HasSorterTrait
+        if (method_exists($driver, 'setSorter')) {
+            $driver->setSorter($container->get(\VuFind\I18n\Sorter::class));
+        }
         return $driver;
     }
 

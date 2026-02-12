@@ -58,7 +58,7 @@
       <i class="fa fa-fw fa-history" aria-hidden="true"></i> <?=$this->transEsc('Loan History')?>
     </a>
   <?php endif; ?>
-  <?php if ($ilsOnline && $user && $user->libraryCardsEnabled()): ?>
+  <?php if ($ilsOnline && $user && $this->accountCapabilities()->libraryCardsEnabled()): ?>
   <a href="<?=$this->url('librarycards-home')?>" class="flex checkedout btn btn-primary btn-block btn-sm text-left<?=$this->active == 'librarycards' ? ' active' : ''?>">
       <i class="fa fa-fw fa-barcode" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('Library Cards')?>
     </a>
@@ -86,14 +86,15 @@
   <a href="<?=$this->url('myresearch-favorites')?>" class="flex checkedout btn btn-primary btn-block btn-sm text-left<?=$this->active == 'favorites' ? ' active' : ''?>">
       <i class="fa fa-fw fa-star" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('Your Favorites')?>
     </a>
-    <?php $lists = $user->getLists() ?>
-    <?php foreach ($lists as $list): ?>
-      <a href="<?=$this->url('userList', ['id' => $list['id']])?>"<?=$this->active == 'list' . $list['id'] ? ' class="btn btn-primary btn-block btn-sm text-left active"' : 'class="btn btn-primary btn-block btn-sm text-left"'?>>
-        <?=$this->escapeHtml($list['title'])?>
-        <span class="badge"><?=$list->cnt ?></span>
-      </a>
-    <?php endforeach; ?>
-    <a href="<?=$this->url('editList', ['id' => 'NEW'])?>" class="btn btn-primary btn-block btn-sm text-left">
+<?php $lists = $this->userList()->getUserListsAndCountsByUser($user) ?>
+<?php foreach ($lists as $listData): ?>
+  <?php $list = $listData['list_entity'] ?>
+  <a href="<?=$this->url('userList', ['id' => $list->getId()])?>"<?=$this->active == 'list' . $list->getId() ? ' class="btn btn-primary btn-block btn-sm text-left active"' : ' class="btn btn-primary btn-block btn-sm text-left"'?>>
+    <?=$this->escapeHtml($list->getTitle())?>
+    <span class="badge"><?=$listData['count'] ?></span>
+  </a>
+<?php endforeach; ?>    
+<a href="<?=$this->url('editList', ['id' => 'NEW'])?>" class="btn btn-primary btn-block btn-sm text-left">
       <i class="fa fa-fw fa-plus" aria-hidden="true"></i> <?=$this->transEsc('Create a List') ?>
     </a>
   </div>
