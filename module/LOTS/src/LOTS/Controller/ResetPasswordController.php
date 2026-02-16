@@ -83,13 +83,17 @@ class ResetPasswordController extends \VuFind\Controller\AbstractBase implements
                 }
             }
         }
-        
+
+        $config = $this->getConfig('LOTS');
+
         return $this->createViewModel([
             'message' => $message,
             'messageType' => $messageType,
             'tokenValid' => $tokenValid,
-            'token' => $token
+            'token' => $token,
+            'passwordRegex' => $config->PasswordRecovery->forgot_password_regex ?? '',
         ]);
+
     }
 
     /**
@@ -100,7 +104,7 @@ class ResetPasswordController extends \VuFind\Controller\AbstractBase implements
      *
      * @return array ['valid' => bool, 'error' => string]
      */
-    protected function validatePin(?string $newPin, ?string $confirmPin): array
+     protected function validatePin(?string $newPin, ?string $confirmPin): array
     {
         if (empty($newPin) || empty($confirmPin)) {
             return [
@@ -108,22 +112,21 @@ class ResetPasswordController extends \VuFind\Controller\AbstractBase implements
                 'error' => $this->translate('password_reset_pin_required')
             ];
         }
-        
         if ($newPin !== $confirmPin) {
             return [
                 'valid' => false,
                 'error' => $this->translate('password_reset_pin_mismatch')
             ];
         }
-        
-        // PIN must be exactly 4 digits
-        if (!preg_match('/^\d{4}$/', $newPin)) {
+        // Only validate format if regex is configured in LOTS.ini
+        $config = $this->getConfig('LOTS');
+        $regex = $config->PasswordRecovery->forgot_password_regex ?? null;
+        if (!empty($regex) && !preg_match($regex, $newPin)) {
             return [
                 'valid' => false,
                 'error' => $this->translate('password_reset_pin_format')
             ];
         }
-        
         return ['valid' => true, 'error' => ''];
     }
 
