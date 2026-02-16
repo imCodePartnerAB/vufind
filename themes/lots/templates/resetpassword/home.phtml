@@ -1,5 +1,6 @@
 <?php
 $this->headTitle($this->translate('reset_pin_code_title'));
+$hasRegex = !empty($this->passwordRegex);
 ?>
 <div class="container">
     <h2><?=$this->transEsc('reset_pin_code_title')?></h2>
@@ -9,6 +10,11 @@ $this->headTitle($this->translate('reset_pin_code_title'));
         </div>
     <?php endif; ?>
     <?php if ($this->tokenValid): ?>
+    <?php if (!empty($this->passwordRegex)): ?>
+        <div class="alert alert-info">
+            <?=$this->transEsc('password_rules_message')?>
+        </div>
+    <?php endif; ?>
     <p><?=$this->transEsc('reset_pin_code_instruction')?></p>
     <form action="<?=$this->url('resetpassword-home')?>" method="post" class="form-horizontal">
         <input type="hidden" name="token" value="<?=$this->escapeHtmlAttr($this->token)?>">
@@ -22,13 +28,10 @@ $this->headTitle($this->translate('reset_pin_code_title'));
                        id="new_pin"
                        class="form-control"
                        required
-                       pattern="\d{4}"
-                       maxlength="4"
-                       placeholder="****"
+                       <?php if ($hasRegex): ?>
+                       pattern="<?=$this->escapeHtmlAttr(trim($this->passwordRegex, '/'))?>"
+                       <?php endif; ?>
                        autocomplete="new-password">
-                <small class="help-block">
-                    <?=$this->transEsc('pin_code_4_digits')?>
-                </small>
             </div>
         </div>
         <div class="form-group">
@@ -41,9 +44,9 @@ $this->headTitle($this->translate('reset_pin_code_title'));
                        id="confirm_pin"
                        class="form-control"
                        required
-                       pattern="\d{4}"
-                       maxlength="4"
-                       placeholder="****"
+                       <?php if ($hasRegex): ?>
+                       pattern="<?=$this->escapeHtmlAttr(trim($this->passwordRegex, '/'))?>"
+                       <?php endif; ?>
                        autocomplete="new-password">
             </div>
         </div>
@@ -62,7 +65,6 @@ $this->headTitle($this->translate('reset_pin_code_title'));
             </a>
         </p>
         <script>
-            // Auto redirect after 3 seconds
             setTimeout(function() {
                 window.location.href = '<?=$this->url('myresearch-home')?>';
             }, 3000);
