@@ -153,6 +153,7 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
         // Unset read-only fields
         unset($request['anonymized']);
         unset($request['restricted']);
+        unset($request['expired']);
 
         $request = array_merge($request, $fields);
 
