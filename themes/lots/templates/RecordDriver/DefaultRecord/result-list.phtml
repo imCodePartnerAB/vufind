@@ -20,7 +20,14 @@
     }
   }
 
-  $coverDetails = $this->record($this->driver)->getCoverDetails('result-list', 'medium', $this->recordLinker()->getUrl($this->driver));
+// old, vufind 8.0
+//  $coverDetails = $this->record($this->driver)->getCoverDetails('result-list', 'medium', $this->recordLinker()->getUrl($this->driver));
+
+  $recordLinker = $this->recordLinker($this->results ?? null);
+  $largeImage = $this->record($this->driver)->getThumbnail('large');
+  $linkAttributes = $largeImage ? ['href' => $largeImage, 'data-lightbox-image' => 'true'] : [];
+  $coverDetails = $this->record($this->driver)->getCoverDetails('result-list', 'medium', $linkAttributes);
+
   $cover = $coverDetails['html'];
   $thumbnail = false;
   $thumbnailAlignment = $this->record($this->driver)->getThumbnailAlignment('result');

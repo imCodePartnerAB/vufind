@@ -172,7 +172,7 @@
      </td>
      <?php
     if ($addTypeColumn) {
-      echo "<td>".$this->transEsc($holding["items"][0]['item_type_id'])."</td>";
+      echo "<td>".$this->transEsc($holding["items"][0]['item_type_id'] ?? '')."</td>";
     }
   ?>  <td class="main-department">
   <?=(isset($holding["items"][0]["collection_code_description"])) ? $this->transEsc($holding["items"][0]["collection_code_description"]) : ''; ?>
