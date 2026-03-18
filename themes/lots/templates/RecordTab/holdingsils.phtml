@@ -46,6 +46,9 @@
     }
     $columns = array_map('trim', explode(',',  $defaultColumns));
     $lots_showItemsInVufind = $config->Record->showItemsInVufind ?? false;
+    // LotsLerum-XXX: When true, Exemplartyp/Avdelning/Placering are shown only in
+    // item collapse rows, not in the library summary row.
+    $holdingsColumnsInCollapseOnly = $config->Record->holdingsColumnsInCollapseOnly ?? false;
     if ($lots_showItemsInVufind) {
           $global_total_items = 0;
           $global_avail_items = 0;
@@ -172,9 +175,14 @@
      </td>
      <?php
     if ($addTypeColumn) {
-      echo "<td>".$this->transEsc($holding["items"][0]['item_type_id'] ?? '')."</td>";
+      if ($holdingsColumnsInCollapseOnly) {
+        echo "<td></td>";
+      } else {
+        echo "<td>".$this->transEsc($holding["items"][0]['item_type_id'] ?? '')."</td>";
+      }
     }
   ?>  <td class="main-department">
+  <?php if (!$holdingsColumnsInCollapseOnly): ?>
   <?=(isset($holding["items"][0]["collection_code_description"])) ? $this->transEsc($holding["items"][0]["collection_code_description"]) : ''; ?>
   <?php
     if (!$addPlacementColumn) {
@@ -182,11 +190,16 @@
       echo (isset($holding["items"][0]["location_description"])) ? ', '.$this->transEsc($holding["items"][0]["location_description"]) : '';
         }
   ?>
+  <?php endif; ?>
     </td>
 
     <?php
     if ($addPlacementColumn) {
-      echo "<td class='main-placement'>".(isset($holding["items"][0]["callnumber"]) && !empty($holding["items"][0]["callnumber"]) ? $this->transEsc($holding["items"][0]["callnumber"]) : '').(isset($holding["items"][0]["location_description"]) ? ', '.$this->transEsc($holding["items"][0]["location_description"]) : '')."</td>";
+      if ($holdingsColumnsInCollapseOnly) {
+        echo "<td class='main-placement'></td>";
+      } else {
+        echo "<td class='main-placement'>".(isset($holding["items"][0]["callnumber"]) && !empty($holding["items"][0]["callnumber"]) ? $this->transEsc($holding["items"][0]["callnumber"]) : '').(isset($holding["items"][0]["location_description"]) ? ', '.$this->transEsc($holding["items"][0]["location_description"]) : '')."</td>";
+      }
     }
     ?>
   </tr>
@@ -207,12 +220,26 @@
         try {
             echo $this->context($this)->renderInContext(
                 'RecordTab/holdingsils/' . $this->tab->getTemplate() . '.phtml',
-                ['holding' => $row, 'iteration'=>$holdDetailIterate, 'hideDetailReserveEvenIfInKoha'=>$hideDetailReserveEvenIfInKoha]
+                [
+                    'holding' => $row,
+                    'iteration' => $holdDetailIterate,
+                    'hideDetailReserveEvenIfInKoha' => $hideDetailReserveEvenIfInKoha,
+                    'addTypeColumn' => $addTypeColumn,
+                    'addPlacementColumn' => $addPlacementColumn,
+                    'holdingsColumnsInCollapseOnly' => $holdingsColumnsInCollapseOnly,
+                ]
             );
         } catch (Exception $e) {
             echo $this->context($this)->renderInContext(
                 'RecordTab/holdingsils/standard.phtml',
-                ['holding' => $row, 'iteration'=>$holdDetailIterate, 'hideDetailReserveEvenIfInKoha'=>$hideDetailReserveEvenIfInKoha]
+                [
+                    'holding' => $row,
+                    'iteration' => $holdDetailIterate,
+                    'hideDetailReserveEvenIfInKoha' => $hideDetailReserveEvenIfInKoha,
+                    'addTypeColumn' => $addTypeColumn,
+                    'addPlacementColumn' => $addPlacementColumn,
+                    'holdingsColumnsInCollapseOnly' => $holdingsColumnsInCollapseOnly,
+                ]
             );
         }
     ?>
@@ -316,7 +343,7 @@
           <?=$statusColorClass == 'item-avail' ? '<i class="fa fa-check-circle"></i>' : '<i class="fa fa-times-circle"></i>'?>
           <?=$this->transEsc($holdStatus)?>
         </span>
-        
+
         <!-- Show inventory details if enabled -->
         <?php if ($showInventoryDetails && $lots_showItemsInVufind && $library_total_items > 0): ?>
         <div class="inventory-info mt-2">
