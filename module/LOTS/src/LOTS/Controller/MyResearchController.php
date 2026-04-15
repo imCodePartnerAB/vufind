@@ -330,7 +330,8 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
                 $this->clearFollowupUrl();
             } else {
                 // LOTS-58
-                return $this->redirect()->toUrl($this->getAndClearFollowupUrl(true));
+		    // return $this->redirect()->toUrl($this->getAndClearFollowupUrl(true));
+		    return $this->redirect()->toUrl($url);
             }
         }
 
