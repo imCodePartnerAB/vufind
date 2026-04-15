@@ -14,6 +14,7 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
 {
     use \VuFindHttp\HttpServiceAwareTrait;
     use \VuFind\ILS\Driver\OAuth2TokenTrait;
+    use PasswordResetLogTrait;
 
     protected $koha_rest_config = null;
     protected $oauth_token = null;
@@ -47,6 +48,10 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
          // Handle form submission
          $username = $this->params()->fromPost('username');
 
+         if ($this->getRequest()->isPost() && empty($username)) {
+             $this->logPasswordReset('Password reset: form submitted with empty username');
+         }
+
          if (!empty($username)) {
              try {
                  // Search for patron using configured search fields
@@ -60,16 +65,23 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
                      // Send email
                      $this->sendResetEmail($patron['email'], $token);
 
+                     $this->logPasswordReset('Password reset: email sent to patron_id=' . $patron['patron_id']);
                      // Generic message (don't reveal if user exists)
                      $message = $this->translate('password_reset_email_sent');
                      $messageType = 'success';
                  } else {
+                     // Log why reset was not sent (for troubleshooting), but show generic message
+                     if (!$patron) {
+                         $this->logPasswordReset('Password reset: patron not found for input=' . $username);
+                     } else {
+                         $this->logPasswordReset('Password reset: patron found but no email configured, patron_id=' . ($patron['patron_id'] ?? 'unknown'));
+                     }
                      // Generic message (don't reveal if user exists or has no email)
                      $message = $this->translate('password_reset_email_sent');
                      $messageType = 'success';
                  }
              } catch (\Exception $e) {
-                 error_log('Password reset error: ' . $e->getMessage());
+                 $this->logPasswordReset('Password reset error: ' . $e->getMessage());
                  $message = $this->translate('password_reset_error');
                  $messageType = 'error';
              }
@@ -109,7 +121,7 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
         $searchFields = array_intersect($searchFields, $validFields);
 
         if (empty($searchFields)) {
-            error_log('No valid patron search fields configured');
+            $this->logPasswordReset('No valid patron search fields configured');
             return null;
         }
 
@@ -169,7 +181,7 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
                 'userid' => $patron['userid'] ?? null
             ];
         } catch (\Exception $e) {
-            error_log("Patron search by $field failed: " . $e->getMessage());
+            $this->logPasswordReset("Patron search by $field failed: " . $e->getMessage());
             return null;
         }
     }
@@ -228,4 +240,5 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
         }
         return $token->getHeaderValue();
     }
+
 }
