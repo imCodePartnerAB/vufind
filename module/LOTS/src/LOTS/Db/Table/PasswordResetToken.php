@@ -10,11 +10,9 @@
  * @link     https://vufind.org Main Site
  */
 namespace LOTS\Db\Table;
-
 use Laminas\Db\Adapter\Adapter;
 use VuFind\Db\Row\RowGateway;
 use VuFind\Db\Table\PluginManager;
-
 /**
  * Table Definition for lots_password_reset_tokens
  *
@@ -42,6 +40,28 @@ class PasswordResetToken extends \VuFind\Db\Table\Gateway
         $table = 'lots_password_reset_tokens'
     ) {
         parent::__construct($adapter, $tm, $cfg, $rowObj, $table);
+        $this->ensureTableExists();
+    }
+
+    /**
+     * Create the table if it does not exist
+     *
+     * @return void
+     */
+    protected function ensureTableExists(): void
+    {
+        $sql = "CREATE TABLE IF NOT EXISTS lots_password_reset_tokens (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            user_id varchar(255) NOT NULL,
+            token varchar(255) NOT NULL,
+            email varchar(255) NOT NULL,
+            created_at timestamp NOT NULL DEFAULT current_timestamp(),
+            expires_at timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+            used tinyint(4) DEFAULT 0,
+            PRIMARY KEY (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_swedish_ci";
+
+        $this->adapter->query($sql, Adapter::QUERY_MODE_EXECUTE);
     }
 
     /**
@@ -54,13 +74,9 @@ class PasswordResetToken extends \VuFind\Db\Table\Gateway
      */
     public function createToken(string $userId, string $email): string
     {
-        // Generate secure random token
         $token = bin2hex(random_bytes(32));
-        
-        // Calculate expiration (2 days from now)
         $expiresAt = date('Y-m-d H:i:s', strtotime('+2 days'));
-        
-        // Insert into database
+
         $this->insert([
             'user_id' => $userId,
             'token' => $token,
@@ -68,7 +84,7 @@ class PasswordResetToken extends \VuFind\Db\Table\Gateway
             'expires_at' => $expiresAt,
             'used' => 0
         ]);
-        
+
         return $token;
     }
 
@@ -88,13 +104,13 @@ class PasswordResetToken extends \VuFind\Db\Table\Gateway
         ]);
         $select->where->lessThanOrEqualTo('created_at', date('Y-m-d H:i:s'));
         $select->where->greaterThan('expires_at', date('Y-m-d H:i:s'));
-        
+
         $result = $this->selectWith($select)->current();
-        
+
         if (!$result) {
             return null;
         }
-        
+
         return [
             'id' => $result->id,
             'user_id' => $result->user_id,

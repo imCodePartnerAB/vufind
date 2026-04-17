@@ -100,6 +100,10 @@ if (!($hideDetailReserveEvenIfInKoha ?? false) && strlen($holding['barcode'] ?? 
         <?php endif; ?>
       <?php endif; ?>
       </td>
+      <?php // Render type column in collapse row if enabled ?>
+      <?php if ($addTypeColumn ?? false): ?>
+      <td><?=$this->transEsc($holding["item"]['item_type_id'] ?? '')?></td>
+      <?php endif; ?>
       <td class="collapse-department"><span class="text-muted"><?=$holding["item"]["collection_code_description"]?></span>
       </td>
       <td class="collapse-placement"><span class="text-muted"><?=$holding["callnumber"]?><?php if (!empty($holding["item_location_description"])): ?>, <?=$holding["item_location_description"]?><?php endif; ?></span>

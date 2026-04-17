@@ -14,6 +14,7 @@ class ResetPasswordController extends \VuFind\Controller\AbstractBase implements
 {
     use \VuFindHttp\HttpServiceAwareTrait;
     use \VuFind\ILS\Driver\OAuth2TokenTrait;
+    use PasswordResetLogTrait;
 
     protected $koha_rest_config = null;
     protected $oauth_token = null;
@@ -26,8 +27,8 @@ class ResetPasswordController extends \VuFind\Controller\AbstractBase implements
     public function homeAction()
     {
 	$token = $this->params()->fromQuery('token') ?? $this->params()->fromPost('token');
-	error_log("DEBUG: Received token from URL: " . var_export($token, true));
-	error_log("DEBUG: Token length: " . strlen($token));
+ $this->logPasswordReset("DEBUG: Received token from URL: " . var_export($token, true));
+ $this->logPasswordReset("DEBUG: Token length: " . strlen($token));
         $message = '';
         $messageType = 'info';
         $tokenValid = false;
@@ -40,7 +41,7 @@ class ResetPasswordController extends \VuFind\Controller\AbstractBase implements
             // Validate token
 	    $tokenTable = $this->getTable('PasswordResetToken');
             $tokenData = $tokenTable->getValidToken($token);
-	    error_log("DEBUG: Token data from DB: " . var_export($tokenData, true));
+     $this->logPasswordReset("DEBUG: Token data from DB: " . var_export($tokenData, true));
             
             if (!$tokenData) {
                 $message = $this->translate('password_reset_token_expired');
@@ -64,15 +65,13 @@ class ResetPasswordController extends \VuFind\Controller\AbstractBase implements
                             // Mark token as used
                             $tokenTable->markAsUsed($token);
                             
-                            $message = $this->translate('password_reset_success');
-                            $messageType = 'success';
-                            $tokenValid = false; // Hide form
-                            
-                            // Redirect to login after 3 seconds
-                            $this->layout()->setVariable('redirectUrl', '/vufind/MyResearch/Home');
-                            $this->layout()->setVariable('redirectDelay', 3000);
+                            // Redirect to login with success flash message
+                            // Important: do NOT render on /ResetPassword?token=... URL
+                            // so VuFind does not store it as followup after login
+                            $this->flashMessenger()->addMessage('password_reset_success', 'success');
+                            return $this->redirect()->toRoute('myresearch-userlogin');
                         } catch (\Exception $e) {
-                            error_log('Password update error: ' . $e->getMessage());
+                            $this->logPasswordReset('Password update error: ' . $e->getMessage());
                             $message = $this->translate('password_reset_update_error');
                             $messageType = 'error';
                         }
@@ -145,7 +144,7 @@ protected function updatePatronPassword(string $patronId, string $newPin): void
     $this->koha_rest_config = $this->getConfig('KohaRest');
     $this->oauth_token = $this->getOAuth2Token();
     
-    error_log("DEBUG: Updating password for patron: " . $patronId);
+    $this->logPasswordReset("DEBUG: Updating password for patron: " . $patronId);
     
     // Use correct endpoint: POST /patrons/{id}/password
     $data = [
@@ -155,7 +154,7 @@ protected function updatePatronPassword(string $patronId, string $newPin): void
     
     $response = $this->json_http("POST", "/patrons/$patronId/password", json_encode($data));
     
-    error_log("Koha password update response: " . $response);
+    $this->logPasswordReset("Koha password update response: " . $response);
     
     // Check if response contains error
     $result = json_decode($response, true);
@@ -215,6 +214,7 @@ public function json_http($method, $api, $postData = null)
 
     // Get the response body/JSON
     return $response->getBody();
-}
+
+    }
 
 }
