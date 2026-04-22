@@ -106,8 +106,10 @@ if (!($hideDetailReserveEvenIfInKoha ?? false) && strlen($holding['barcode'] ?? 
       <?php endif; ?>
       <td class="collapse-department"><span class="text-muted"><?=$holding["item"]["collection_code_description"]?></span>
       </td>
+      <?php if ($addPlacementColumn ?? false): ?>
       <td class="collapse-placement"><span class="text-muted"><?=$holding["callnumber"]?><?php if (!empty($holding["item_location_description"])): ?>, <?=$holding["item_location_description"]?><?php endif; ?></span>
       </td>
+      <?php endif; ?>
 
     <td style='border:thin;background-color:#fff;'>
     </td>
