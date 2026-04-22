@@ -698,4 +698,59 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
         return null;
     }
 
+
+    /**
+     * Override to enrich holding entries with item_type_id,
+     * collection_code_description and location_description from Koha API.
+     * Base VuFind driver does not include these fields in $entry.
+     *
+     * {@inheritDoc}
+     */
+    protected function getItemStatusesForBiblio($id, $patron = null, array $options = [])
+    {
+        $results = parent::getItemStatusesForBiblio($id, $patron, $options);
+
+        if (empty($results['holdings'])) {
+            return $results;
+        }
+
+        // Fetch raw item data from the same endpoint to get fields
+        // not mapped by the parent driver.
+        $requestParams = [
+            'path' => [
+                'v1', 'contrib', 'kohasuomi', 'availability', 'biblios', $id,
+                'search',
+            ],
+            'errors' => true,
+            'query' => [],
+        ];
+        if (($options['itemLimit'] ?? 0) > 0) {
+            $requestParams['query'] = [
+                'limit'  => $options['itemLimit'],
+                'offset' => $options['offset'],
+            ];
+        }
+
+        $result = $this->makeRequest($requestParams);
+        if (empty($result['data']['item_availabilities'])) {
+            return $results;
+        }
+
+        // Index raw items by item_id for O(1) lookup
+        $rawItems = [];
+        foreach ($result['data']['item_availabilities'] as $item) {
+            $rawItems[$item['item_id']] = $item;
+        }
+
+        // Enrich each holding entry with additional fields
+        foreach ($results['holdings'] as &$entry) {
+            $raw = $rawItems[$entry['item_id']] ?? [];
+            $entry['item_type_id']                = $raw['item_type_id'] ?? '';
+            $entry['collection_code_description'] = $raw['collection_code_description'] ?? '';
+            $entry['location_description']        = $raw['location_description'] ?? '';
+        }
+        unset($entry);
+
+        return $results;
+    }
 }
