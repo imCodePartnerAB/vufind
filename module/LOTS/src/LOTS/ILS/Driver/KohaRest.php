@@ -10,6 +10,19 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
 {
     protected $lotsConfig;
 
+    /**
+     * Override item status mappings to add On Order support.
+     * Item::NotForLoan with status -1 means the item is on order in Koha.
+     * SUPVARM-277 / LOTS-87
+     *
+     * @var array
+     */
+    protected $itemStatusMappings = [
+        'Item::Held'         => 'On Hold',
+        'Item::Waiting'      => 'On Holdshelf',
+        'Item::NotForLoan-1' => 'On Order',
+    ];
+
     public function __construct(
         \VuFind\Date\Converter $dateConverter,
         $sessionFactory,
