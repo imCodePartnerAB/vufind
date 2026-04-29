@@ -87,7 +87,7 @@ echo $bodytag;
 ?>
 
 
-<?php if ($justLoggedIn): ?>
+<?php if (!empty($justLoggedIn)): ?>
  <script>
  console.log('justLoggedIn passed');
  window.addEventListener('load', function() {

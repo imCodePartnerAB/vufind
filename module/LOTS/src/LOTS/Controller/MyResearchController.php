@@ -273,6 +273,32 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
     }
 
     /**
+     * User login action -- overrides core to preserve followup URL if already set.
+     * Core userloginAction always clears followup, which breaks post-PIN-reset
+     * redirect to My Pages (LotsLerum-162).
+     *
+     * @return mixed
+     */
+    public function userloginAction()
+    {
+        if ($this->getAuthManager()->isLoggedIn()) {
+            return $this->inLightbox()
+                ? $this->getRefreshResponse()
+                : $this->redirect()->toRoute('home');
+        }
+        if (!$this->followup()->retrieve('url')) {
+            $this->clearFollowupUrl();
+            if (!$this->inLightbox()) {
+                $this->setFollowupUrlToReferer();
+            }
+        }
+        if ($si = $this->getSessionInitiator()) {
+            return $this->redirect()->toUrl($si);
+        }
+        return $this->forwardTo('MyResearch', 'Login');
+    }
+
+    /**
      * Prepare and direct the home page where it needs to go
      *
      * @return mixed
