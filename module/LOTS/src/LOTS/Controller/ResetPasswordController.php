@@ -27,8 +27,8 @@ class ResetPasswordController extends \VuFind\Controller\AbstractBase implements
     public function homeAction()
     {
 	$token = $this->params()->fromQuery('token') ?? $this->params()->fromPost('token');
- $this->logPasswordReset("DEBUG: Received token from URL: " . var_export($token, true));
- $this->logPasswordReset("DEBUG: Token length: " . strlen($token));
+ $this->logPasswordReset("Received token from URL: " . var_export($token, true));
+ $this->logPasswordReset("Token length: " . strlen($token));
         $message = '';
         $messageType = 'info';
         $tokenValid = false;
@@ -41,7 +41,7 @@ class ResetPasswordController extends \VuFind\Controller\AbstractBase implements
             // Validate token
 	    $tokenTable = $this->getTable('PasswordResetToken');
             $tokenData = $tokenTable->getValidToken($token);
-     $this->logPasswordReset("DEBUG: Token data from DB: " . var_export($tokenData, true));
+     $this->logPasswordReset("Token data from DB: " . var_export($tokenData, true));
             
             if (!$tokenData) {
                 $message = $this->translate('password_reset_token_expired');
@@ -68,6 +68,7 @@ class ResetPasswordController extends \VuFind\Controller\AbstractBase implements
                             // Redirect to login with success flash message
                             // Important: do NOT render on /ResetPassword?token=... URL
                             // so VuFind does not store it as followup after login
+                            $this->followup()->store([], $this->getServerUrl('myresearch-checkedout'));
                             $this->flashMessenger()->addMessage('password_reset_success', 'success');
                             return $this->redirect()->toRoute('myresearch-userlogin');
                         } catch (\Exception $e) {
@@ -144,7 +145,7 @@ protected function updatePatronPassword(string $patronId, string $newPin): void
     $this->koha_rest_config = $this->getConfig('KohaRest');
     $this->oauth_token = $this->getOAuth2Token();
     
-    $this->logPasswordReset("DEBUG: Updating password for patron: " . $patronId);
+    $this->logPasswordReset("Updating password for patron: " . $patronId);
     
     // Use correct endpoint: POST /patrons/{id}/password
     $data = [
