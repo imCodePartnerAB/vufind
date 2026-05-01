@@ -1,61 +1,28 @@
 <?php
-// Only render collapse rows if hideDetailReserveEvenIfInKoha is false
-if (!($hideDetailReserveEvenIfInKoha ?? false) && strlen($holding['barcode'] ?? '') > 0):
+// Render collapse rows for all items with a barcode
+if (strlen($holding['barcode'] ?? '') > 0):
 ?>
   <?php
     $check = $holding['check'] ?? false;
     $checkStorageRetrievalRequest = $holding['checkStorageRetrievalRequest'] ?? false;
     $checkILLRequest = $holding['checkILLRequest'] ?? false;
-
   ?>
+  <?php /* DEBUG */ ?>
+  <!-- DEBUG: keys=<?=implode(",", array_keys($holding))?> col_code=<?=$holding["collection_code_description"]??'EMPTY'?> item_type=<?=$holding["item_type_id"]??'EMPTY'?> -->
   <tr id="exTr_<?=$iteration?>" class="collapse" typeof="Offer" vocab="http://schema.org/">
+    <td></td>
     <td>
-      <span class="text-muted"><?=$holding["item"]["serial_issue_number"]?></span>
+      <span class="text-muted"><?=$holding["serial_issue_number"] ?? ""?></span>
       <?php if ($holding['reserve'] == "Y"): ?>
         <link property="availability" href="http://schema.org/InStoreOnly" />
         <?=$this->transEsc("On Reserve - Ask at Circulation Desk")?><br />
       <?php endif; ?>
       <?php if ($holding['use_unknown_message'] ?? false): ?>
         <span class="text-muted"><?=$this->transEsc("status_unknown_message")?></span>
-        </td>
-        <td>&nbsp;
       <?php else: ?>
         <?php if ($holding['availability'] ?? false): ?>
-
-          <?php /* Begin Available Items (Holds) */ ?>
-           <span class="text-success"><?=$this->transEsc("Available")?><link property="availability" href="http://schema.org/InStock" /></span>
-           </td>
-          <td<?php if (!($holding['link'] ?? false)): ?> style="display:none!important;"<?php endif; ?>>
-            <?php /* Hide this cell for non-authenticated users (when no action links available) */ ?>
-            <?php if ($holding['link'] ?? false): ?>
-
-                <a class="<?=$check ? 'checkRequest ' : ''?>placehold"
-                <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>
-                  href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['link']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Hold" : "Place a Hold")?></a>
-
-            <?php endif; ?>
-          <?php if ($holding['storageRetrievalRequestLink'] ?? false): ?>
-            <a class="<?=$checkStorageRetrievalRequest ? 'checkStorageRetrievalRequest ' : ''?> placeStorageRetrievalRequest" data-lightbox href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['storageRetrievalRequestLink']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($checkStorageRetrievalRequest ? "storage_retrieval_request_check_text" : "storage_retrieval_request_place_text")?></a>
-          <?php endif; ?>
-          <?php if ($holding['ILLRequestLink'] ?? false): ?>
-            <a class="<?=$checkILLRequest ? 'checkILLRequest ' : ''?>placeILLRequest" data-lightbox href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['ILLRequestLink']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($checkILLRequest ? "ill_request_check_text" : "ill_request_place_text")?></a>
-          <?php endif; ?>
-          <?php /* Embed item structured data: library, barcode, call number */ ?>
-          <?php /* SEO metadata - invisible to users but helps search engines */ ?>
-          <?php if ($holding['location'] ?? false): ?>
-            <meta property="seller" content="<?=$this->escapeHtmlAttr($holding['location'])?>" />
-          <?php endif; ?>
-          <?php if ($holding['barcode'] ?? false): ?>
-            <meta property="serialNumber" content="<?=$this->escapeHtmlAttr($holding['barcode'])?>" />
-          <?php endif; ?>
-          <?php if ($holding['callnumber'] ?? false): ?>
-            <meta property="sku" content="<?=$this->escapeHtmlAttr($holding['callnumber'])?>" />
-          <?php endif; ?>
-          <?php /* Declare that the item is to be borrowed, not for sale */ ?>
-          <link property="businessFunction" href="http://purl.org/goodrelations/v1#LeaseOut" />
-          <link property="itemOffered" href="#record" />
+          <span class="text-success"><?=$this->transEsc("Available")?><link property="availability" href="http://schema.org/InStock" /></span>
         <?php else: ?>
-          <?php /* Begin Unavailable Items (Recalls) */ ?>
           <span class="text-danger"><?=$this->transEsc($holding['status'])?><link property="availability" href="http://schema.org/OutOfStock" /></span>
           <?php if ($holding['returnDate'] ?? false): ?>&ndash; <span class="small"><?=$this->escapeHtml($holding['returnDate'])?></span><?php endif; ?>
           <?php if ($holding['duedate'] ?? false): ?>
@@ -64,29 +31,45 @@ if (!($hideDetailReserveEvenIfInKoha ?? false) && strlen($holding['barcode'] ?? 
           <?php if (($holding['requests_placed'] ?? 0) > 0): ?>
             <span><?=$this->transEsc("Requests")?>: <?=$this->escapeHtml($holding['requests_placed'])?></span>
           <?php endif; ?>
-          &nbsp;</td>
-          <td<?php if (!($holding['link'] ?? false)): ?> style="display:none!important;"<?php endif; ?>>
-          <?php /* Hide this cell for non-authenticated users (when no action links available) */ ?>
-
-          <?php if ($holding['link'] ?? false): ?>
-            <a class="<?=$check ? 'checkRequest' : ''?> placehold" <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['link']))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Recall" : "Recall This")?></a>
-          <?php endif; ?>
-
-            <?=$this->relais()->renderButtonIfActive($this->driver ?? null)?>
-          <?php /* Embed item structured data: library, barcode, call number */ ?>
-          <?php /* SEO metadata - invisible to users but helps search engines */ ?>
-          <?php if ($holding['location'] ?? false): ?>
-            <meta property="seller" content="<?=$this->escapeHtmlAttr($holding['location'])?>" />
-          <?php endif; ?>
-          <?php if ($holding['barcode'] ?? false): ?>
-            <meta property="serialNumber" content="<?=$this->escapeHtmlAttr($holding['barcode'])?>" />
-          <?php endif; ?>
-          <?php if ($holding['callnumber'] ?? false): ?>
-            <meta property="sku" content="<?=$this->escapeHtmlAttr($holding['callnumber'])?>" />
-          <?php endif; ?>
-          <?php /* Declare that the item is to be borrowed, not for sale */ ?>
-          <link property="businessFunction" href="http://purl.org/goodrelations/v1#LeaseOut" />
-          <link property="itemOffered" href="#record" />
+        <?php endif; ?>
+        <?php /* Action links inside status cell — no extra <td> */ ?>
+        <?php if (!($hideReserveButton ?? true) && ($holding['link'] ?? false)): ?>
+          <div>
+            <?php if ($holding['availability'] ?? false): ?>
+              <a class="<?=$check ? 'checkRequest ' : ''?>placehold"
+                <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>
+                href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['link']))?>">
+                <i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Hold" : "Place a Hold")?>
+              </a>
+            <?php else: ?>
+              <a class="<?=$check ? 'checkRequest' : ''?> placehold"
+                <?php if (!empty($holding['linkLightbox'])): ?>data-lightbox <?php endif; ?>
+                href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['link']))?>">
+                <i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Recall" : "Recall This")?>
+              </a>
+            <?php endif; ?>
+          </div>
+        <?php endif; ?>
+        <?php if (!($hideReserveButton ?? true) && ($holding['storageRetrievalRequestLink'] ?? false)): ?>
+          <div>
+            <a class="<?=$checkStorageRetrievalRequest ? 'checkStorageRetrievalRequest ' : ''?>placeStorageRetrievalRequest"
+              data-lightbox
+              href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['storageRetrievalRequestLink']))?>">
+              <i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($checkStorageRetrievalRequest ? "storage_retrieval_request_check_text" : "storage_retrieval_request_place_text")?>
+            </a>
+          </div>
+        <?php endif; ?>
+        <?php if (!($hideReserveButton ?? true) && ($holding['ILLRequestLink'] ?? false)): ?>
+          <div>
+            <a class="<?=$checkILLRequest ? 'checkILLRequest ' : ''?>placeILLRequest"
+              data-lightbox
+              href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holding['ILLRequestLink']))?>">
+              <i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($checkILLRequest ? "ill_request_check_text" : "ill_request_place_text")?>
+            </a>
+          </div>
+        <?php endif; ?>
+        <?php if (!($hideReserveButton ?? true) && !($holding['availability'] ?? false)): ?>
+          <?=$this->relais()->renderButtonIfActive($this->driver ?? null)?>
         <?php endif; ?>
         <?php if (isset($holding['item_notes'])): ?>
           <div class="item-notes">
@@ -98,22 +81,31 @@ if (!($hideDetailReserveEvenIfInKoha ?? false) && strlen($holding['barcode'] ?? 
             </ul>
           </div>
         <?php endif; ?>
+        <?php /* SEO metadata */ ?>
+        <?php if ($holding['location'] ?? false): ?>
+          <meta property="seller" content="<?=$this->escapeHtmlAttr($holding['location'])?>" />
+        <?php endif; ?>
+        <?php if ($holding['barcode'] ?? false): ?>
+          <meta property="serialNumber" content="<?=$this->escapeHtmlAttr($holding['barcode'])?>" />
+        <?php endif; ?>
+        <?php if ($holding['callnumber'] ?? false): ?>
+          <meta property="sku" content="<?=$this->escapeHtmlAttr($holding['callnumber'])?>" />
+        <?php endif; ?>
+        <link property="businessFunction" href="http://purl.org/goodrelations/v1#LeaseOut" />
+        <link property="itemOffered" href="#record" />
       <?php endif; ?>
-      </td>
-      <?php // Render type column in collapse row if enabled ?>
-      <?php if ($addTypeColumn ?? false): ?>
-      <td><?=$this->transEsc($holding["item"]['item_type_id'] ?? '')?></td>
-      <?php endif; ?>
-      <td class="collapse-department"><span class="text-muted"><?=$holding["item"]["collection_code_description"]?></span>
-      </td>
-      <?php if ($addPlacementColumn ?? false): ?>
-      <td class="collapse-placement"><span class="text-muted"><?=$holding["callnumber"]?><?php if (!empty($holding["item_location_description"])): ?>, <?=$holding["item_location_description"]?><?php endif; ?></span>
-      </td>
-      <?php endif; ?>
-
-    <td style='border:thin;background-color:#fff;'>
     </td>
-
+    <?php if ($addTypeColumn ?? false): ?>
+    <td><?=$this->transEsc($holding['item_type_id'] ?? '')?></td>
+    <?php endif; ?>
+    <td class="collapse-department">
+      <span class="text-muted"><?=$holding["collection_code_description"] ?? ""?></span>
+    </td>
+    <?php if ($addPlacementColumn ?? false): ?>
+    <td class="collapse-placement">
+      <span class="text-muted"><?=$holding["callnumber"] ?? ""?><?php if (!empty($holding["location_description"])): ?>, <?=$holding["location_description"]?><?php endif; ?></span>
+    </td>
+    <?php endif; ?>
   </tr>
 <?php
 endif;

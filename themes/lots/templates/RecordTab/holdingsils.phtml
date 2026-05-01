@@ -32,7 +32,7 @@
     $config = $this->config()->get('LOTS');
     $defaultColumns = "holds_library, holds_status, holds_department";
     $addTypeColumn = $config->Record->addTypeColumn ?? false;
-    $hideDetailReserveEvenIfInKoha = $config->Record->hideDetailReserveEvenIfInKoha ?? false;
+    $hideReserveButton = $config->Record->hideReserveButton ?? true;
     $showInventoryDetails = $config->Record->showInventoryDetails ?? true;
     $hideReserveDuplicates = $config->Record->hideReserveDuplicates ?? true;
     $layoutMode = $config->Theme->layoutMode ?? "plain";
@@ -223,7 +223,7 @@
                 [
                     'holding' => $row,
                     'iteration' => $holdDetailIterate,
-                    'hideDetailReserveEvenIfInKoha' => $hideDetailReserveEvenIfInKoha,
+                    'hideReserveButton' => $hideReserveButton,
                     'addTypeColumn' => $addTypeColumn,
                     'addPlacementColumn' => $addPlacementColumn,
                     'holdingsColumnsInCollapseOnly' => $holdingsColumnsInCollapseOnly,
@@ -235,7 +235,7 @@
                 [
                     'holding' => $row,
                     'iteration' => $holdDetailIterate,
-                    'hideDetailReserveEvenIfInKoha' => $hideDetailReserveEvenIfInKoha,
+                    'hideReserveButton' => $hideReserveButton,
                     'addTypeColumn' => $addTypeColumn,
                     'addPlacementColumn' => $addPlacementColumn,
                     'holdingsColumnsInCollapseOnly' => $holdingsColumnsInCollapseOnly,
@@ -262,65 +262,22 @@
 <!-- End desktop table -->
 
 <!-- Mobile view - layout depends on layoutMode setting -->
+<!-- layoutMode options: "plain" (default, table only), "bootstrap" (cards on mobile) -->
 <?php if ($layoutMode === "bootstrap"): ?>
 <!-- Mobile Bootstrap Cards View - only visible on mobile -->
 <div class="mobile-holdings-cards">
 <?php foreach ($holdings['holdings'] ?? [] as $holding): ?>
   <?php
-    $holdStatus = $holding["items"][0]["status"] ?? null ?? '';
     $locationTextEsc = $this->transEscWithPrefix('location_', $holding['location']);
-    $statusColorClass = holdsColor($holdStatus);
 
-    // Get first item for reserve link
-    $firstItem = $holding["items"][0] ?? null;
-    $hasReserveLink = $firstItem && ($firstItem['link'] ?? false);
-    $check = $firstItem['check'] ?? false;
-
-    // Get type if enabled
-    $itemType = '';
-    if ($addTypeColumn && isset($holding["items"][0]['item_type_id'])) {
-      $itemType = $this->transEsc($holding["items"][0]['item_type_id']);
-    }
-
-    // Get department
-    $department = '';
-    if (isset($holding["items"][0]["collection_code_description"])) {
-      $department = $this->transEsc($holding["items"][0]["collection_code_description"]);
-    }
-
-    // Get placement/call number
-    $placement = '';
-    if ($addPlacementColumn) {
-      $placementParts = [];
-      if (isset($holding["items"][0]["callnumber"]) && !empty($holding["items"][0]["callnumber"])) {
-        $placementParts[] = $this->transEsc($holding["items"][0]["callnumber"]);
-      }
-      if (isset($holding["items"][0]["location_description"])) {
-        $placementParts[] = $this->transEsc($holding["items"][0]["location_description"]);
-      }
-      $placement = implode(', ', $placementParts);
-    } else {
-      // When addPlacementColumn is false, call number and location are in department cell
-      $placementParts = [];
-      if (isset($holding["items"][0]["callnumber"]) && !empty($holding["items"][0]["callnumber"])) {
-        $placementParts[] = $this->transEsc($holding["items"][0]["callnumber"]);
-      }
-      if (isset($holding["items"][0]["location_description"])) {
-        $placementParts[] = $this->transEsc($holding["items"][0]["location_description"]);
-      }
-      if (!empty($placementParts)) {
-        $placement = implode(', ', $placementParts);
-      }
-    }
-
-    // Calculate inventory details for mobile if enabled
+    // Calculate inventory summary for this library
     $library_total_items = 0;
     $library_avail_items = 0;
     $library_holds_queued = 0;
     if ($showInventoryDetails && $lots_showItemsInVufind) {
       foreach ($holding["items"] ?? [] as $local_item) {
-        if (strlen($local_item['barcode'] ?? '') > 0){
-          $library_holds_queued += $local_item["requests_placed"];
+        if (strlen($local_item['barcode'] ?? '') > 0) {
+          $library_holds_queued += $local_item["requests_placed"] ?? 0;
           if ($local_item["availability"]) {
             $library_avail_items++;
           }
@@ -328,66 +285,82 @@
         }
       }
     }
+
+    // Overall library availability from first item
+    $firstItemAvail = $holding["items"][0]["availability"] ?? false;
   ?>
 
   <div class="card mb-3 holding-card">
     <div class="card-body">
       <!-- Library name -->
-      <h5 class="card-title mb-2">
-        <i class="fa fa-book" aria-hidden="true"></i> <?=$locationTextEsc?>
-      </h5>
+      <div class="holding-library-name"><?=$locationTextEsc?></div>
 
-      <!-- Status with color badge -->
-      <div class="mb-3">
-        <span class="badge badge-<?=$statusColorClass == 'item-avail' ? 'success' : 'danger'?> status-badge">
-          <?=$statusColorClass == 'item-avail' ? '<i class="fa fa-check-circle"></i>' : '<i class="fa fa-times-circle"></i>'?>
-          <?=$this->transEsc($holdStatus)?>
-        </span>
-
-        <!-- Show inventory details if enabled -->
-        <?php if ($showInventoryDetails && $lots_showItemsInVufind && $library_total_items > 0): ?>
-        <div class="inventory-info mt-2">
-          <small class="text-muted">
-            <?php printf($this->translate('ils_availability_detail'), $library_avail_items, $library_total_items, $library_holds_queued); ?>
-          </small>
-        </div>
+      <!-- Overall status + inventory summary -->
+      <div class="holding-summary <?=$firstItemAvail ? 'item-avail' : 'item-reserved'?>">
+        <?php if ($firstItemAvail): ?>
+          <span class="holding-dot holding-dot-avail">&#9679;</span> <?=$this->transEsc('On Shelf')?>
+        <?php else: ?>
+          <span class="holding-dot holding-dot-unavail">&#10005;</span> <?=$this->transEsc('On Hold')?>
         <?php endif; ?>
       </div>
 
-      <!-- Reserve button - if available and not hidden -->
-      <?php if ($hasReserveLink && !$hideDetailReserveEvenIfInKoha): ?>
-      <div class="mb-3">
-        <a class="<?=$check ? 'checkRequest ' : ''?>placehold btn btn-primary btn-block"
-           <?php if (!empty($firstItem['linkLightbox'])): ?>data-lightbox <?php endif; ?>
-           href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($firstItem['link']))?>">
-           <i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc($check ? "Check Hold" : "Place a Hold")?>
-        </a>
+      <?php if ($showInventoryDetails && $lots_showItemsInVufind && $library_total_items > 0): ?>
+      <div class="holding-inventory">
+        <?php printf($this->translate('ils_availability_detail'), $library_avail_items, $library_total_items, $library_holds_queued); ?>
       </div>
       <?php endif; ?>
 
-      <!-- Details in compact format -->
-      <div class="holding-details">
-        <?php if ($addTypeColumn && $itemType): ?>
-        <div class="detail-row">
-          <span class="detail-label"><?=$this->transEsc('holds_type')?>:</span>
-          <span class="detail-value"><?=$itemType?></span>
-        </div>
-        <?php endif; ?>
+      <!-- All items for this library -->
+      <?php foreach ($holding["items"] ?? [] as $item): ?>
+        <?php if (strlen($item['barcode'] ?? '') === 0) continue; ?>
+        <?php
+          $itemAvail = $item["availability"] ?? false;
+          $itemStatusClass = $itemAvail ? 'item-avail' : 'item-reserved';
+          $itemType = $addTypeColumn ? ($item['item_type_id'] ?? '') : '';
+          $itemDept = $item['collection_code_description'] ?? '';
+          $itemPlacement = '';
+          if ($addPlacementColumn) {
+            $parts = [];
+            if (!empty($item['callnumber'])) $parts[] = $this->transEsc($item['callnumber']);
+            if (!empty($item['location_description'])) $parts[] = $this->transEsc($item['location_description']);
+            $itemPlacement = implode(', ', $parts);
+          }
 
-        <?php if ($department): ?>
-        <div class="detail-row">
-          <span class="detail-label"><?=$this->transEsc('holds_department')?>:</span>
-          <span class="detail-value"><?=$department?></span>
+          // Reserve link
+          $itemCheck = $item['check'] ?? false;
+          $itemLink = $item['link'] ?? false;
+        ?>
+        <div class="holding-item">
+          <div class="holding-item-status <?=$itemStatusClass?>">
+            <?php if ($itemAvail): ?>
+              <span class="holding-dot holding-dot-avail">&#9679;</span> <?=$this->transEsc('On Shelf')?>
+            <?php else: ?>
+              <span class="holding-dot holding-dot-unavail">&#10005;</span> <?=$this->transEsc('On Hold')?>
+              <?php if (!empty($item['duedate'])): ?>
+                &ndash; <span class="holding-due"><?=$this->transEsc('Due')?>: <?=$this->escapeHtml($item['duedate'])?></span>
+              <?php endif; ?>
+            <?php endif; ?>
+          </div>
+          <?php if ($addTypeColumn && $itemType): ?>
+          <div class="holding-item-detail"><?=$this->transEsc($itemType)?></div>
+          <?php endif; ?>
+          <?php if ($itemDept): ?>
+          <div class="holding-item-detail"><?=$this->transEsc($itemDept)?></div>
+          <?php endif; ?>
+          <?php if ($itemPlacement): ?>
+          <div class="holding-item-detail"><?=$itemPlacement?></div>
+          <?php endif; ?>
+          <?php if (!$hideReserveButton && $itemLink): ?>
+          <div class="holding-item-reserve">
+            <a class="<?=$itemCheck ? 'checkRequest ' : ''?>placehold"
+               <?php if (!empty($item['linkLightbox'])): ?>data-lightbox <?php endif; ?>
+               href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($itemLink))?>">
+               <?=$this->transEsc($itemCheck ? "Check Hold" : "Place a Hold")?>
+            </a>
+          </div>
+          <?php endif; ?>
         </div>
-        <?php endif; ?>
-
-        <?php if ($placement): ?>
-        <div class="detail-row">
-          <span class="detail-label"><?=$this->transEsc($addPlacementColumn ? 'holds_placing' : 'holds_department')?>:</span>
-          <span class="detail-value"><?=$placement?></span>
-        </div>
-        <?php endif; ?>
-      </div>
+      <?php endforeach; ?>
 
     </div>
   </div>
@@ -521,96 +494,64 @@ Bootstrap has a bug that makes Collapsible on TR become display:block instead of
     .desktop-holdings-wrapper {
         display: none !important;
     }
-
     .mobile-holdings-cards {
         display: block !important;
     }
-
-    /* Card styling */
+    /* Card */
     .holding-card {
         border: 1px solid #ddd;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .holding-card .card-body {
-        padding: 15px;
-    }
-
-    .holding-card .card-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #333;
+        border-radius: 4px;
         margin-bottom: 12px;
     }
-
-    .holding-card .card-title i {
-        color: #666;
-        margin-right: 6px;
+    .holding-card .card-body {
+        padding: 12px 14px;
     }
-
-    /* Status badge */
-    .status-badge {
-        font-size: 0.95rem;
-        padding: 6px 12px;
-        border-radius: 4px;
-        display: inline-block;
-    }
-
-    .status-badge i {
-        margin-right: 4px;
-    }
-
-    .badge-success {
-        background-color: #28a745;
-        color: white;
-    }
-
-    .badge-danger {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    /* Inventory info styling */
-    .inventory-info {
-        font-size: 0.85rem;
-        padding: 6px 0;
-    }
-
-    /* Reserve button */
-    .holding-card .btn-primary {
-        background-color: #007bff;
-        border-color: #007bff;
-        font-weight: 500;
-        padding: 10px;
-    }
-
-    .holding-card .btn-block {
-        display: block;
-        width: 100%;
-    }
-
-    /* Details section */
-    .holding-details {
-        margin-top: 12px;
-        padding-top: 12px;
-        border-top: 1px solid #eee;
-    }
-
-    .detail-row {
-        margin-bottom: 8px;
-        font-size: 0.9rem;
-    }
-
-    .detail-label {
+    /* Library name */
+    .holding-library-name {
         font-weight: 600;
-        color: #666;
-        margin-right: 6px;
+        font-size: 1rem;
+        color: #222;
+        margin-bottom: 6px;
     }
-
-    .detail-value {
-        color: #333;
+    /* Library summary status */
+    .holding-summary {
+        font-size: 0.95rem;
+        margin-bottom: 2px;
+        background: none;
     }
+    .holding-summary.item-avail { color: #2d7a2d; }
+    .holding-summary.item-reserved { color: #c0392b; }
+    /* Inventory line */
+    .holding-inventory {
+        font-size: 0.85rem;
+        color: #555;
+        margin-bottom: 8px;
+    }
+    /* Individual item block */
+    .holding-item {
+        border-top: 1px solid #eee;
+        padding-top: 8px;
+        margin-top: 8px;
+    }
+    /* Item status */
+    .holding-item-status {
+        font-size: 0.95rem;
+        margin-bottom: 2px;
+        background: none;
+    }
+    .holding-item-status.item-avail { color: #2d7a2d; }
+    .holding-item-status.item-reserved { color: #c0392b; }
+    /* Item detail lines - no bold per PDF */
+    .holding-item-detail {
+        font-size: 0.9rem;
+        font-weight: normal;
+        color: #444;
+        margin-bottom: 1px;
+    }
+    .holding-due { font-size: 0.85rem; }
+    .holding-dot-avail { color: #2d7a2d; }
+    .holding-dot-unavail { color: #c0392b; font-size: 0.8rem; }
+    .holding-item-reserve { margin-top: 4px; font-size: 0.85rem; }
     <?php endif; ?>
 }
 </style>
