@@ -549,4 +549,15 @@ Bootstrap has a bug that makes Collapsible on TR become display:block instead of
     .holding-item-reserve { margin-top: 4px; font-size: 0.85rem; }
     <?php endif; ?>
 }
+
+/* Rotate caret icon based on collapse state */
+a[data-toggle="collapse"] .fa-caret-down,
+a[data-toggle="collapse"] i.fas.fa-caret-down {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+a[data-toggle="collapse"][aria-expanded="true"] .fa-caret-down,
+a[data-toggle="collapse"][aria-expanded="true"] i.fas.fa-caret-down {
+    transform: rotate(-180deg);
+}
 </style>
