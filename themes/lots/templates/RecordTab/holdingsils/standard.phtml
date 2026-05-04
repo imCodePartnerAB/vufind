@@ -1,6 +1,6 @@
 <?php
-// Only render collapse rows if hideDetailReserveEvenIfInKoha is false
-if (!($hideDetailReserveEvenIfInKoha ?? false) && strlen($holding['barcode'] ?? '') > 0):
+// Render collapse rows for all items with a barcode
+if (strlen($holding['barcode'] ?? '') > 0):
 ?>
   <?php
     $check = $holding['check'] ?? false;
