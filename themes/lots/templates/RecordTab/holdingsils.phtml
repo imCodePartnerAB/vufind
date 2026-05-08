@@ -2,6 +2,7 @@
 
     // Set up convenience variables:
     $holdDetailIterate = 0;
+    $itemIterate = 0; // global unique item counter for collapse IDs
     $account = $this->auth()->getManager();
     $user = $account->isLoggedIn();
     $openUrl = $this->openUrl($this->driver, 'holdings');
@@ -213,13 +214,15 @@
     </tr>
   <?php endforeach; ?>
   <?php foreach ($holding['items'] as $row): ?>
+    <?php $itemIterate++; ?>
     <?php
         try {
             echo $this->context($this)->renderInContext(
                 'RecordTab/holdingsils/' . $this->tab->getTemplate() . '.phtml',
                 [
                     'holding' => $row,
-                    'iteration' => $holdDetailIterate,
+                    'iteration' => $itemIterate,
+                    'group' => $holdDetailIterate,
                     'hideReserveButton' => $hideReserveButton,
                     'addTypeColumn' => $addTypeColumn,
                     'addPlacementColumn' => $addPlacementColumn,
@@ -231,7 +234,8 @@
                 'RecordTab/holdingsils/standard.phtml',
                 [
                     'holding' => $row,
-                    'iteration' => $holdDetailIterate,
+                    'iteration' => $itemIterate,
+                    'group' => $holdDetailIterate,
                     'hideReserveButton' => $hideReserveButton,
                     'addTypeColumn' => $addTypeColumn,
                     'addPlacementColumn' => $addPlacementColumn,
@@ -391,6 +395,21 @@ Bootstrap has a bug that makes Collapsible on TR become display:block instead of
       style.appendChild(document.createTextNode(css));
     }
     document.head.appendChild(style);
+
+    // Sync all group rows when first item is toggled
+    document.querySelectorAll('a[data-toggle="collapse"][data-target^="#exTr_"]').forEach(function(toggle) {
+      toggle.addEventListener('click', function() {
+        var groupNum = this.getAttribute('data-target').replace('#exTr_', '');
+        var isExpanded = this.getAttribute('aria-expanded') === 'true';
+        document.querySelectorAll('tr.exGrp_' + groupNum).forEach(function(row) {
+          if (isExpanded) {
+            row.classList.remove('show');
+          } else {
+            row.classList.add('show');
+          }
+        });
+      });
+    });
   });
 </script>
 
