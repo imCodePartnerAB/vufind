@@ -299,9 +299,9 @@
       <!-- Overall status + inventory summary -->
       <div class="holding-summary <?=$firstItemAvail ? 'item-avail' : 'item-reserved'?>">
         <?php if ($firstItemAvail): ?>
-          <span class="holding-dot holding-dot-avail">&#9679;</span> <?=$this->transEsc('On Shelf')?>
+          <span class="holding-dot holding-dot-avail">&#9679;</span> <?=$this->transEsc($holding["items"][0]["status"] ?? 'On Shelf')?>
         <?php else: ?>
-          <span class="holding-dot holding-dot-unavail">&#10005;</span> <?=$this->transEsc('On Hold')?>
+          <span class="holding-dot holding-dot-unavail">&#10005;</span> <?=$this->transEsc($holding["items"][0]["status"] ?? 'On Hold')?>
         <?php endif; ?>
       </div>
 
@@ -332,9 +332,9 @@
         <div class="holding-item">
           <div class="holding-item-status <?=$itemStatusClass?>">
             <?php if ($itemAvail): ?>
-              <span class="holding-dot holding-dot-avail">&#9679;</span> <?=$this->transEsc('On Shelf')?>
+              <span class="holding-dot holding-dot-avail">&#9679;</span> <?=$this->transEsc($item['status'] ?? 'On Shelf')?>
             <?php else: ?>
-              <span class="holding-dot holding-dot-unavail">&#10005;</span> <?=$this->transEsc('On Hold')?>
+              <span class="holding-dot holding-dot-unavail">&#10005;</span> <?=$this->transEsc($item['status'] ?? 'On Hold')?>
               <?php if (!empty($item['duedate'])): ?>
                 &ndash; <span class="holding-due"><?=$this->transEsc('Due')?>: <?=$this->escapeHtml($item['duedate'])?></span>
               <?php endif; ?>
@@ -396,9 +396,11 @@ Bootstrap has a bug that makes Collapsible on TR become display:block instead of
     }
     document.head.appendChild(style);
 
-    // Sync all group rows when first item is toggled
+    // Handle group collapse manually - prevent Bootstrap from handling it
     document.querySelectorAll('a[data-toggle="collapse"][data-target^="#exTr_"]').forEach(function(toggle) {
-      toggle.addEventListener('click', function() {
+      toggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         var groupNum = this.getAttribute('data-target').replace('#exTr_', '');
         var isExpanded = this.getAttribute('aria-expanded') === 'true';
         document.querySelectorAll('tr.exGrp_' + groupNum).forEach(function(row) {
@@ -408,6 +410,7 @@ Bootstrap has a bug that makes Collapsible on TR become display:block instead of
             row.classList.add('show');
           }
         });
+        this.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
       });
     });
   });
