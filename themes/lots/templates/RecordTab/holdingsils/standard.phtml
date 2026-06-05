@@ -7,9 +7,7 @@ if (strlen($holding['barcode'] ?? '') > 0):
     $checkStorageRetrievalRequest = $holding['checkStorageRetrievalRequest'] ?? false;
     $checkILLRequest = $holding['checkILLRequest'] ?? false;
   ?>
-  <?php /* DEBUG */ ?>
-  <!-- DEBUG: keys=<?=implode(",", array_keys($holding))?> col_code=<?=$holding["collection_code_description"]??'EMPTY'?> item_type=<?=$holding["item_type_id"]??'EMPTY'?> -->
-  <tr id="exTr_<?=$iteration?>" class="collapse" typeof="Offer" vocab="http://schema.org/">
+  <tr id="exTr_<?=$iteration?>" class="collapse exGrp_<?=$group ?? 0?>" typeof="Offer" vocab="http://schema.org/">
     <td></td>
     <td>
       <span class="text-muted"><?=$holding["serial_issue_number"] ?? ""?></span>
