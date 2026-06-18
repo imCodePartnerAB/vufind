@@ -171,6 +171,14 @@ $lots_show_availability_in_results = $config->Record->showAvailabilityInResults 
 $lots_enable_debug = $config->Record->enableDebug ?? false; // Toggle debug logging
 $max_branches = $config->Record->maxBranches ?? 100; // Maximum number of branches to process
 
+// LotsLerum-160: optionally default the branch dropdown to the logged-in patron's home library
+$lots_use_home_library_default = $config->Record->useHomeLibraryAsDefaultBranch ?? false;
+$lots_home_library = null;
+if ($lots_use_home_library_default) {
+    $lots_user = $this->auth()->isLoggedIn();
+    $lots_home_library = $lots_user ? ($lots_user->home_library ?? null) : null;
+}
+
 // Get base URL using VuFind's serverUrl method or config, fallback to relative path
 $base_url = method_exists($this, 'serverUrl') ? $this->serverUrl() : ($config->Site->url ?? '');
 $base_url = rtrim($base_url, '/'); // Ensure no trailing slash
@@ -249,7 +257,7 @@ if ($lots_show_availability_in_results == 1):
         <select id="branch-select-<?=$this->escapeHtmlAttr($biblionumber)?>" name="branch" onchange="this.form.submit()">
             <option value=""><?=$this->transEsc('Select branch')?></option>
             <?php foreach ($validBranches as $branchId => $branch): ?>
-                <option value="<?php echo $this->escapeHtmlAttr($branchId); ?>">
+                <option value="<?php echo $this->escapeHtmlAttr($branchId); ?>"<?php echo ($lots_home_library !== null && $branchId === $lots_home_library) ? ' selected' : ''; ?>>
                     <?php echo $this->escapeHtml($branch['name']) . ' (' . $branch['available'] . '/' . $branch['total'] . ')'; ?>
                 </option>
             <?php endforeach; ?>
