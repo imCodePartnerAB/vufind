@@ -21,6 +21,7 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
         'Item::Held'         => 'On Hold',
         'Item::Waiting'      => 'On Holdshelf',
         'Item::NotForLoan-1' => 'On Order',
+        'Item::CheckedOut'   => 'Checked Out', // LotsLerum-160: shows as "Utlånad" (sv.ini)
     ];
 
     public function __construct(
@@ -765,5 +766,26 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
         unset($entry);
 
         return $results;
+    }
+
+    /**
+     * Override to translate hold error messages that come directly from the
+     * Koha REST API and are not covered by the parent switch-case (LotsLerum-160).
+     *
+     * @param string $error Error message
+     *
+     * @return array
+     */
+    protected function holdError($error)
+    {
+        $this->debugLog('holdError received: ' . var_export($error, true));
+
+        switch ($error) {
+        case 'The supplied pickup location is not valid':
+            $error = 'lots_hold_invalid_pickup_location';
+            break;
+        }
+
+        return parent::holdError($error);
     }
 }
