@@ -724,6 +724,25 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
     {
         $results = parent::getItemStatusesForBiblio($id, $patron, $options);
 
+        // LotsLerum-160: on loan + hold should show "Utlånad", not "Reserverad".
+        // Parent collapses a copy that is both checked out and reserved into
+        // status "On Hold" but keeps both in status_array (["Borrowed","On Hold"]).
+        // When that combination is present, prefer the loan status.
+        // NOTE: ported from lots-8.0 (verified there on live data); verify on a
+        // running VuFind 11 instance during the upgrade, as the parent result
+        // shape may differ.
+        if (is_array($results)) {
+            foreach ($results as &$lotsEntry) {
+                if (is_array($lotsEntry)
+                    && ($lotsEntry['status'] ?? null) === 'On Hold'
+                    && in_array('Borrowed', $lotsEntry['status_array'] ?? [], true)
+                ) {
+                    $lotsEntry['status'] = 'Checked Out';
+                }
+            }
+            unset($lotsEntry);
+        }
+
         if (empty($results['holdings'])) {
             return $results;
         }
