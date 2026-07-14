@@ -86,6 +86,18 @@ $config = array (
           'VuFind\\ILS\\Driver\\KohaRest' => 'LOTS\\ILS\\Driver\\KohaRest',
         ),
       ),
+      'ajaxhandler' =>
+      array (
+        'factories' =>
+        array (
+          'LOTS\\AjaxHandler\\GetItemStatuses' => 'LOTS\\AjaxHandler\\GetItemStatusesFactory',
+        ),
+        'aliases' =>
+        array (
+          'getItemStatuses' => 'LOTS\\AjaxHandler\\GetItemStatuses',
+          'VuFind\\AjaxHandler\\GetItemStatuses' => 'LOTS\\AjaxHandler\\GetItemStatuses',
+        ),
+      ),
       'db_table' =>
       array (
         'factories' =>
@@ -125,4 +137,3 @@ $routeGenerator = new \VuFind\Route\RouteGenerator();
 $routeGenerator->addNonTabRecordActions($config, $nonTabRecordActions);
 */
 return $config;
-
