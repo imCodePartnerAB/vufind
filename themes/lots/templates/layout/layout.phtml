@@ -80,6 +80,13 @@ $bodytxt = '<body class="template-dir-'.$this->templateDir.' template-name-'.$th
 $header = file_get_contents('https://'.$http_host.'?cont=pageStart', false, stream_context_create($arrContextOptions));
 // LotsLerum-163, remove check_item_statuses
 $header = preg_replace('/<script[^>]*check_item_statuses\.js[^>]*><\/script>\s*/i', '', $header);
+// LOTS-88: imCMS pageStart doesn't include truncate.js, so VuFind.truncate is undefined when facets.js calls it. Inject it before facets.js.
+$header = preg_replace(
+    '/(<script[^>]*\bfacets\.js[^>]*><\/script>)/i',
+    '<script src="' . $this->url('home') . 'themes/lots/js/truncate.js"></script>' . "\n$1",
+    $header,
+    1
+);
 $bodytag = str_replace('<body id="startPage">', $bodytxt, $header);
 $bodytag = str_replace('<!-- TITLE-TAG -->', '<title>'.$title.'</title>', $bodytag);
 echo $bodytag;
