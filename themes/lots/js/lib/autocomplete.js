@@ -62,7 +62,7 @@
           }
           var content = list[i].label || list[i].value;
           if (options.highlight) {
-            content = content.replace(regex, '<b>$1</b>');
+            content = content.replace(regex, '<strong>$1</strong>');
           }
           var item = typeof list[i].href === 'undefined' ? $('<div/>') : $('<a/>').attr('href', list[i].href);
           // list
@@ -73,7 +73,7 @@
           if (typeof list[i].description !== 'undefined') {
             item.append(
               $('<small/>').html(
-                options.highlight ? list[i].description.replace(regex, '<b>$1</b>') : list[i].description
+                options.highlight ? list[i].description.replace(regex, '<strong>$1</strong>') : list[i].description
               )
             );
           }
