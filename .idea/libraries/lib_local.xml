@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="lib_local">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/import/lib_local/mysql-connector-java-5.1.48-bin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/import/lib_local/ini4j-0.5.2-SNAPSHOT.jar!/" />
+      <root url="jar://$PROJECT_DIR$/import/lib_local/postgresql-9.1-902.jdbc4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
