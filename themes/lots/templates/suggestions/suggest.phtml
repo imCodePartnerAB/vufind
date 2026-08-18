@@ -129,6 +129,18 @@ function shouldHideField($fieldName, $fieldsToHideArray) {
         <?php endif; ?>
 
         <?php if (!shouldHideField('branchcode', $fieldsToHideArray)) : ?>
+        <?php
+            // Which library should be pre-selected / locked in: the patron's
+            // home library when logged in, otherwise the first library in
+            // the (already filtered + sorted) list.
+            $selectedLibraryId = null;
+            if ($user && !empty($user['home_library'])) {
+                $selectedLibraryId = $user['home_library'];
+            } elseif (!empty($libraries)) {
+                $firstLibrary = reset($libraries);
+                $selectedLibraryId = $firstLibrary->library_id ?? null;
+            }
+        ?>
         <div class="form-group row">
             <label for="branch" class="col-sm-4 col-form-label">
                 <?= $this->transEsc('suggest_branchcode') ?>
@@ -137,14 +149,18 @@ function shouldHideField($fieldName, $fieldsToHideArray) {
                 <?php if ($branchcodeAllowChange) : ?>
                     <select id="branch" name="branchcode" class="form-control form-control-sm">
                 <?php else: ?>
-                    <select class="form-control form-control-sm" disabled>
+                    <select id="branch" class="form-control form-control-sm" disabled>
                 <?php endif; ?>
-                
                         <?php foreach ($libraries as $library) : ?>
-                            
-                            <option value="<?php echo $library->library_id; ?>" <?php if ($library->library_id === $user['home_library']) echo "selected"; ?>><?php echo $library->name; ?></option>
+                            <option value="<?php echo $library->library_id; ?>" <?php if ((string) $library->library_id === (string) $selectedLibraryId) echo "selected"; ?>><?php echo $library->name; ?></option>
                         <?php endforeach; ?>
                     </select>
+                    <?php if (!$branchcodeAllowChange) : ?>
+                        <!-- Disabled <select> elements are excluded from form submission by the
+                             browser, so mirror the locked-in value in a hidden field to make
+                             sure "branchcode" (-> library_id) still reaches Koha. -->
+                        <input type="hidden" name="branchcode" value="<?php echo $this->escapeHtmlAttr($selectedLibraryId ?? ''); ?>">
+                    <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>
