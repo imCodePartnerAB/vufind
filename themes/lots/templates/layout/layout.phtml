@@ -232,49 +232,43 @@ document.addEventListener('DOMContentLoaded', function() {
 $(document).ready(function() {
     console.log('WCAG: Starting compliance fixes');
 
+    // Fix #3332648: describe placeholder on the single visible search input
+    var $searchInput = $('#searchForm_lookfor');
 
-    // Fix #3332648: Add aria-describedby instead
-var $searchInput = $('#searchForm_lookfor, input[name="lookfor"]');
+    if ($searchInput.length && $searchInput.attr('placeholder')) {
+        var placeholder = $searchInput.attr('placeholder');
+        var labelText = '';
+        var $label = null;
 
-if ($searchInput.length && $searchInput.attr('placeholder')) {
-    var placeholder = $searchInput.attr('placeholder');
-    var labelText = '';
-    var $label = null;
+        if ($searchInput.attr('aria-labelledby')) {
+            var labelId = $searchInput.attr('aria-labelledby');
+            $label = $('#' + labelId);
+            labelText = $label.text().trim();
+        }
 
-    // Find label
-    if ($searchInput.attr('aria-labelledby')) {
-        var labelId = $searchInput.attr('aria-labelledby');
-        $label = $('#' + labelId);
-        labelText = $label.text().trim();
+        if (labelText && placeholder) {
+            var descId = 'searchForm_lookfor_description';
+
+            if (!$('#' + descId).length) {
+                $searchInput.after('<span id="' + descId + '" class="sr-only">' + placeholder + '</span>');
+            }
+
+            var ariaDescribedby = $searchInput.attr('aria-describedby') || '';
+            if (ariaDescribedby.indexOf(descId) === -1) {
+                ariaDescribedby = ariaDescribedby ? ariaDescribedby + ' ' + descId : descId;
+                $searchInput.attr('aria-describedby', ariaDescribedby);
+            }
+
+            $searchInput.attr('aria-label', labelText + ' - ' + placeholder);
+            $searchInput.removeAttr('aria-labelledby');
+
+            if ($label && $label.length) {
+                $label.html(labelText + ' <span class="text-muted small">(' + placeholder + ')</span>');
+            }
+
+            console.log('WCAG: Fixed search with aria-describedby');
+        }
     }
-
-    if (labelText && placeholder) {
-        // Create a hidden description element
-        var descId = 'searchForm_lookfor_description';
-
-        if (!$('#' + descId).length) {
-            $searchInput.after('<span id="' + descId + '" class="sr-only">' + placeholder + '</span>');
-        }
-
-        // Update aria attributes
-        var ariaDescribedby = $searchInput.attr('aria-describedby') || '';
-        if (ariaDescribedby.indexOf(descId) === -1) {
-            ariaDescribedby = ariaDescribedby ? ariaDescribedby + ' ' + descId : descId;
-            $searchInput.attr('aria-describedby', ariaDescribedby);
-        }
-
-        // Also update aria-label
-        $searchInput.attr('aria-label', labelText + ' - ' + placeholder);
-        $searchInput.removeAttr('aria-labelledby');
-
-        // Update visible label
-        if ($label && $label.length) {
-            $label.html(labelText + ' <span class="text-muted small">(' + placeholder + ')</span>');
-        }
-
-        console.log('WCAG: Fixed search with aria-describedby');
-    }
-}
 
     // Fix #3332646, #3332647: New window warning for links
     setTimeout(function() {
@@ -294,12 +288,11 @@ if ($searchInput.length && $searchInput.attr('placeholder')) {
             console.log('WCAG: Fixed link - ' + $link.attr('href'));
         }
     });
-    }, 1500); 
+    }, 1500);
 
     console.log('WCAG: All fixes applied');
 });
 </script>
-
 </body>
 </html>
 <!-- STOP ./layout/layout.phtml -->
