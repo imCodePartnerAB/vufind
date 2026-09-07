@@ -252,6 +252,7 @@ if ($lots_show_availability_in_results == 1):
             $totalCopies = array_sum(array_column($validBranches, 'total'));
 ?>
 <div class="availability-section">
+    <!--
     <form method="GET" action="<?php echo $this->escapeHtmlAttr($base_url . '/vufind/Record/' . $biblionumber); ?>">
         <label for="branch-select-<?=$this->escapeHtmlAttr($biblionumber)?>"><?=$this->transEsc('Branch')?>:</label>
         <select id="branch-select-<?=$this->escapeHtmlAttr($biblionumber)?>" name="branch" onchange="this.form.submit()">
@@ -263,6 +264,17 @@ if ($lots_show_availability_in_results == 1):
             <?php endforeach; ?>
         </select>
     </form>
+-->
+
+        <label for="branch-select-<?=$this->escapeHtmlAttr($biblionumber)?>"><?=$this->transEsc('Branch')?>:</label>
+        <ul id="branch-select-<?=$this->escapeHtmlAttr($biblionumber)?>" class="fa-ul" >
+            <?php foreach ($validBranches as $branchId => $branch): ?>
+                <li>
+                    <?php echo $this->escapeHtml($branch['name']) . ' (' . $branch['available'] . '/' . $branch['total'] . ')'; ?>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+
 
     <div class="availability-info">
         <span><?=$this->transEsc('Available copies')?>: <?php echo $totalAvailable; ?></span>
