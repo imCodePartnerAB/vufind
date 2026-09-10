@@ -3,7 +3,7 @@
     <?php if (isset($this->previous)): ?>
       <?php if (!isset($this->options['disableFirst']) || !$this->options['disableFirst']): ?>
         <li >
-          <a href="<?=$this->currentPath() . $this->results->getUrlQuery()->setPage(1)?>" aria-label="<?=$this->transEscAttr('page_first')?>">[1]</a>
+          <a href="<?=$this->currentPath() . $this->results->getUrlQuery()->setPage(1)?>" aria-label="<?=$this->transEscAttr('page_first')?> [1]">[1]</a>
         </li>
       <?php endif; ?>
       <li >
@@ -35,7 +35,7 @@
       </li>
       <?php if (!isset($this->options['disableLast']) || !$this->options['disableLast']): ?>
         <li >
-          <a href="<?=$this->currentPath() . $this->results->getUrlQuery()->setPage($this->pageCount)?>" aria-label="<?=$this->transEscAttr('page_last')?>">[<?=$this->pageCount?>]</a>
+          <a href="<?=$this->currentPath() . $this->results->getUrlQuery()->setPage($this->pageCount)?>" aria-label="<?=$this->transEscAttr('page_last')?> [<?=$this->pageCount?>]">[<?=$this->pageCount?>]</a>
         </li>
       <?php endif; ?>
     <?php endif; ?>
