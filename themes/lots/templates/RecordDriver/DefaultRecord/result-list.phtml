@@ -267,17 +267,12 @@ if ($lots_show_availability_in_results == 1):
             $totalCopies = array_sum(array_column($validBranches, 'total'));
 ?>
 <div class="availability-section">
-    <form method="GET" action="<?php echo $this->escapeHtmlAttr($base_url . '/vufind/Record/' . $biblionumber); ?>">
-        <label for="branch-select-<?=$this->escapeHtmlAttr($biblionumber)?>"><?=$this->transEsc('Branch')?>:</label>
-        <select id="branch-select-<?=$this->escapeHtmlAttr($biblionumber)?>" name="branch" onchange="this.form.submit()">
-            <option value=""><?=$this->transEsc('Select branch')?></option>
-            <?php foreach ($validBranches as $branchId => $branch): ?>
-                <option value="<?php echo $this->escapeHtmlAttr($branchId); ?>"<?php echo ($lots_home_library !== null && $branchId === $lots_home_library) ? ' selected' : ''; ?>>
-                    <?php echo $this->escapeHtml($branch['name']) . ' (' . $branch['available'] . '/' . $branch['total'] . ')'; ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </form>
+    <span id="branch-list-label-<?=$this->escapeHtmlAttr($biblionumber)?>"><?=$this->transEsc('Branch')?>:</span>
+    <ul class="fa-ul" aria-labelledby="branch-list-label-<?=$this->escapeHtmlAttr($biblionumber)?>">
+        <?php foreach ($validBranches as $branch): ?>
+            <li><?=$this->escapeHtml($branch['name'] . ' (' . $branch['available'] . '/' . $branch['total'] . ')')?></li>
+        <?php endforeach; ?>
+    </ul>
 
     <div class="availability-info">
         <span><?=$this->transEsc('Available copies')?>: <?php echo $totalAvailable; ?></span>
