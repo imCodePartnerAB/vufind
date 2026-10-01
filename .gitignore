@@ -20,6 +20,7 @@ module/VuFind/tests/.phpunit.result.cache
 node_modules
 public/swagger-ui
 
-composer.json
 
 .php-cs-fixer.cache
+
+composer.local.json
