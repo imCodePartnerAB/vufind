@@ -24,3 +24,8 @@ public/swagger-ui
 .php-cs-fixer.cache
 
 composer.local.json
+
+local/config/vufind/*.ini
+local/config/vufind/*.json
+local/config/vufind/*.yaml
+local/import/
