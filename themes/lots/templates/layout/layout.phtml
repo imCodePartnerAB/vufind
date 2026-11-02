@@ -230,6 +230,15 @@ if (!headers_sent()) {
     header('X-Layout-Cache-End: ' . $lotsFooterCache);
 }
 
+// A WordPress pageEnd is a complete document (own html/head/body). Use only what is inside its body so the page does not
+// get nested html/head/body elements, and skip jQuery scripts that the header already loaded. A fragment (imCMS) is left as is.
+$lotsJquery = '/<script[^>]*\bsrc=["\'][^"\']*\/jquery(?:-migrate)?(?:-[0-9.]+)?(?:\.min)?\.js[^"\']*["\'][^>]*>\s*<\/script>\s*/i';
+if (preg_match('/<body\b[^>]*>(.*)<\/body>/is', $footer, $lotsBody)) {
+    $footer = $lotsBody[1];
+    if (preg_match($lotsJquery, $header)) {
+        $footer = preg_replace($lotsJquery, '', $footer);
+    }
+}
 $footer = str_replace('</body>', '', $footer);
 $footer = str_replace('</html>', '', $footer);
 
