@@ -200,7 +200,7 @@ class ForgotPasswordController extends \VuFind\Controller\AbstractBase implement
         $fromEmail = $config->Site->email ?? 'noreply@library.se';
 
         $request = $this->getRequest();
-        $serverUrl = $request->getUri()->getScheme() . '://' . $request->getUri()->getHost();
+        $serverUrl = rtrim($config->Site->url ?? ($request->getUri()->getScheme() . '://' . $request->getUri()->getHost()), '/');
         $resetUrl = $serverUrl . '/vufind/ResetPassword?token=' . urlencode($token);
 
         $body = $this->translate('password_reset_line1') . PHP_EOL . PHP_EOL .
