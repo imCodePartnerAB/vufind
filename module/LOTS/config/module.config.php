@@ -89,9 +89,11 @@ $config = array (
         'factories' =>
         array (
           'LOTS\\AjaxHandler\\GetItemStatuses' => 'LOTS\\AjaxHandler\\GetItemStatusesFactory',
+          'LOTS\\AjaxHandler\\GetBranchAvailability' => 'LOTS\\AjaxHandler\\GetBranchAvailabilityFactory',
         ),
         'aliases' =>
         array (
+          'getBranchAvailability' => 'LOTS\\AjaxHandler\\GetBranchAvailability',
           'getItemStatuses' => 'LOTS\\AjaxHandler\\GetItemStatuses',
           'VuFind\\AjaxHandler\\GetItemStatuses' => 'LOTS\\AjaxHandler\\GetItemStatuses',
         ),
