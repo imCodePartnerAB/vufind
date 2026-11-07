@@ -320,7 +320,7 @@ if ($lots_show_availability_in_results == 1):
       <?php endif; ?>
 
 <!-- Reservera på Titelnivå 1-->
-<?php $holdingTitleHold = $this->driver->tryMethod('getRealTimeTitleHold'); if ($lots_show_reservation_button and $holdingTitleHold): ?>
+<?php $holdingTitleHold = $lots_show_reservation_button ? $this->driver->tryMethod('getRealTimeTitleHold') : false; if ($holdingTitleHold): ?>
     <a class="placehold" data-light-box title="<?=$this->transEscAttr('request_place_text')?>" href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holdingTitleHold))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('title_hold_place')?></a>
 <?php endif; ?>
 
