@@ -9,6 +9,13 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
     protected $lotsConfig;
 
     /**
+     * Branches fetched from Koha during this request (see getAvailableBranches).
+     *
+     * @var array|null
+     */
+    protected $availableBranches = null;
+
+    /**
      * Override item status mappings to add On Order support.
      * Item::NotForLoan with status -1 means the item is on order in Koha.
      * SUPVARM-277 / LOTS-87
@@ -595,6 +602,12 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
         if ($this->availableBranches === null) {
             $this->availableBranches = [];
 
+            $cachedBranches = $this->getCachedData('lots-available-branches');
+            if (is_array($cachedBranches)) {
+                $this->availableBranches = $cachedBranches;
+                return $this->availableBranches;
+            }
+
             $this->debugLog('Calling getAvailableBranches');
 
             try {
@@ -620,6 +633,10 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
                 }
             } else {
                 $this->debugLog('No branches data found in response');
+            }
+
+            if (!empty($this->availableBranches)) {
+                $this->putCachedData('lots-available-branches', $this->availableBranches, 3600);
             }
 
             $this->debugLog('Returning branches: ' . var_export($this->availableBranches, true));
@@ -661,19 +678,7 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
         }
 
         if ($response && isset($response['data']['item_availabilities'])) {
-            foreach ($response['data']['item_availabilities'] as $item) {
-                $holdingLibraryId = $item['holding_library_id'];
-                if (!isset($availability[$holdingLibraryId])) {
-                    $availability[$holdingLibraryId] = [
-                        'available' => 0,
-                        'total' => 0,
-                    ];
-                }
-                $availability[$holdingLibraryId]['total']++;
-                if ($item['availability']['available']) {
-                    $availability[$holdingLibraryId]['available']++;
-                }
-            }
+            $availability = $this->summarizeBranchAvailability($response['data']);
         } else {
             $this->debugLog('No items data found in response');
         }
@@ -685,6 +690,158 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
 
         $this->debugLog('Returning availability: ' . var_export($availability, true));
         return $availability;
+    }
+
+    /**
+     * Count available and total items per holding library.
+     *
+     * @param array $data Decoded Koha availability response
+     *
+     * @return array Branch id => ['available' => int, 'total' => int]
+     */
+    protected function summarizeBranchAvailability($data)
+    {
+        $availability = [];
+        foreach ($data['item_availabilities'] ?? [] as $item) {
+            $holdingLibraryId = $item['holding_library_id'];
+            if (!isset($availability[$holdingLibraryId])) {
+                $availability[$holdingLibraryId] = [
+                    'available' => 0,
+                    'total' => 0,
+                ];
+            }
+            $availability[$holdingLibraryId]['total']++;
+            if ($item['availability']['available']) {
+                $availability[$holdingLibraryId]['available']++;
+            }
+        }
+        return $availability;
+    }
+
+    /**
+     * Get per-branch availability for several records at once.
+     *
+     * Cached entries are reused, the rest is fetched from Koha in parallel.
+     *
+     * @param array $biblionumbers Biblionumbers (alphanumeric only)
+     *
+     * @return array Biblionumber => availability as returned by getAvailability(),
+     * or null if Koha could not be reached for that record
+     */
+    public function getAvailabilityBatch(array $biblionumbers)
+    {
+        $result = [];
+        $missing = [];
+        foreach (array_unique($biblionumbers) as $id) {
+            $cached = $this->getCachedData('lots-availability|' . $id);
+            $result[$id] = is_array($cached) ? $cached : null;
+            if ($result[$id] === null) {
+                $missing[] = $id;
+            }
+        }
+
+        $lifetime = (int)($this->lotsConfig->Record->availabilityCacheTime ?? 60);
+        foreach ($this->fetchAvailabilityInParallel($missing) as $id => $availability) {
+            $result[$id] = $availability;
+            if ($availability !== null && $lifetime > 0) {
+                $this->putCachedData('lots-availability|' . $id, $availability, $lifetime);
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Fetch availability for the given records from Koha with curl_multi.
+     *
+     * @param array $biblionumbers Biblionumbers to fetch
+     *
+     * @return array Biblionumber => branch availability, or null on failure
+     */
+    protected function fetchAvailabilityInParallel(array $biblionumbers)
+    {
+        $results = array_fill_keys($biblionumbers, null);
+        if (empty($biblionumbers)) {
+            return $results;
+        }
+
+        $timeout = max(1, (int)($this->lotsConfig->Record->availabilityTimeout ?? 10));
+        $maxParallel = max(1, (int)($this->lotsConfig->Record->availabilityMaxParallel ?? 4));
+        $baseUrl = rtrim($this->config['Catalog']['host'], '/')
+            . '/v1/contrib/kohasuomi/availability/biblios/';
+        $verifyHost = !isset($this->config['Http']['ssl_verify_peer_name'])
+            || $this->config['Http']['ssl_verify_peer_name'];
+
+        $token = $this->getOAuth2Token();
+        $renewed = false;
+        $pending = $biblionumbers;
+
+        // One session for all requests, so the connection is reused. At most
+        // $maxParallel requests are in flight at once (1 = one at a time).
+        $multi = curl_multi_init();
+        curl_multi_setopt($multi, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
+
+        while (!empty($pending)) {
+            $unauthorized = [];
+            foreach (array_chunk($pending, $maxParallel) as $chunk) {
+                $handles = [];
+                foreach ($chunk as $id) {
+                    $handle = curl_init($baseUrl . rawurlencode($id) . '/search');
+                    curl_setopt_array(
+                        $handle,
+                        [
+                            CURLOPT_RETURNTRANSFER => true,
+                            CURLOPT_TIMEOUT => $timeout,
+                            CURLOPT_CONNECTTIMEOUT => min(5, $timeout),
+                            CURLOPT_USERAGENT => 'VuFind',
+                            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_2TLS,
+                            CURLOPT_PIPEWAIT => true,
+                            CURLOPT_HTTPHEADER => [
+                                'Authorization: ' . $token,
+                                'Accept: application/json',
+                            ],
+                            CURLOPT_SSL_VERIFYHOST => $verifyHost ? 2 : 0,
+                        ]
+                    );
+                    curl_multi_add_handle($multi, $handle);
+                    $handles[$id] = $handle;
+                }
+
+                do {
+                    $status = curl_multi_exec($multi, $running);
+                    if ($running && curl_multi_select($multi, 1.0) === -1) {
+                        usleep(1000);
+                    }
+                } while ($running && $status === CURLM_OK);
+
+                foreach ($handles as $id => $handle) {
+                    $code = (int)curl_getinfo($handle, CURLINFO_HTTP_CODE);
+                    $data = json_decode((string)curl_multi_getcontent($handle), true);
+                    if ($code === 401) {
+                        $unauthorized[] = $id;
+                    } elseif ($code >= 200 && $code < 300 && is_array($data)) {
+                        $results[$id] = $this->summarizeBranchAvailability($data);
+                    } elseif ($code >= 400 && $code < 500) {
+                        $results[$id] = [];
+                    } else {
+                        $this->logError(
+                            "Availability request for biblio $id failed: HTTP $code "
+                            . curl_error($handle)
+                        );
+                    }
+                    curl_multi_remove_handle($multi, $handle);
+                    curl_close($handle);
+                }
+            }
+
+            if (empty($unauthorized) || $renewed) {
+                break;
+            }
+            $token = $this->getOAuth2Token(true);
+            $renewed = true;
+            $pending = $unauthorized;
+        }
+        curl_multi_close($multi);
+        return $results;
     }
 
     /**
