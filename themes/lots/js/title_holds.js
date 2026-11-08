@@ -7,6 +7,7 @@
   'use strict';
 
   var TIMEOUT_MS = 20000;
+  var MAX_WAIT_MS = 25000;
 
   function removeAll(placeholders) {
     placeholders.forEach(function remove(el) {
@@ -65,9 +66,27 @@
     xhr.send(body);
   }
 
+  // Koha only handles a few requests at once, so the hold check waits until the
+  // branch availability of the same page is done.
+  function start() {
+    if (!document.querySelector('.lots-branch-availability')) {
+      load();
+      return;
+    }
+    var started = false;
+    function go() {
+      if (!started) {
+        started = true;
+        load();
+      }
+    }
+    document.addEventListener('lots:branch-availability-done', go);
+    setTimeout(go, MAX_WAIT_MS);
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', load);
+    document.addEventListener('DOMContentLoaded', start);
   } else {
-    load();
+    start();
   }
 }());

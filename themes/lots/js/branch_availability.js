@@ -8,6 +8,18 @@
 
   var TIMEOUT_MS = 20000;
 
+  function done() {
+    var name = 'lots:branch-availability-done';
+    var evt;
+    if (typeof Event === 'function') {
+      evt = new Event(name);
+    } else {
+      evt = document.createEvent('Event');
+      evt.initEvent(name, true, true);
+    }
+    document.dispatchEvent(evt);
+  }
+
   function removeAll(placeholders) {
     placeholders.forEach(function remove(el) {
       if (el.parentNode) {
@@ -58,9 +70,11 @@
         availability = {};
       }
       fill(placeholders, availability);
+      done();
     };
     xhr.onerror = xhr.ontimeout = function onfail() {
       removeAll(placeholders);
+      done();
     };
     xhr.send(body);
   }
