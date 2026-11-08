@@ -51,6 +51,7 @@ $config = array (
     'factories' =>
     array (
       'LOTS\\ILS\\Connection' => 'VuFind\\ILS\\ConnectionFactory',
+      'LOTS\\ILS\\Logic\\TitleHolds' => 'VuFind\\ILS\\Logic\\LogicFactory',
     ),
     'aliases' =>
     array (
@@ -89,9 +90,13 @@ $config = array (
         'factories' =>
         array (
           'LOTS\\AjaxHandler\\GetItemStatuses' => 'LOTS\\AjaxHandler\\GetItemStatusesFactory',
+          'LOTS\\AjaxHandler\\GetBranchAvailability' => 'LOTS\\AjaxHandler\\GetBranchAvailabilityFactory',
+          'LOTS\\AjaxHandler\\GetTitleHolds' => 'LOTS\\AjaxHandler\\GetTitleHoldsFactory',
         ),
         'aliases' =>
         array (
+          'getBranchAvailability' => 'LOTS\\AjaxHandler\\GetBranchAvailability',
+          'getTitleHolds' => 'LOTS\\AjaxHandler\\GetTitleHolds',
           'getItemStatuses' => 'LOTS\\AjaxHandler\\GetItemStatuses',
           'VuFind\\AjaxHandler\\GetItemStatuses' => 'LOTS\\AjaxHandler\\GetItemStatuses',
         ),
