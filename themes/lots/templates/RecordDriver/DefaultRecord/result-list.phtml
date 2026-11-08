@@ -226,8 +226,28 @@ if ($lots_show_availability_in_results == 1):
       <?php endif; ?>
 
 <!-- Reservera på Titelnivå 1-->
-<?php $holdingTitleHold = $lots_show_reservation_button ? $this->driver->tryMethod('getRealTimeTitleHold') : false; if ($holdingTitleHold): ?>
+<?php
+$lotsHoldMode = $lots_show_reservation_button ? $this->ils()->getTitleHoldsMode() : 'disabled';
+if ($lotsHoldMode === 'driver'):
+    // The hold check is done by title_holds.js with one AJAX request per page (logged in users only)
+    $lotsBiblioLevel = strtolower((string)$this->driver->tryMethod('getBibliographicLevel'));
+    if ($this->auth()->isLoggedIn() && $this->driver->supportsAjaxStatus()
+        && ('monograph' == $lotsBiblioLevel || strstr($lotsBiblioLevel, 'part'))
+    ):
+        $lotsHoldScriptFlag = $this->placeholder('lotsTitleHoldScript');
+        if (!count($lotsHoldScriptFlag)):
+            $lotsHoldScriptFlag->set('added');
+            $lotsHoldScriptFile = defined('APPLICATION_PATH') ? APPLICATION_PATH . '/themes/lots/js/title_holds.js' : '';
+            $lotsHoldScriptVersion = is_file($lotsHoldScriptFile) ? filemtime($lotsHoldScriptFile) : 0;
+?>
+<script defer src="<?=$this->escapeHtmlAttr($this->url('home') . 'themes/lots/js/title_holds.js?v=' . $lotsHoldScriptVersion)?>"></script>
+<?php endif; ?>
+<span class="lots-title-hold" data-id="<?=$this->escapeHtmlAttr($this->driver->getUniqueId())?>" data-url="<?=$this->escapeHtmlAttr($this->url('home') . 'AJAX/JSON?method=getTitleHolds')?>"></span>
+<?php endif; ?>
+<?php elseif ($lotsHoldMode !== 'disabled'): ?>
+<?php $holdingTitleHold = $this->driver->tryMethod('getRealTimeTitleHold'); if ($holdingTitleHold): ?>
     <a class="placehold" data-light-box title="<?=$this->transEscAttr('request_place_text')?>" href="<?=$this->escapeHtmlAttr($this->recordLinker()->getRequestUrl($holdingTitleHold))?>"><i class="fa fa-flag" aria-hidden="true"></i>&nbsp;<?=$this->transEsc('title_hold_place')?></a>
+<?php endif; ?>
 <?php endif; ?>
 
       <?php if ($this->userlist()->getMode() !== 'disabled'): ?>
