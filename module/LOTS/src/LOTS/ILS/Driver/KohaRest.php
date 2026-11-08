@@ -751,7 +751,7 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
     }
 
     /**
-     * Fetch availability for the given records from Koha with curl_multi.
+     * Fetch availability for the given records from Koha in parallel.
      *
      * @param array $biblionumbers Biblionumbers to fetch
      *
@@ -759,33 +759,128 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
      */
     protected function fetchAvailabilityInParallel(array $biblionumbers)
     {
+        $requests = [];
+        foreach ($biblionumbers as $id) {
+            $requests[$id] = 'v1/contrib/kohasuomi/availability/biblios/'
+                . rawurlencode($id) . '/search';
+        }
+
         $results = array_fill_keys($biblionumbers, null);
-        if (empty($biblionumbers)) {
+        foreach ($this->fetchInParallel($requests) as $id => $response) {
+            if ($response === null) {
+                continue;
+            }
+            if ($response['code'] >= 200 && $response['code'] < 300
+                && is_array($response['data'])
+            ) {
+                $results[$id] = $this->summarizeBranchAvailability($response['data']);
+            } elseif ($response['code'] >= 400 && $response['code'] < 500) {
+                $results[$id] = [];
+            }
+        }
+        return $results;
+    }
+
+    /**
+     * Check in parallel whether the patron may place a title level hold.
+     *
+     * Patron blocks are checked first. The answers are cached per patron and
+     * record for a short time and are never shared between patrons.
+     *
+     * @param array $biblionumbers Biblionumbers to check
+     * @param array $patron        Patron as returned by patronLogin()
+     *
+     * @return array Biblionumber => bool (false if blocked or Koha did not answer)
+     */
+    public function getTitleHoldsBatch(array $biblionumbers, array $patron)
+    {
+        $result = array_fill_keys($biblionumbers, false);
+        if (empty($biblionumbers) || empty($patron['id']) || $this->getPatronBlocks($patron)) {
+            return $result;
+        }
+
+        $patronId = $patron['id'];
+        $requests = [];
+        foreach ($biblionumbers as $id) {
+            $cached = $this->getCachedData("lots-hold|$patronId|$id");
+            if (is_array($cached)) {
+                $result[$id] = !empty($cached['valid']);
+            } else {
+                $requests[$id] = 'v1/contrib/kohasuomi/availability/biblios/'
+                    . rawurlencode($id) . '/hold?patron_id=' . rawurlencode($patronId);
+            }
+        }
+
+        $lifetime = (int)($this->lotsConfig->Record->holdCheckCacheTime ?? 30);
+        foreach ($this->fetchInParallel($requests) as $id => $response) {
+            if ($response === null) {
+                continue;
+            }
+            $valid = $response['code'] >= 200 && $response['code'] < 300
+                && !empty($response['data']['availability']['available']);
+            $result[$id] = $valid;
+            if ($response['code'] >= 200 && $response['code'] < 300 && $lifetime > 0) {
+                $this->putCachedData("lots-hold|$patronId|$id", ['valid' => $valid], $lifetime);
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Forget the cached hold check when the patron places a hold.
+     *
+     * {@inheritDoc}
+     */
+    public function placeHold($holdDetails)
+    {
+        $result = parent::placeHold($holdDetails);
+        if (!empty($holdDetails['patron']['id']) && !empty($holdDetails['id'])) {
+            $this->removeCachedData(
+                'lots-hold|' . $holdDetails['patron']['id'] . '|' . $holdDetails['id']
+            );
+        }
+        return $result;
+    }
+
+    /**
+     * GET several Koha API paths with curl_multi in one session, so the
+     * connection is reused. At most availabilityMaxParallel requests are in
+     * flight at once (1 = one at a time).
+     *
+     * @param array $requests Key => path relative to the API host, with query
+     *
+     * @return array Key => ['code' => int, 'data' => decoded JSON or null], or
+     * null if the request failed
+     */
+    protected function fetchInParallel(array $requests)
+    {
+        $results = array_fill_keys(array_keys($requests), null);
+        if (empty($requests)) {
             return $results;
         }
 
         $timeout = max(1, (int)($this->lotsConfig->Record->availabilityTimeout ?? 10));
         $maxParallel = max(1, (int)($this->lotsConfig->Record->availabilityMaxParallel ?? 4));
-        $baseUrl = rtrim($this->config['Catalog']['host'], '/')
-            . '/v1/contrib/kohasuomi/availability/biblios/';
+        $baseUrl = rtrim($this->config['Catalog']['host'], '/') . '/';
         $verifyHost = !isset($this->config['Http']['ssl_verify_peer_name'])
             || $this->config['Http']['ssl_verify_peer_name'];
+        $http2 = '1.1' !== (string)($this->lotsConfig->Record->availabilityHttpVersion ?? '2');
 
         $token = $this->getOAuth2Token();
         $renewed = false;
-        $pending = $biblionumbers;
+        $pending = array_keys($requests);
 
-        // One session for all requests, so the connection is reused. At most
-        // $maxParallel requests are in flight at once (1 = one at a time).
         $multi = curl_multi_init();
-        curl_multi_setopt($multi, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
+        if ($http2) {
+            curl_multi_setopt($multi, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
+        }
 
         while (!empty($pending)) {
             $unauthorized = [];
             foreach (array_chunk($pending, $maxParallel) as $chunk) {
                 $handles = [];
-                foreach ($chunk as $id) {
-                    $handle = curl_init($baseUrl . rawurlencode($id) . '/search');
+                foreach ($chunk as $key) {
+                    $handle = curl_init($baseUrl . $requests[$key]);
                     curl_setopt_array(
                         $handle,
                         [
@@ -793,8 +888,8 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
                             CURLOPT_TIMEOUT => $timeout,
                             CURLOPT_CONNECTTIMEOUT => min(5, $timeout),
                             CURLOPT_USERAGENT => 'VuFind',
-                            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_2TLS,
-                            CURLOPT_PIPEWAIT => true,
+                            CURLOPT_HTTP_VERSION => $http2 ? CURL_HTTP_VERSION_2TLS : CURL_HTTP_VERSION_1_1,
+                            CURLOPT_PIPEWAIT => $http2,
                             CURLOPT_HTTPHEADER => [
                                 'Authorization: ' . $token,
                                 'Accept: application/json',
@@ -803,7 +898,7 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
                         ]
                     );
                     curl_multi_add_handle($multi, $handle);
-                    $handles[$id] = $handle;
+                    $handles[$key] = $handle;
                 }
 
                 do {
@@ -813,18 +908,16 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
                     }
                 } while ($running && $status === CURLM_OK);
 
-                foreach ($handles as $id => $handle) {
+                foreach ($handles as $key => $handle) {
                     $code = (int)curl_getinfo($handle, CURLINFO_HTTP_CODE);
-                    $data = json_decode((string)curl_multi_getcontent($handle), true);
                     if ($code === 401) {
-                        $unauthorized[] = $id;
-                    } elseif ($code >= 200 && $code < 300 && is_array($data)) {
-                        $results[$id] = $this->summarizeBranchAvailability($data);
-                    } elseif ($code >= 400 && $code < 500) {
-                        $results[$id] = [];
+                        $unauthorized[] = $key;
+                    } elseif ($code > 0 && $code < 500) {
+                        $data = json_decode((string)curl_multi_getcontent($handle), true);
+                        $results[$key] = ['code' => $code, 'data' => is_array($data) ? $data : null];
                     } else {
                         $this->logError(
-                            "Availability request for biblio $id failed: HTTP $code "
+                            "Koha request {$requests[$key]} failed: HTTP $code "
                             . curl_error($handle)
                         );
                     }
