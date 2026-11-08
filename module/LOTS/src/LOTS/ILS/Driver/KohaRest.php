@@ -16,6 +16,13 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
     protected $availableBranches = null;
 
     /**
+     * Answers to GET requests already made during this page load (see makeRequest).
+     *
+     * @var array
+     */
+    protected $requestMemo = [];
+
+    /**
      * Override item status mappings to add On Order support.
      * Item::NotForLoan with status -1 means the item is on order in Koha.
      * SUPVARM-277 / LOTS-87
@@ -302,6 +309,16 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
             ];
         }
 
+        // Identical GET requests within one page load are sent to Koha only once
+        $isGet = 'GET' === ($request['method'] ?? 'GET');
+        $memoKey = $isGet ? md5(json_encode([$request, $dojson])) : null;
+        if (null !== $memoKey && isset($this->requestMemo[$memoKey])) {
+            return $this->requestMemo[$memoKey];
+        }
+        if (!$isGet) {
+            $this->requestMemo = [];
+        }
+
         if (is_array($request['path'])) {
             $apiUrl .= implode('/', array_map('urlencode', $request['path']));
         } else {
@@ -401,11 +418,15 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
             throw new ILSException('Problem with Koha REST API.');
         }
 
-        return [
+        $parsed = [
             'data' => $decodedResult,
             'code' => (int)$response->getStatusCode(),
             'headers' => $response->getHeaders()->toArray(),
         ];
+        if (null !== $memoKey) {
+            $this->requestMemo[$memoKey] = $parsed;
+        }
+        return $parsed;
     }
 
     public function getConfig($function, $params = null)
