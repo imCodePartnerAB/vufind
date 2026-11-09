@@ -1,0 +1,28 @@
+<?php $safeId = $this->escapeHtmlAttr($id); ?>
+<?php if (!empty($branches)): ?>
+<div class="availability-section">
+    <label for="branch-select-<?=$safeId?>"><?=$this->transEsc('Branch')?>:</label>
+    <ul id="branch-select-<?=$safeId?>" class="fa-ul">
+        <?php foreach ($branches as $branch): ?>
+            <li>
+                <?=$this->escapeHtml($branch['name']) . ' (' . $branch['available'] . '/' . $branch['total'] . ')'?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+
+    <div class="availability-info">
+        <span><?=$this->transEsc('Available copies')?>: <?=$totalAvailable?></span>
+        <span><?=$this->transEsc('Total copies')?>: <?=$totalCopies?></span>
+        <span class="availability-dot" style="color: <?=$totalAvailable > 0 ? '#00FF00' : '#FF0000'?>">&#9679;</span>
+    </div>
+</div>
+<?php else: ?>
+<div class="availability-section">
+    <div class="alert alert-warning"><?=$this->transEsc('No book found')?></div>
+    <div class="availability-info">
+        <span><?=$this->transEsc('Available copies')?>: 0</span>
+        <span><?=$this->transEsc('Total copies')?>: 0</span>
+        <span class="availability-dot" style="color: #FF0000;">&#9679;</span>
+    </div>
+</div>
+<?php endif; ?>
