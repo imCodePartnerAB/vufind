@@ -471,6 +471,26 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
     
     public function patronLogin($username, $password)
     {
+        // A successful login is remembered in the user's own session for
+        // patronValidationCacheTime seconds (0 = off), so Koha is not asked to
+        // validate the same credentials on every page.
+        $lifetime = (int)($this->lotsConfig->Record->patronValidationCacheTime ?? 0);
+        $key = null;
+        if ($lifetime > 0 && !empty($username) && !empty($password)) {
+            $key = hash_hmac(
+                'sha256',
+                $username . "\0" . $password,
+                (string)($this->config['Catalog']['clientSecret'] ?? '')
+            );
+            $cached = isset($this->sessionCache->lotsPatronValidation)
+                ? $this->sessionCache->lotsPatronValidation : null;
+            if (is_array($cached) && is_array($cached['patron'] ?? null)
+                && hash_equals((string)($cached['key'] ?? ''), $key)
+                && time() - (int)($cached['time'] ?? 0) <= $lifetime
+            ) {
+                return ['cat_password' => $password] + $cached['patron'];
+            }
+        }
 
         $parent_info =  parent::patronLogin($username, $password);
         if ($parent_info === null) {
@@ -482,6 +502,16 @@ class KohaRest extends \VuFind\ILS\Driver\KohaRest
         if ($dbUser['email'] != $parent_info['email']) {
             $dbUser->updateEmail($parent_info['email'],true);
             $dbUser->save();
+        }
+
+        if (null !== $key) {
+            $patron = $parent_info;
+            unset($patron['cat_password']);
+            $this->sessionCache->lotsPatronValidation = [
+                'key' => $key,
+                'time' => time(),
+                'patron' => $patron,
+            ];
         }
 
         return $parent_info;
