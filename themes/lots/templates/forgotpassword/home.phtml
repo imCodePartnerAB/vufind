@@ -24,6 +24,16 @@ foreach ($this->searchFields as $field) {
 
 $labelText = implode(' / ', $fieldLabels);
 $placeholderText = implode(' / ', $fieldPlaceholders);
+
+// Optional site-wide override of the combined label and placeholder (set in local/languages)
+$customLabel = $this->translate('forgot_password_field_label', [], '');
+$customPlaceholder = $this->translate('forgot_password_field_placeholder', [], '');
+if ($customLabel !== '') {
+    $labelText = $this->escapeHtml($customLabel);
+}
+if ($customPlaceholder !== '') {
+    $placeholderText = $this->escapeHtmlAttr($customPlaceholder);
+}
 ?>
 <div class="container">
     <h2><?=$this->transEsc('forgot_password_title')?></h2>
