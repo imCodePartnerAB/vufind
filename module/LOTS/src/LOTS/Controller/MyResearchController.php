@@ -28,11 +28,13 @@ class MyResearchController extends \VuFind\Controller\MyResearchController imple
         $history = $this->params()->fromPost('loan_history', false);
 
         if (is_array($patron) && $history >= 0) {
-            if ($this->processLibraryDataUpdate($patron, $values)) {
+            $updated = $this->processLibraryDataUpdate($patron, $values);
 #                $this->flashMessenger()->setNamespace('info')
 #                    ->addMessage('profile_update');
-            }
             $view = parent::profileAction();
+            if (!$updated) {
+                $this->flashMessenger()->clearCurrentMessages('success');
+            }
         }
         return $view;
     }
