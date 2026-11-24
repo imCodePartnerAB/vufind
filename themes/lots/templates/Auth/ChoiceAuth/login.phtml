@@ -1,0 +1,43 @@
+<?php
+  // LOTS: login_method = both. One radio per method; only the chosen method's
+  // form is shown. Without JS all forms stay visible, so login still works.
+  // A radiogroup div is used instead of <fieldset>: the site CSS floats fieldsets.
+  $manager = $this->auth()->getManager();
+  $methods = $manager->getSelectableAuthOptions();
+?>
+<div class="lots-login-choice" role="radiogroup" aria-labelledby="lots-login-choice-label">
+  <span id="lots-login-choice-label" class="sr-only"><?=$this->transEsc('lots_choose_login_method')?></span>
+  <?php foreach ($methods as $i => $method): ?>
+    <?php $key = strtolower($method); ?>
+    <label class="radio-inline">
+      <input type="radio" name="lots_login_method" value="<?=$this->escapeHtmlAttr($key)?>" aria-controls="lots-login-<?=$this->escapeHtmlAttr($key)?>"<?=0 === $i ? ' checked' : ''?>>
+      <?=$this->transEsc('login_method_' . $key)?>
+    </label>
+  <?php endforeach; ?>
+</div>
+<div class="mt20">
+  <?php foreach ($methods as $method): ?>
+    <?php $key = strtolower($method); ?>
+    <div id="lots-login-<?=$this->escapeHtmlAttr($key)?>" class="lots-login-panel" data-login-method="<?=$this->escapeHtmlAttr($key)?>">
+      <?php $manager->setAuthMethod($method); ?>
+      <?=$this->auth()->getLoginDesc()?>
+      <?=$this->auth()->getLogin()?>
+    </div>
+  <?php endforeach; ?>
+</div>
+<?php $manager->setAuthMethod('ChoiceAuth'); ?>
+<script>
+  (function () {
+    var radios = document.querySelectorAll('input[name="lots_login_method"]');
+    var panels = document.querySelectorAll('.lots-login-panel');
+    function show(method) {
+      Array.prototype.forEach.call(panels, function (panel) {
+        panel.hidden = panel.getAttribute('data-login-method') !== method;
+      });
+    }
+    Array.prototype.forEach.call(radios, function (radio) {
+      radio.addEventListener('change', function () { show(radio.value); });
+      if (radio.checked) { show(radio.value); }
+    });
+  })();
+</script>

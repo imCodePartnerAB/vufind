@@ -22,6 +22,36 @@ $config = array (
           ]
         ],
       ],
+      'bankid-start' => [
+        'type' => 'Laminas\Router\Http\Literal',
+        'options' => [
+          'route' => '/BankID/Start',
+          'defaults' => [
+            'controller' => 'BankID',
+            'action' => 'Start',
+          ]
+        ],
+      ],
+      'bankid-callback' => [
+        'type' => 'Laminas\Router\Http\Literal',
+        'options' => [
+          'route' => '/BankID/Callback',
+          'defaults' => [
+            'controller' => 'BankID',
+            'action' => 'Callback',
+          ]
+        ],
+      ],
+      'bankid-simulate' => [
+        'type' => 'Laminas\Router\Http\Literal',
+        'options' => [
+          'route' => '/BankID/Simulate',
+          'defaults' => [
+            'controller' => 'BankID',
+            'action' => 'Simulate',
+          ]
+        ],
+      ],
     ],
   ],
   'controllers' =>
@@ -32,6 +62,7 @@ $config = array (
       'LOTS\\Controller\\ForgotPasswordController' => 'VuFind\\Controller\\AbstractBaseFactory',
       'LOTS\\Controller\\ResetPasswordController' => 'VuFind\\Controller\\AbstractBaseFactory',
       'LOTS\\Controller\\SuggestionsController' => 'VuFind\\Controller\\AbstractBaseFactory',
+      'LOTS\\Controller\\BankIDController' => 'VuFind\\Controller\\AbstractBaseFactory',
     ),
     'aliases' =>
     array (
@@ -43,6 +74,8 @@ $config = array (
       'resetpassword' => 'LOTS\\Controller\\ResetPasswordController',
       'Suggestions' => 'LOTS\\Controller\\SuggestionsController',
       'suggestions' => 'LOTS\\Controller\\SuggestionsController',
+      'BankID' => 'LOTS\\Controller\\BankIDController',
+      'bankid' => 'LOTS\\Controller\\BankIDController',
     ),
   ),
   'service_manager' =>
@@ -51,10 +84,15 @@ $config = array (
     'factories' =>
     array (
       'LOTS\\ILS\\Connection' => 'VuFind\\ILS\\ConnectionFactory',
+      // LOTS-90 BankID
+      'LOTS\\Auth\\ILSAuthenticator' => 'VuFind\\Auth\\ILSAuthenticatorFactory',
+      'LOTS\\BankID\\SessionStore' => 'LOTS\\BankID\\SessionStoreFactory',
+      'LOTS\\BankID\\ProviderBuilder' => 'LOTS\\BankID\\ProviderBuilderFactory',
     ),
     'aliases' =>
     array (
       'VuFind\\ILS\\Connection' => 'LOTS\\ILS\\Connection',
+      'VuFind\\Auth\\ILSAuthenticator' => 'LOTS\\Auth\\ILSAuthenticator', // LOTS-90
     ),
   ),
   'view_helpers' =>
@@ -71,8 +109,29 @@ $config = array (
   'vufind' =>
   array (
     'allow_override' => true,
+    // BankID login: LOTS.ini [Authentication] login_method decides the effective
+    // [Authentication] method in config.ini (see LOTS\Config\LoginMethodDelegatorFactory).
+    'config_reader' =>
+    array (
+      'delegators' =>
+      array (
+        'config' => ['LOTS\\Config\\LoginMethodDelegatorFactory'],
+      ),
+    ),
     'plugin_managers' =>
     array (
+      'auth' =>
+      array (
+        'factories' =>
+        array (
+          'LOTS\\Auth\\BankID' => 'LOTS\\Auth\\BankIDFactory',
+        ),
+        'aliases' =>
+        array (
+          'BankID' => 'LOTS\\Auth\\BankID',
+          'bankid' => 'LOTS\\Auth\\BankID',
+        ),
+      ),
       'ils_driver' =>
       array (
         'factories' =>

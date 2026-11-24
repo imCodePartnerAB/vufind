@@ -6,6 +6,7 @@ use VuFind\View\Helper\Root\SafeMoneyFormat;
 
 class KohaRest extends \VuFind\ILS\Driver\KohaRest
 {
+    use BankIdPatronTrait; // LOTS-90 BankID: patron lookup without password
     protected $lotsConfig;
 
     /**

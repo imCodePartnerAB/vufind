@@ -1,0 +1,25 @@
+<?php
+  // LOTS-90: development-only stand-in for the BankID provider page.
+  $this->headTitle('BankID (simulated)');
+?>
+<h2>BankID (simulated)</h2>
+<div class="alert alert-warning">
+  Development only. No real BankID authentication takes place. Configured by
+  <code>bankid_provider = simulated</code> in LOTS.ini.
+</div>
+<form method="get" action="<?=$this->url('bankid-callback')?>" class="max-w460">
+  <input type="hidden" name="state" value="<?=$this->escapeHtmlAttr($this->state)?>">
+  <div class="form-group">
+    <label for="bankid-simulated-code">Personnummer</label>
+    <select id="bankid-simulated-code" name="code" class="form-control">
+      <?php foreach ($this->numbers as $number): ?>
+        <?php $value = $number->format(\LOTS\BankID\Personnummer::FORMAT_12_DASH); ?>
+        <option value="<?=$this->escapeHtmlAttr($value)?>"><?=$this->escapeHtml($value)?></option>
+      <?php endforeach; ?>
+    </select>
+  </div>
+  <div class="form-group clearfix">
+    <button type="submit" class="btn btn-primary float-right">Identify</button>
+    <a class="btn btn-link" href="<?=$this->url('bankid-callback')?>?<?=$this->escapeHtmlAttr(http_build_query(['state' => $this->state, 'error' => 'access_denied']))?>">Cancel</a>
+  </div>
+</form>
